@@ -2,39 +2,120 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
+  <title>Simulados Abertos - Objetivo</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Simulados Abertos</title>
   <style>
     body {
       margin: 0;
-      font-family: Arial, sans-serif;
-      background: #f8f9fa;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
+      font-family: "Segoe UI", sans-serif;
+      background-color: #f8f9fa;
+    }
+
+    header {
+      background-color: #002776;
+      color: white;
+      padding: 20px;
       text-align: center;
     }
-    .container {
+
+    h1 {
+      margin: 0;
+      font-size: 24px;
+    }
+
+    .simulados {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 20px;
+      padding: 40px 20px;
+    }
+
+    .card {
       background: white;
-      padding: 40px;
       border-radius: 12px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      width: 300px;
+      padding: 20px;
+      box-sizing: border-box;
     }
-    h1 {
-      color: #1a237e;
-      margin-bottom: 10px;
+
+    .card h2 {
+      color: #002776;
+      margin-top: 0;
+      font-size: 20px;
     }
-    h2 {
-      color: #424242;
-      font-weight: normal;
+
+    .card p {
+      margin: 8px 0;
+      font-size: 14px;
+    }
+
+    .btn {
+      display: inline-block;
+      background: #ffc107;
+      color: black;
+      text-decoration: none;
+      padding: 10px 15px;
+      margin-top: 10px;
+      border-radius: 8px;
+      font-weight: bold;
+    }
+
+    .btn:hover {
+      background: #ffca2c;
+    }
+
+    footer {
+      text-align: center;
+      padding: 20px;
+      font-size: 12px;
+      color: #888;
+    }
+
+    @media (max-width: 768px) {
+      .simulados {
+        flex-direction: column;
+        align-items: center;
+      }
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Curso Objetivo Vestibulares</h1>
-    <h2>Simulados Abertos</h2>
+
+<header>
+  <h1>Simulados Abertos — Curso Objetivo Vestibulares</h1>
+</header>
+
+<section class="simulados">
+  <div class="card">
+    <h2>Semi de Agosto - Medicina</h2>
+    <p><strong>Modalidade:</strong> presencial</p>
+    <p><strong>Para quem:</strong> não alunos</p>
+    <p><strong>Quando:</strong> 19/07/2025 às 10h</p>
+    <a href="https://script.google.com/macros/s/.../exec" class="btn">Acessar</a>
   </div>
+
+  <div class="card">
+    <h2>Semi de Agosto - Geral</h2>
+    <p><strong>Modalidade:</strong> presencial</p>
+    <p><strong>Para quem:</strong> não alunos</p>
+    <p><strong>Quando:</strong> 17/08/2025 às 13h</p>
+    <a href="https://script.google.com/macros/s/.../exec" class="btn">Acessar</a>
+  </div>
+
+  <div class="card">
+    <h2>Simulado Aberto ENEM</h2>
+    <p><strong>Modalidade:</strong> presencial</p>
+    <p><strong>Para quem:</strong> alunos e não alunos</p>
+    <p><strong>Quando:</strong> 25/08/2025 às 14h</p>
+    <a href="https://script.google.com/macros/s/.../exec" class="btn">Acessar</a>
+  </div>
+</section>
+
+<footer>
+  Desenvolvido por Adilson Alves — 3A Sistemas — simuladoaberto.com
+</footer>
+
 </body>
 </html>
