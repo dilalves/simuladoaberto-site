@@ -68,30 +68,31 @@
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
   <script>
-    function fazerLogin() {
-      const login = document.getElementById('matricula').value.trim();
-      const senha = document.getElementById('senha').value.trim();
+    <script>
+  function fazerLogin() {
+    const login = document.getElementById('matricula').value.trim();
+    const senha = document.getElementById('senha').value.trim();
 
-      if (!login || !senha) {
-        M.toast({ html: 'Preencha login e senha', classes: 'red' });
-        return;
-      }
-
-      fetch('https://script.google.com/macros/s/AKfycbyyhxtyettZATeyTfAC4w9ZtKUsrhgSY5PXq6g2l60crp0C3gW4wjbB-unnJYOg9OhP/exec?login=' + login + '&senha=' + senha)
-        .then(response => response.json())
-        .then(data => {
-          if (data && data.login) {
-            // Redireciona com os dados na URL
-            window.location.href = `principal.html?login=${encodeURIComponent(data.login)}&unidade=${encodeURIComponent(data.nomeUnidade)}`;
-          } else {
-            M.toast({ html: 'Login ou senha inválidos', classes: 'red' });
-          }
-        })
-        .catch(error => {
-          console.error('Erro ao conectar:', error);
-          M.toast({ html: 'Erro ao conectar ao servidor', classes: 'red' });
-        });
+    if (!login || !senha) {
+      M.toast({ html: 'Preencha login e senha', classes: 'red' });
+      return;
     }
+
+    google.script.run
+      .withSuccessHandler(function (dados) {
+        if (dados && dados.erro) {
+          M.toast({ html: 'Login ou senha inválidos', classes: 'red' });
+        } else {
+          // Renderiza a próxima página no HTMLService
+          document.open();
+          document.write(dados); // já é o conteúdo HTML retornado da função renderPrincipal
+          document.close();
+        }
+      })
+      .getNota(login); // aqui você pode adaptar para verificar senha também, se quiser
+  }
+</script>
+
   </script>
 </body>
 </html>
