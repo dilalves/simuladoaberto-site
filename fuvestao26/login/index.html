@@ -10,18 +10,6 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.maskedinput/1.4.1/jquery.maskedinput.min.js"></script>
 
   <style>
-    #resultTable thead {
-      position: sticky;
-      top: 0;
-      background-color: #f2f2f2;
-      z-index: 100;
-    }
-
-    #resultTable tbody {
-      max-height: 300px;
-      overflow-y: auto;
-    }
-
     .centered-form {
       display: flex;
       flex-direction: column;
@@ -42,7 +30,7 @@
 
 <body>
   <div style="text-align: center; padding: 10px;">
-    <img src="https://lh3.googleusercontent.com/d/1BMxFhXTHy2zbw1n41e5m7Jf6GOQu8pM2=w1000">
+    <img src="https://lh3.googleusercontent.com/d/1BMxFhXTHy2zbw1n41e5m7Jf6GOQu8pM2=w1000" style="max-width: 100%; height: auto;">
   </div>
 
   <div class="row centered-form">
@@ -60,7 +48,7 @@
       <button class="btn waves-effect waves-light blue darken-4" onclick="fazerLogin()">
         Entrar <i class="material-icons right">send</i>
       </button>
-      <button class="btn waves-effect waves-light blue darken-4">
+      <button class="btn waves-effect waves-light blue darken-4" onclick="window.location.href='adesao.html'">
         Adesão <i class="material-icons right">send</i>
       </button>
     </div>
@@ -68,31 +56,29 @@
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
   <script>
-    <script>
-  function fazerLogin() {
-    const login = document.getElementById('matricula').value.trim();
-    const senha = document.getElementById('senha').value.trim();
+    function fazerLogin() {
+      const login = document.getElementById('matricula').value.trim();
+      const senha = document.getElementById('senha').value.trim();
 
-    if (!login || !senha) {
-      M.toast({ html: 'Preencha login e senha', classes: 'red' });
-      return;
+      if (!login || !senha) {
+        M.toast({ html: 'Preencha login e senha', classes: 'red' });
+        return;
+      }
+
+      fetch(`https://script.google.com/macros/s/AKfycbyyhxtyettZATeyTfAC4w9ZtKUsrhgSY5PXq6g2l60crp0C3gW4wjbB-unnJYOg9OhP/exec?login=${login}&senha=${senha}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.ok) {
+            window.location.href = `principal.html?login=${encodeURIComponent(data.login)}&unidade=${encodeURIComponent(data.unidade)}`;
+          } else {
+            M.toast({ html: 'Login ou senha inválidos', classes: 'red' });
+          }
+        })
+        .catch(err => {
+          console.error('Erro ao conectar:', err);
+          M.toast({ html: 'Erro ao conectar ao servidor', classes: 'red' });
+        });
     }
-
-    google.script.run
-      .withSuccessHandler(function (dados) {
-        if (dados && dados.erro) {
-          M.toast({ html: 'Login ou senha inválidos', classes: 'red' });
-        } else {
-          // Renderiza a próxima página no HTMLService
-          document.open();
-          document.write(dados); // já é o conteúdo HTML retornado da função renderPrincipal
-          document.close();
-        }
-      })
-      .getNota(login); // aqui você pode adaptar para verificar senha também, se quiser
-  }
-</script>
-
   </script>
 </body>
 </html>
