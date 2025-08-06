@@ -4,10 +4,14 @@
   <meta charset="UTF-8">
   <title>Simulados Abertos - Objetivo</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  
-  <!-- Ícone do site - pegar do site do curso-objetivo.br -->
+
+  <!-- Ícone -->
   <link rel="icon" type="image/x-icon" href="https://www.curso-objetivo.br/assets/img/favicon.ico">
-    
+
+  <!-- Bootstrap (para o carrossel funcionar) -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
   <style>
     body {
       margin: 0;
@@ -27,7 +31,14 @@
       font-size: 24px;
     }
 
-    /* AQUI trocamos o flex pelo grid */
+    /* Banner em largura total */
+    #banner-wrapper { width:100vw; margin:0; padding:0; overflow:hidden; }
+    #banner .carousel { width:100vw; }
+    #banner .carousel-item img,
+    #banner .carousel-item picture,
+    #banner .carousel-item video { width:100%; display:block; }
+
+    /* Cards em grid 3 + 2 */
     .simulados {
       display: grid;
       grid-template-columns: repeat(3, minmax(280px, 1fr));
@@ -66,9 +77,7 @@
       font-weight: bold;
     }
 
-    .btn:hover {
-      background: #ffca2c;
-    }
+    .btn:hover { background: #ffca2c; }
 
     footer {
       text-align: center;
@@ -85,11 +94,8 @@
       .simulados { grid-template-columns: 1fr; }
     }
 
-    .card .btn-container {
-      text-align: center;
-    }
-</style>
-
+    .card .btn-container { text-align: center; }
+  </style>
 </head>
 <body>
 
@@ -97,20 +103,14 @@
   <h1>Simulados Abertos — Curso Objetivo Vestibulares</h1>
 </header>
 
-  <!-- Banner do site Objetivo -->
-<div style="margin:0; padding:0;">
-  <iframe 
-    src="https://www.curso-objetivo.br/"
-    style="width:100vw; height:500px; border:0; display:block;"
-    scrolling="no">
-  </iframe>
+<!-- Banner (apenas carrossel, via GAS) -->
+<div id="banner-wrapper">
+  <div id="banner"></div>
 </div>
 
-
 <section class="simulados">
-
-   <div class="card">
-    <h2>Simulado Aberto ENEM - Abril </h2>
+  <div class="card">
+    <h2>Simulado Aberto ENEM - Abril</h2>
     <p><strong>Quando:</strong> 27/04 e 04/05/2025 às 13h</p>
     <div class="btn-container">
       <a href="https://sites.google.com/view/simuladoenem0525" class="btn">Acessar</a>
@@ -118,23 +118,21 @@
   </div>
 
   <div class="card">
-    <h2>Simulado Aberto ENEM - Agosto </h2>
+    <h2>Simulado Aberto ENEM - Agosto</h2>
     <p><strong>Quando:</strong> 17 e 24/08/2025 às 13h</p>
     <div class="btn-container">
-    <a href="https://sites.google.com/view/simuladoenemobjetivo0825" class="btn">Acessar</a>
+      <a href="https://sites.google.com/view/simuladoenemobjetivo0825" class="btn">Acessar</a>
     </div>
   </div>
 
   <div class="card">
-    <h2>Simulado Aberto ENEM - Setembro </h2>
+    <h2>Simulado Aberto ENEM - Setembro</h2>
     <p><strong>Quando:</strong> 28/09 e 05/10/2025 às 13h</p>
     <div class="btn-container">
       <a href="https://sites.google.com/view/simuladoenem0925" class="btn">Acessar</a>
     </div>
   </div>
 
-
-  <!-- 5 (novo) -->
   <div class="card">
     <h2>Fuvestão Maio 2025</h2>
     <p><strong>Quando:</strong> 31/05/2025 às 14h</p>
@@ -147,26 +145,34 @@
     <h2>Fuvestão 2026</h2>
     <p><strong>Quando:</strong> 20/09/2025 às 14h</p>
     <p><strong>Adesão em breve!</strong></p>
-    <!-- <a href="https://script.google.com/macros/s/.../exec" class="btn">Acessar</a> --
+    <!-- <a href="https://script.google.com/macros/s/.../exec" class="btn">Acessar</a> -->
   </div>
-    
 </section>
 
 <footer>
   simuladoaberto.com - Curso Objetivo Vestibulares
 </footer>
 
+<!-- Script para buscar o carrossel do GAS e inicializar -->
+<script>
+(async () => {
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbzMEuCgPxnM9TYPNJ4oHzCLAltxI5QGCst-qrHkpfwDq6sm7k18bHMBl1WCr774-Y_E/exec"; // <-- cole aqui a URL pública da implantação do GAS
+  try {
+    const resp = await fetch(GAS_URL);
+    const html = await resp.text();
+    const el = document.getElementById("banner");
+    el.innerHTML = html;
+
+    // Inicializa o carrossel (se não estiver em "ride" automático no HTML)
+    const car = el.querySelector("#carouselBanner");
+    if (car && window.bootstrap) {
+      new bootstrap.Carousel(car, { interval: 5000, ride: "carousel", pause: false });
+    }
+  } catch (e) {
+    console.error("Erro ao carregar carrossel:", e);
+  }
+})();
+</script>
+
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
