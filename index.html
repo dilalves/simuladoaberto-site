@@ -162,15 +162,27 @@
 <!-- Script para buscar o carrossel do GAS e inicializar -->
 <script>
 (async () => {
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbzMEuCgPxnM9TYPNJ4oHzCLAltxI5QGCst-qrHkpfwDq6sm7k18bHMBl1WCr774-Y_E/exec"; // <-- cole aqui a URL pública da implantação do GAS
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbzMEuCgPxnM9TYPNJ4oHzCLAltxI5QGCst-qrHkpfwDq6sm7k18bHMBl1WCr774-Y_E/exec";
   try {
     const resp = await fetch(GAS_URL);
     const html = await resp.text();
-    const el = document.getElementById("banner");
-    el.innerHTML = html;
+    const bannerEl = document.getElementById("banner");
 
-    // Inicializa o carrossel (se não estiver em "ride" automático no HTML)
-    const car = el.querySelector("#carouselBanner");
+    // Insere o HTML
+    bannerEl.innerHTML = html;
+
+    // Aguarda os <link rel="stylesheet"> injetados dentro de #banner carregarem
+    const links = bannerEl.querySelectorAll('link[rel="stylesheet"]');
+    await Promise.all(Array.from(links).map(l => {
+      return new Promise(resolve => {
+        if (l.sheet) return resolve();     // pode já estar carregado
+        l.addEventListener('load', resolve);
+        l.addEventListener('error', resolve); // não travar se algum falhar
+      });
+    }));
+
+    // Inicializa o carrossel
+    const car = bannerEl.querySelector("#carouselBanner");
     if (car && window.bootstrap) {
       new bootstrap.Carousel(car, { interval: 5000, ride: "carousel", pause: false });
     }
@@ -180,5 +192,7 @@
 })();
 </script>
 
+
 </body>
 </html>
+
