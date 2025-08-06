@@ -13,17 +13,23 @@
   <script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
   <style>
-   #banner .carousel-item {
-      min-height: 380px;
-      background-size: cover;
-      background-position: center;
-    }
+  #banner .carousel-item {
+  min-height: 380px;
+  background-size: cover;
+  background-position: center;
+  }
+  
+  #carouselBanner .carousel-item img {
+    width: 100%;
+    max-width: 100%; /* garante que não ultrapasse a tela */
+    height: auto;
+    display: block;  /* remove possíveis espaços extras */
+  }
+  
+  html, body {
+    overflow-x: hidden; /* remove rolagem lateral */
+  }
 
- #carouselBanner .carousel-item img {
-  width: 100%;
-  height: auto;
-}
-    
     body {
       margin: 0;
       font-family: "Segoe UI", sans-serif;
@@ -200,6 +206,7 @@
 
 </body>
 </html>
+
 
 
 
