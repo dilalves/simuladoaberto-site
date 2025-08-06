@@ -27,19 +27,19 @@
       font-size: 24px;
     }
 
+    /* AQUI trocamos o flex pelo grid */
     .simulados {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(280px, 1fr));
       gap: 20px;
       padding: 40px 20px;
+      justify-content: center;
     }
 
     .card {
       background: white;
       border-radius: 12px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      width: 400px;
       padding: 20px;
       box-sizing: border-box;
     }
@@ -77,18 +77,19 @@
       color: #888;
     }
 
-    @media (max-width: 768px) {
-      .simulados {
-        flex-direction: column;
-        align-items: center;
-      }
+    /* Responsividade */
+    @media (max-width: 992px) {
+      .simulados { grid-template-columns: repeat(2, minmax(260px, 1fr)); }
+    }
+    @media (max-width: 600px) {
+      .simulados { grid-template-columns: 1fr; }
     }
 
     .card .btn-container {
-    text-align: center;
+      text-align: center;
     }
+</style>
 
-  </style>
 </head>
 <body>
 
@@ -96,7 +97,24 @@
   <h1>Simulados Abertos — Curso Objetivo Vestibulares</h1>
 </header>
 
+  <!-- Banner do site Objetivo -->
+<div style="max-width:1100px;margin:0 auto;">
+  <iframe src="https://www.curso-objetivo.br/"
+          style="width:100%; height:450px; border:0;"
+          scrolling="no">
+  </iframe>
+</div>
+
 <section class="simulados">
+
+   <div class="card">
+    <h2>Simulado Aberto ENEM - Abril </h2>
+    <p><strong>Quando:</strong> 27/04 e 04/05/2025 às 13h</p>
+    <div class="btn-container">
+      <a href="https://sites.google.com/view/simuladoenem0525" class="btn">Acessar</a>
+    </div>
+  </div>
+
   <div class="card">
     <h2>Simulado Aberto ENEM - Agosto </h2>
     <p><strong>Quando:</strong> 17 e 24/08/2025 às 13h</p>
@@ -106,21 +124,30 @@
   </div>
 
   <div class="card">
-    <h2>Fuvestão 2026</h2>
-    <p><strong>Quando:</strong> 20/09/2025 às 14h</p>
-    <p><strong>Adesão em breve!</strong></p>
-    <!-- <a href="https://script.google.com/macros/s/.../exec" class="btn">Acessar</a> -->
-    
-  </div>
-
-  <div class="card">
     <h2>Simulado Aberto ENEM - Setembro </h2>
     <p><strong>Quando:</strong> 28/09 e 05/10/2025 às 13h</p>
     <div class="btn-container">
       <a href="https://sites.google.com/view/simuladoenem0925" class="btn">Acessar</a>
     </div>
   </div>
-  
+
+
+  <!-- 5 (novo) -->
+  <div class="card">
+    <h2>Fuvestão Maio 2025</h2>
+    <p><strong>Quando:</strong> 31/05/2025 às 14h</p>
+    <div class="btn-container">
+      <a href="https://sites.google.com/view/simulado-fuvesto-maio-2025" class="btn">Acessar</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Fuvestão 2026</h2>
+    <p><strong>Quando:</strong> 20/09/2025 às 14h</p>
+    <p><strong>Adesão em breve!</strong></p>
+    <!-- <a href="https://script.google.com/macros/s/.../exec" class="btn">Acessar</a> --
+  </div>
+    
 </section>
 
 <footer>
@@ -129,6 +156,7 @@
 
 </body>
 </html>
+
 
 
 
