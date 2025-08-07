@@ -174,16 +174,6 @@
 
  <div id="noticias-enem">Carregando notícias do ENEM...</div>
 
-<script>
-  fetch('https://script.google.com/macros/s/AKfycbwrEFIpSICF1s3DXXM2V-VCYBMBol6i1q7MJxyghIZcvYeKFoVHAmzzHzg6Hupmu3/exec')
-    .then(r => r.text())
-    .then(html => {
-      document.getElementById('noticias-enem').innerHTML = html;
-    })
-    .catch(() => {
-      document.getElementById('noticias-enem').innerHTML = 'Erro ao carregar notícias.';
-    });
-</script>
 
 <footer>
   simuladoaberto.com - Curso Objetivo Vestibulares
@@ -220,11 +210,23 @@
     console.error("Erro ao carregar carrossel:", e);
   }
 })();
+
+  fetch('https://script.google.com/macros/s/AKfycbwrEFIpSICF1s3DXXM2V-VCYBMBol6i1q7MJxyghIZcvYeKFoVHAmzzHzg6Hupmu3/exec')
+    .then(r => r.text())
+    .then(html => {
+      document.getElementById('noticias-enem').innerHTML = html;
+    })
+    .catch(() => {
+      document.getElementById('noticias-enem').innerHTML = 'Erro ao carregar notícias!';
+    });
+
+  
 </script>
 
 
 </body>
 </html>
+
 
 
 
