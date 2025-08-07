@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <title>Simulados Abertos - Objetivo</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 
   <!-- Ícone -->
   <link rel="icon" type="image/x-icon" href="https://www.curso-objetivo.br/assets/img/favicon.ico">
@@ -211,11 +213,12 @@
   }
 })();
 
-   function expandirNoticias() {
+   function expandirNoticias(btn) {
     const itens = document.querySelectorAll('.noticia-item');
     itens.forEach(el => el.style.display = 'block');
-    event.target.style.display = 'none';
+    btn.style.display = 'none';
   }
+
 
   fetch('https://script.google.com/macros/s/AKfycbwrEFIpSICF1s3DXXM2V-VCYBMBol6i1q7MJxyghIZcvYeKFoVHAmzzHzg6Hupmu3/exec')
     .then(r => r.text())
@@ -223,7 +226,7 @@
       document.getElementById('noticias-enem').innerHTML = html;
     })
     .catch(() => {
-      document.getElementById('noticias-enem').innerHTML = 'Erro ao carregar notícias!';
+      document.getElementById('noticias-enem').innerHTML = 'Erro ao carregar notícias.';
     });
 
   
@@ -232,6 +235,7 @@
 
 </body>
 </html>
+
 
 
 
