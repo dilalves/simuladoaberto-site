@@ -211,7 +211,13 @@
   }
 })();
 
-  fetch('https://script.google.com/macros/s/AKfycbwrEFIpSICF1s3DXXM2V-VCYBMBol6i1q7MJxyghIZcvYeKFoVHAmzzHzg6Hupmu3g/exec')
+   function expandirNoticias() {
+    const itens = document.querySelectorAll('.noticia-item');
+    itens.forEach(el => el.style.display = 'block');
+    event.target.style.display = 'none';
+  }
+
+  fetch('https://script.google.com/macros/s/AKfycbwrEFIpSICF1s3DXXM2V-VCYBMBol6i1q7MJxyghIZcvYeKFoVHAmzzHzg6Hupmu3/exec')
     .then(r => r.text())
     .then(html => {
       document.getElementById('noticias-enem').innerHTML = html;
@@ -226,6 +232,7 @@
 
 </body>
 </html>
+
 
 
 
