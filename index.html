@@ -220,21 +220,18 @@
   }
 
 
-  fetch('https://script.google.com/macros/s/AKfycbwrEFIpSICF1s3DXXM2V-VCYBMBol6i1q7MJxyghIZcvYeKFoVHAmzzHzg6Hupmu3/exec')
-    .then(r => r.text())
-    .then(html => {
-      document.getElementById('noticias-enem').innerHTML = html;
-    })
-    .catch(() => {
-      document.getElementById('noticias-enem').innerHTML = 'Erro ao carregar notícias.';
-    });
-
-  
+   function renderENEM(res) {
+    document.getElementById('noticias-enem').innerHTML = res.html || 'Sem conteúdo.';
+  }
+ 
 </script>
+
+  <script src="https://script.google.com/macros/s/AKfycbwrEFIpSICF1s3DXXM2V-VCYBMBol6i1q7MJxyghIZcvYeKFoVHAmzzHzg6Hupmu3/exec?callback=renderENEM"></script>
 
 
 </body>
 </html>
+
 
 
 
