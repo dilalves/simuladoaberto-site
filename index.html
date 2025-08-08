@@ -1,67 +1,63 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Simulados Abertos - Objetivo</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Materialize (se não precisar, pode remover estas 2 linhas) -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
 
   <!-- Ícone -->
-  <link rel="icon" type="image/x-icon" href="https://www.curso-objetivo.br/assets/img/favicon.ico">
+  <link rel="icon" type="image/x-icon" href="https://www.curso-objetivo.br/assets/img/favicon.ico" />
 
   <!-- Bootstrap (para o carrossel funcionar) -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
   <script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
   <style>
-  #banner .carousel-item {
-  min-height: 380px;
-  background-size: cover;
-  background-position: center;
-  }
-  
-  #carouselBanner .carousel-item img {
-    width: 100%;
-    max-width: 100%; /* garante que não ultrapasse a tela */
-    height: auto;
-    display: block;  /* remove possíveis espaços extras */
-  }
-  
-  html, body {
-    overflow-x: hidden; /* remove rolagem lateral */
-  }
+    /* === Correção de conflito Materialize x Bootstrap no banner === */
+    #banner .carousel { position: relative !important; }
+    #banner .carousel-inner { position: relative !important; }
+    #banner .carousel-item {
+      position: relative !important;
+      display: block !important;
+      opacity: 1 !important;
+      transform: none !important;
+    }
+
+    #banner .carousel-item {
+      min-height: 380px;
+      background-size: cover;
+      background-position: center;
+    }
+    #carouselBanner .carousel-item img {
+      width: 100%;
+      max-width: 100%;
+      height: auto;
+      display: block;
+    }
+    html, body { overflow-x: hidden; }
 
     body {
       margin: 0;
       font-family: "Segoe UI", sans-serif;
       background-color: #f8f9fa;
     }
-
     header {
       margin: 0;
-      padding: 20px 0; /* padding só vertical */
+      padding: 20px 0;
       background-color: #002776;
       color: white;
       text-align: center;
     }
-
-    h1 {
-      margin: 0;
-      font-size: 24px;
-    }
+    h1 { margin: 0; font-size: 24px; }
 
     /* Banner em largura total */
     #banner-wrapper { width:100vw; margin:0; padding:0; overflow:hidden; }
     #banner .carousel { width:100vw; }
-    #banner .carousel-item img,
-    #banner .carousel-item picture,
-    #banner .carousel-item video { width:100%; display:block; }
-
-    #banner {
-      margin: 0;
-      padding: 0;
-    }
+    #banner { margin: 0; padding: 0; }
 
     /* Cards em grid 3 + 2 */
     .simulados {
@@ -71,7 +67,6 @@
       padding: 40px 20px;
       justify-content: center;
     }
-
     .card {
       background: white;
       border-radius: 12px;
@@ -79,18 +74,8 @@
       padding: 20px;
       box-sizing: border-box;
     }
-
-    .card h2 {
-      color: #002776;
-      margin-top: 0;
-      font-size: 20px;
-    }
-
-    .card p {
-      margin: 8px 0;
-      font-size: 14px;
-    }
-
+    .card h2 { color: #002776; margin-top: 0; font-size: 20px; }
+    .card p { margin: 8px 0; font-size: 14px; }
     .btn {
       display: inline-block;
       background: #ffc107;
@@ -101,15 +86,8 @@
       border-radius: 8px;
       font-weight: bold;
     }
-
     .btn:hover { background: #ffca2c; }
-
-    footer {
-      text-align: center;
-      padding: 20px;
-      font-size: 12px;
-      color: #888;
-    }
+    footer { text-align: center; padding: 20px; font-size: 12px; color: #888; }
 
     /* Responsividade */
     @media (max-width: 992px) {
@@ -118,131 +96,100 @@
     @media (max-width: 600px) {
       .simulados { grid-template-columns: 1fr; }
     }
-
     .card .btn-container { text-align: center; }
   </style>
 </head>
 <body>
-
 <header>
   <h1>Simulados Abertos — Curso Objetivo Vestibulares</h1>
 </header>
 
-<!-- Banner (apenas carrossel, via GAS) -->
-<div id="banner-wrapper">
-  <div id="banner"></div>
-</div>
+<!-- Banner (via GAS) -->
+<div id="banner-wrapper"><div id="banner"></div></div>
 
 <section class="simulados">
   <div class="card">
     <h2>Simulado Aberto ENEM - Abril</h2>
     <p><strong>Quando:</strong> 27/04 e 04/05/2025 às 13h</p>
-    <div class="btn-container">
-      <a href="https://sites.google.com/view/simuladoenem0525" class="btn">Acessar</a>
-    </div>
+    <div class="btn-container"><a href="https://sites.google.com/view/simuladoenem0525" class="btn">Acessar</a></div>
   </div>
 
   <div class="card">
     <h2>Simulado Aberto ENEM - Agosto</h2>
     <p><strong>Quando:</strong> 17 e 24/08/2025 às 13h</p>
-    <div class="btn-container">
-      <a href="https://sites.google.com/view/simuladoenemobjetivo0825" class="btn">Acessar</a>
-    </div>
+    <div class="btn-container"><a href="https://sites.google.com/view/simuladoenemobjetivo0825" class="btn">Acessar</a></div>
   </div>
 
   <div class="card">
     <h2>Simulado Aberto ENEM - Setembro</h2>
     <p><strong>Quando:</strong> 28/09 e 05/10/2025 às 13h</p>
-    <div class="btn-container">
-      <a href="https://sites.google.com/view/simuladoenem0925" class="btn">Acessar</a>
-    </div>
+    <div class="btn-container"><a href="https://sites.google.com/view/simuladoenem0925" class="btn">Acessar</a></div>
   </div>
 
   <div class="card">
     <h2>Fuvestão Maio 2025</h2>
     <p><strong>Quando:</strong> 31/05/2025 às 14h</p>
-    <div class="btn-container">
-      <a href="https://sites.google.com/view/simulado-fuvesto-maio-2025" class="btn">Acessar</a>
-    </div>
+    <div class="btn-container"><a href="https://sites.google.com/view/simulado-fuvesto-maio-2025" class="btn">Acessar</a></div>
   </div>
 
   <div class="card">
     <h2>Fuvestão 2026</h2>
     <p><strong>Quando:</strong> 20/09/2025 às 14h</p>
     <p><strong>Adesão em breve!</strong></p>
-    <!-- <a href="https://script.google.com/macros/s/.../exec" class="btn">Acessar</a> -->
   </div>
 </section>
 
- <div id="noticias-enem">Carregando notícias do ENEM...</div>
+<div id="noticias-enem" style="padding: 0 20px 20px;">Carregando notícias do ENEM…</div>
 
+<footer>simuladoaberto.com - Curso Objetivo Vestibulares</footer>
 
-<footer>
-  simuladoaberto.com - Curso Objetivo Vestibulares
-</footer>
-
-<!-- Script para buscar o carrossel do GAS e inicializar -->
 <script>
-(async () => {
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbzMEuCgPxnM9TYPNJ4oHzCLAltxI5QGCst-qrHkpfwDq6sm7k18bHMBl1WCr774-Y_E/exec";
-  try {
-    const resp = await fetch(GAS_URL);
-    const html = await resp.text();
-    const bannerEl = document.getElementById("banner");
+  // Carrossel via GAS (Bootstrap)
+  (async () => {
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbzMEuCgPxnM9TYPNJ4oHzCLAltxI5QGCst-qrHkpfwDq6sm7k18bHMBl1WCr774-Y_E/exec";
+    try {
+      const resp = await fetch(GAS_URL, { cache: "no-store" });
+      const html = await resp.text();
+      const bannerEl = document.getElementById("banner");
+      bannerEl.innerHTML = html;
 
-    // Insere o HTML
-    bannerEl.innerHTML = html;
+      // Espera folhas de estilo injetadas
+      const links = bannerEl.querySelectorAll('link[rel="stylesheet"]');
+      await Promise.all([...links].map(l => new Promise(res => {
+        if (l.sheet) return res();
+        l.addEventListener('load', res);
+        l.addEventListener('error', res);
+      })));
 
-    // Aguarda os <link rel="stylesheet"> injetados dentro de #banner carregarem
-    const links = bannerEl.querySelectorAll('link[rel="stylesheet"]');
-    await Promise.all(Array.from(links).map(l => {
-      return new Promise(resolve => {
-        if (l.sheet) return resolve();     // pode já estar carregado
-        l.addEventListener('load', resolve);
-        l.addEventListener('error', resolve); // não travar se algum falhar
-      });
-    }));
-
-    // Inicializa o carrossel
-    const car = bannerEl.querySelector("#carouselBanner");
-    if (car && window.bootstrap) {
-      new bootstrap.Carousel(car, { interval: 5000, ride: "carousel", pause: false });
+      const car = bannerEl.querySelector("#carouselBanner");
+      if (car && window.bootstrap) {
+        new bootstrap.Carousel(car, { interval: 5000, ride: "carousel", pause: false });
+      } else {
+        console.warn("Carousel não encontrado ou Bootstrap indisponível.");
+      }
+    } catch (e) {
+      console.error("Erro ao carregar carrossel:", e);
     }
-  } catch (e) {
-    console.error("Erro ao carregar carrossel:", e);
-  }
-})();
+  })();
 
-   function expandirNoticias(btn) {
-    const itens = document.querySelectorAll('.noticia-item');
-    itens.forEach(el => el.style.display = 'block');
-    btn.style.display = 'none';
-  }
+  // Botão "Ver mais" (usado pelo HTML que vem do GAS das notícias)
+  window.expandirNoticias = function (btn) {
+    document.querySelectorAll('.noticia-item').forEach(el => el.style.display = 'block');
+    if (btn) btn.style.display = 'none';
+  };
 
+  // Callback JSONP precisa ser global
+  window.renderENEM = function (res) {
+    document.getElementById('noticias-enem').innerHTML = res?.html || 'Sem conteúdo.';
+  };
 
-   function renderENEM(res) {
-    document.getElementById('noticias-enem').innerHTML = res.html || 'Sem conteúdo.';
-  }
- 
+  // Injeta o JSONP com cache-buster
+  (function injectJSONP() {
+    const s = document.createElement('script');
+    s.src = 'https://script.google.com/macros/s/AKfycbwrEFIpSICF1s3DXXM2V-VCYBMBol6i1q7MJxyghIZcvYeKFoVHAmzzHzg6Hupmu3g/exec'
+          + '?callback=renderENEM&nocache=' + Date.now();
+    document.body.appendChild(s);
+  })();
 </script>
-
-  <script src="https://script.google.com/macros/s/AKfycbwrEFIpSICF1s3DXXM2V-VCYBMBol6i1q7MJxyghIZcvYeKFoVHAmzzHzg6Hupmu3/exec?callback=renderENEM"></script>
-
-
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
