@@ -228,11 +228,13 @@
 
   // Callbacks JSONP (um para cada coluna)
   window.renderENEM = function (res) {
-    document.getElementById('col-enem').innerHTML = res?.html || 'Sem conteúdo.';
+  document.getElementById('col-enem').innerHTML = res?.html || 'Sem conteúdo.';
+  marcarNovasNoticias('col-enem');
   };
-
+  
   window.renderFUVEST = function (res) {
     document.getElementById('col-fuvest').innerHTML = res?.html || 'Sem conteúdo.';
+    marcarNovasNoticias('col-fuvest');
   };
 
   // Injeta JSONP para ENEM
@@ -250,10 +252,54 @@
           + '?callback=renderFUVEST&nocache=' + Date.now();
     document.body.appendChild(s);
   })();
+
+  function marcarNovasNoticias(containerId) {
+  const diasNovo = 7; // quantos dias considerar como "novo"
+  const hoje = new Date();
+  const mesesPT = {
+    janeiro:1, fevereiro:2, março:3, marco:3, abril:4, maio:5, junho:6,
+    julho:7, agosto:8, setembro:9, outubro:10, novembro:11, dezembro:12
+  };
+
+  const container = document.getElementById(containerId);
+  if (!container) return;
+
+  container.querySelectorAll('.noticia-item strong').forEach(el => {
+    const txt = el.textContent.trim().toLowerCase();
+
+    // casa formatos tipo: "4 de agosto de 2025"
+    const m = txt.match(/^(\d{1,2})\s+de\s+([a-zçãé]+)\s+de\s+(\d{4})$/i);
+    if (!m) return;
+
+    const dia = parseInt(m[1], 10);
+    const mesNome = m[2].normalize('NFD').replace(/[\u0300-\u036f]/g, ''); // remove acentos
+    const mes = mesesPT[mesNome];
+    const ano = parseInt(m[3], 10);
+    if (!mes) return;
+
+    const dataNoticia = new Date(ano, mes - 1, dia);
+    if (isNaN(dataNoticia)) return;
+
+    const diffDias = Math.floor((hoje - dataNoticia) / (1000 * 60 * 60 * 24));
+    if (diffDias <= diasNovo) {
+      // evita duplicar selo
+      if (!el.querySelector('.badge-novo')) {
+        const badge = document.createElement('span');
+        badge.className = 'badge-novo';
+        badge.style.cssText = 'color:#fff;background:#e53935;font-size:10px;padding:2px 6px;border-radius:4px;margin-left:6px;';
+        badge.textContent = 'Novo!';
+        el.appendChild(badge);
+      }
+    }
+  });
+}
+
+  
 </script>
 
 </body>
 </html>
+
 
 
 
