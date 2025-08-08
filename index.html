@@ -99,6 +99,37 @@
       .simulados { grid-template-columns: 1fr; }
     }
     .card .btn-container { text-align: center; }
+
+    /* GRID: 1 coluna no mobile, 2 colunas a partir de ~900px */
+    .news-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 24px;
+      padding: 0 20px 30px;
+    }
+    
+    .news-col {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+      padding: 16px 18px;
+    }
+    
+    /* Borda vertical só no desktop para "separar" */
+    @media (min-width: 900px) {
+      .news-grid { grid-template-columns: 1fr 1fr; align-items: start; }
+      .news-col { padding: 16px 22px; }
+      .news-col:first-child { border-right: 1px solid #eee; }
+    }
+    
+    /* Estados e pequenos ajustes */
+    .news-col .loading { color: #888; font-size: 14px; }
+    .news-col h5 { margin: 0 0 10px; }
+    .news-col .noticia-item { padding: 10px 0; border-bottom: 1px solid #eee; }
+    .news-col .noticia-item:last-child { border-bottom: 0; }
+    .news-col a { color:#003366; font-weight:600; text-decoration: none; }
+    .news-col a:hover { text-decoration: underline; }
+    
   </style>
 </head>
 <body>
@@ -141,7 +172,16 @@
   </div>
 </section>
 
-<div id="noticias-enem" style="padding: 0 20px 20px;">Carregando notícias do ENEM…</div>
+<!-- Notícias (ENEM + FUVEST, lado a lado) -->
+<section id="noticias" class="news-grid">
+  <div id="col-enem" class="news-col">
+    <div class="loading">Carregando notícias do ENEM…</div>
+  </div>
+  <div id="col-fuvest" class="news-col">
+    <div class="loading">Carregando notícias da FUVEST…</div>
+  </div>
+</section>
+
 
 <footer>simuladoaberto.com - Curso Objetivo Vestibulares</footer>
 
@@ -174,25 +214,39 @@
     }
   })();
 
-  // Botão "Ver mais" (usado pelo HTML que vem do GAS das notícias)
+  // Botão "Ver mais"
   window.expandirNoticias = function (btn) {
     document.querySelectorAll('.noticia-item').forEach(el => el.style.display = 'block');
     if (btn) btn.style.display = 'none';
   };
 
-  // Callback JSONP precisa ser global
+  // Callbacks JSONP (um para cada coluna)
   window.renderENEM = function (res) {
-    document.getElementById('noticias-enem').innerHTML = res?.html || 'Sem conteúdo.';
+    document.getElementById('col-enem').innerHTML = res?.html || 'Sem conteúdo.';
   };
 
-  // Injeta o JSONP com cache-buster
-  (function injectJSONP() {
+  window.renderFUVEST = function (res) {
+    document.getElementById('col-fuvest').innerHTML = res?.html || 'Sem conteúdo.';
+  };
+
+  // Injeta JSONP para ENEM
+  (function injectJSONP_ENEM() {
     const s = document.createElement('script');
     s.src = 'https://script.google.com/macros/s/AKfycbwrEFIpSICF1s3DXXM2V-VCYBMBol6i1q7MJxyghIZcvYeKFoVHAmzzHzg6Hupmu3g/exec'
           + '?callback=renderENEM&nocache=' + Date.now();
     document.body.appendChild(s);
   })();
+
+  // Injeta JSONP para FUVEST
+  (function injectJSONP_FUVEST() {
+    const s = document.createElement('script');
+    s.src = 'https://script.google.com/macros/s/SEU_SCRIPT_FUVEST/exec'
+          + '?callback=renderFUVEST&nocache=' + Date.now();
+    document.body.appendChild(s);
+  })();
 </script>
+
 </body>
 </html>
+
 
