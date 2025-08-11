@@ -19,133 +19,154 @@
   <script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
   <style>
-    /* === Correção de conflito Materialize x Bootstrap no banner === */
-    #banner .carousel { position: relative !important; }
-    #banner .carousel-inner { position: relative !important; }
-    #banner .carousel-item {
-      position: relative !important;
-      display: block !important;
-      opacity: 1 !important;
-      transform: none !important;
-    }
+  /* === Correção de conflito Materialize x Bootstrap no banner === */
+  #banner .carousel { position: relative !important; }
+  #banner .carousel-inner { position: relative !important; }
+  #banner .carousel-item {
+    position: relative !important;
+    display: block !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
 
-    #banner .carousel-item {
-      min-height: 380px;
-      background-size: cover;
-      background-position: center;
-    }
-    #carouselBanner .carousel-item img {
-      width: 100%;
-      max-width: 100%;
-      height: auto;
-      display: block;
-    }
-    
-    #carouselBanner .carousel-indicators {
-      display: none !important;
-    }
+  #banner .carousel-item {
+    min-height: 380px;
+    background-size: cover;
+    background-position: center;
+  }
+  #carouselBanner .carousel-item img {
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    display: block;
+  }
+  #carouselBanner .carousel-indicators { display: none !important; }
 
-    
-    html, body { overflow-x: hidden; }
+  html, body { overflow-x: hidden; }
+  body {
+    margin: 0;
+    font-family: "Segoe UI", sans-serif;
+    background-color: #f8f9fa;
+  }
+  header {
+    margin: 0;
+    padding: 20px 0;
+    background-color: #002776;
+    color: white;
+    text-align: center;
+  }
+  h1 { margin: 0; font-size: 24px; }
 
-    body {
-      margin: 0;
-      font-family: "Segoe UI", sans-serif;
-      background-color: #f8f9fa;
-    }
-    header {
-      margin: 0;
-      padding: 20px 0;
-      background-color: #002776;
-      color: white;
-      text-align: center;
-    }
-    h1 { margin: 0; font-size: 24px; }
+  /* Banner em largura total */
+  #banner-wrapper { width:100vw; margin:0; padding:0; overflow:hidden; }
+  #banner .carousel { width:100vw; }
+  #banner { margin: 0; padding: 0; }
 
-    /* Banner em largura total */
-    #banner-wrapper { width:100vw; margin:0; padding:0; overflow:hidden; }
-    #banner .carousel { width:100vw; }
-    #banner { margin: 0; padding: 0; }
+  /* Cards em grid 3 + 2 */
+  .simulados {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(280px, 1fr));
+    gap: 20px;
+    padding: 40px 20px;
+    justify-content: center;
+  }
+  .card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    padding: 20px;
+    box-sizing: border-box;
+  }
+  .card h2 { color: #002776; margin-top: 0; font-size: 20px; }
+  .card p { margin: 8px 0; font-size: 14px; }
+  .btn {
+    display: inline-block;
+    background: #ffc107;
+    color: black;
+    text-decoration: none;
+    padding: 10px 15px;
+    margin-top: 10px;
+    border-radius: 8px;
+    font-weight: bold;
+  }
+  .btn:hover { background: #ffca2c; }
+  footer { text-align: center; padding: 20px; font-size: 12px; color: #888; }
 
-    /* Cards em grid 3 + 2 */
-    .simulados {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(280px, 1fr));
-      gap: 20px;
-      padding: 40px 20px;
-      justify-content: center;
-    }
-    .card {
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      padding: 20px;
-      box-sizing: border-box;
-    }
-    .card h2 { color: #002776; margin-top: 0; font-size: 20px; }
-    .card p { margin: 8px 0; font-size: 14px; }
-    .btn {
-      display: inline-block;
-      background: #ffc107;
-      color: black;
-      text-decoration: none;
-      padding: 10px 15px;
-      margin-top: 10px;
-      border-radius: 8px;
-      font-weight: bold;
-    }
-    .btn:hover { background: #ffca2c; }
-    footer { text-align: center; padding: 20px; font-size: 12px; color: #888; }
+  /* Responsividade */
+  @media (max-width: 992px) {
+    .simulados { grid-template-columns: repeat(2, minmax(260px, 1fr)); }
+  }
+  @media (max-width: 600px) {
+    .simulados { grid-template-columns: 1fr; }
+  }
+  .card .btn-container { text-align: center; }
 
-    /* Responsividade */
-    @media (max-width: 992px) {
-      .simulados { grid-template-columns: repeat(2, minmax(260px, 1fr)); }
-    }
-    @media (max-width: 600px) {
-      .simulados { grid-template-columns: 1fr; }
-    }
-    .card .btn-container { text-align: center; }
+  /* GRID: 1 coluna no mobile, 2 colunas a partir de ~900px */
+  .news-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 24px;
+    padding: 0 20px 30px;
+  }
+  .news-col {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    padding: 16px 18px;
+  }
+  @media (min-width: 900px) {
+    .news-grid { grid-template-columns: 1fr 1fr; align-items: start; }
+    .news-col { padding: 16px 22px; }
+    .news-col:first-child { border-right: 1px solid #eee; }
+  }
 
-    /* GRID: 1 coluna no mobile, 2 colunas a partir de ~900px */
-    .news-grid {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 24px;
-      padding: 0 20px 30px;
-    }
-    
-    .news-col {
-      background: #fff;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
-      padding: 16px 18px;
-    }
-    
-    /* Borda vertical só no desktop para "separar" */
-    @media (min-width: 900px) {
-      .news-grid { grid-template-columns: 1fr 1fr; align-items: start; }
-      .news-col { padding: 16px 22px; }
-      .news-col:first-child { border-right: 1px solid #eee; }
-    }
-    
-    /* Estados e pequenos ajustes */
-    .news-col .loading { color: #888; font-size: 14px; }
-    .news-col h5 { margin: 0 0 10px; }
-    .news-col .noticia-item { padding: 10px 0; border-bottom: 1px solid #eee; }
-    .news-col .noticia-item:last-child { border-bottom: 0; }
-    .news-col a { color:#003366; font-weight:600; text-decoration: none; }
-    .news-col a:hover { text-decoration: underline; }
+  /* ------------------------------- */
+  /* Padronização interna das colunas de notícias */
+  /* ------------------------------- */
+  .news-col * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  .news-col h5 { margin: 0 0 10px; }
 
-    /* css para o selo NOVO */
-    .badge-novo{
-      background:#e53935;
-      color:#fff;
-      font-size:10px;
-      padding:2px 6px;
-      border-radius:6px;
-      margin-left:6px;
-    }   
-  </style>
+  /* Cada item com o MESMO espaçamento e linha separadora */
+  .news-col .noticia-item {
+    padding: 10px 0 12px;
+    border-bottom: 1px solid #eee;
+  }
+  .news-col .noticia-item:last-child { border-bottom: 0; }
+
+  /* Data com espaçamento fixo acima do título */
+  .news-col .noticia-item strong {
+    display: inline-block;
+    margin-bottom: 4px;
+    font-size: 12px;
+    color: #666;
+  }
+
+  /* Título ocupa toda a largura e tem altura de linha consistente */
+  .news-col a {
+    display: block;
+    line-height: 1.4;
+    color:#003366;
+    font-weight:600;
+    text-decoration: none;
+  }
+  .news-col a:hover { text-decoration: underline; }
+  /* ------------------------------- */
+
+  /* css para o selo NOVO */
+  .badge-novo{
+    background:#e53935;
+    color:#fff;
+    font-size:10px;
+    padding:2px 6px;
+    border-radius:6px;
+    margin-left:6px;
+  }
+</style>
+
 </head>
 <body>
 <header>
@@ -310,6 +331,7 @@
 </script>
 </body>
 </html>
+
 
 
 
