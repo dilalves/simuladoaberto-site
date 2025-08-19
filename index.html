@@ -165,6 +165,12 @@
     border-radius:6px;
     margin-left:6px;
   }
+
+  /* layout dos avisos reaproveitando seu .card */
+  #avisos-simulados-container{ display:grid; grid-template-columns:1fr; gap:10px; }
+  @media (min-width:900px){ #avisos-simulados-container{ grid-template-columns:1fr 1fr; } }
+  .aviso-item{ border:1px solid #eef1f6; border-radius:12px; padding:10px; }
+        
 </style>
 
 </head>
@@ -206,6 +212,22 @@
     <p><strong>Quando:</strong> 20/09/2025 às 14h</p>
     <!-- <p><strong>Adesão em breve!</strong></p>  -->
     <div class="btn-container"><a href="https://sites.google.com/view/simuladofuvestao2026" class="btn">Acessar</a></div>
+  </div>
+</section>
+
+  <!-- AVISOS DOS SIMULADOS -->
+<section class="wrap" id="avisos-simulados-section" style="padding:0 20px;">
+  <div class="card" id="avisos-card">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;color:#002776">
+      <span aria-hidden="true">📌</span>
+      <h3 style="margin:0;font-size:1.1rem;font-weight:700">Avisos dos Simulados</h3>
+    </div>
+    <div id="avisos-simulados-container">
+      <p style="margin:6px 0;color:#666">Nenhum aviso disponível.</p>
+    </div>
+    <div id="avisos-footer" style="display:flex;justify-content:center;margin-top:10px" hidden>
+      <button id="avisos-more" class="btn">Ver mais</button>
+    </div>
   </div>
 </section>
 
@@ -329,9 +351,61 @@
       }
     });
   }
+
+  (function(){
+  const API = 'https://script.google.com/macros/s/SEU_DEPLOY_ID/exec';
+  const box = document.getElementById('avisos-simulados-container');
+  const footer = document.getElementById('avisos-footer');
+  const btnMore = document.getElementById('avisos-more');
+  let limit = 6;
+
+  async function fetchAvisos(n){
+    const url = `${API}?fn=avisos&limit=${encodeURIComponent(n)}`;
+    const r = await fetch(url, {cache:'no-store'});
+    if(!r.ok) throw new Error('Falha ao buscar avisos');
+    return r.json();
+  }
+
+  function render(items){
+    if(!items || !items.length){
+      box.innerHTML = `<p style="margin:6px 0;color:#666">Nenhum aviso disponível.</p>`;
+      footer.hidden = true;
+      return;
+    }
+    box.innerHTML = items.map(it => `
+      <div class="aviso-item${it.destaque ? ' destaque':''}">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-weight:600;">
+          <span style="background:#f2f4f8;padding:4px 8px;border-radius:8px">${it.data||'-'}</span>
+          <span>${it.simulado||''}</span>
+        </div>
+        <p style="margin:8px 0 0 0">${it.info||''}</p>
+        ${it.link ? `<a class="aviso-link" href="${it.link}" target="_blank" rel="noopener" style="display:inline-block;margin-top:4px;text-decoration:underline">Saiba mais</a>` : ``}
+      </div>
+    `).join('');
+  }
+
+  async function carregar(){
+    try{
+      box.innerHTML = '<p style="margin:6px 0;color:#666">Carregando avisos…</p>';
+      const data = await fetchAvisos(limit);
+      render(data.items || []);
+      footer.hidden = !data.items || data.items.length < limit;
+    }catch(e){
+      console.error(e);
+      box.innerHTML = '<p style="margin:6px 0;color:#c00">Falha ao carregar avisos.</p>';
+      footer.hidden = true;
+    }
+  }
+
+  btnMore?.addEventListener('click', () => { limit += 10; carregar(); });
+  carregar();
+})();
+
+  
 </script>
 </body>
 </html>
+
 
 
 
