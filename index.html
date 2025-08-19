@@ -270,10 +270,10 @@
   <div class="card" id="avisos-card">
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;color:#002776">
       <span aria-hidden="true">📌</span>
-      <h3 style="margin:0;font-size:1.1rem;font-weight:700">Avisos dos Simulados</h3>
+      <h3 style="margin:0;font-size:1.1rem;font-weight:700">Avisos dos Simulados Abertos</h3>
     </div>
     <div id="avisos-simulados-container">
-      <p style="margin:6px 0;color:#666">Nenhum aviso disponível.</p>
+      <p style="margin:6px 0;color:#666">Carregando avisos...</p>
     </div>
     <div id="avisos-footer" style="display:flex;justify-content:center;margin-top:10px" hidden>
       <button id="avisos-more" class="btn">Ver mais</button>
@@ -360,7 +360,7 @@
   window.renderAVISOS = function (res) {
     // Preenche o CARD inteiro com o HTML vindo do GAS
     const card = document.getElementById('avisos-card');
-    card.innerHTML = res?.html || '<p style="margin:6px 0;color:#666">Buscando avisos...</p>';
+    card.innerHTML = res?.html || '<p style="margin:6px 0;color:#666">Nenhum aviso disponível.</p>';
   };
 
   // Injeta o JSONP (igual às notícias)
@@ -420,6 +420,7 @@
 </script>
 </body>
 </html>
+
 
 
 
