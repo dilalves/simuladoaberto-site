@@ -170,6 +170,18 @@
   #avisos-simulados-container{ display:grid; grid-template-columns:1fr; gap:10px; }
   @media (min-width:900px){ #avisos-simulados-container{ grid-template-columns:1fr 1fr; } }
   .aviso-item{ border:1px solid #eef1f6; border-radius:12px; padding:10px; }
+
+  #avisos-simulados-section {
+  padding: 0 20px;
+  margin-bottom: 30px; /* espaço entre avisos e a seção de notícias */
+  }
+  #avisos-card {
+    margin: 0 auto;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    padding: 16px 18px;
+    background: #fff;
+  }
         
 </style>
 
@@ -353,7 +365,7 @@
   }
 
   (function(){
-  const API = 'https://script.google.com/macros/s/SEU_DEPLOY_ID/exec';
+  const API = 'https://script.google.com/macros/s/AKfycbwsooS1YSeV9Rx6gZ7cOFLpFDfqnK1K_q1-tYACl0GfsIlBSZnZdwMX5wxDzYmBKf794Q/exec';    
   const box = document.getElementById('avisos-simulados-container');
   const footer = document.getElementById('avisos-footer');
   const btnMore = document.getElementById('avisos-more');
@@ -405,6 +417,7 @@
 </script>
 </body>
 </html>
+
 
 
 
