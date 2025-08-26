@@ -33,58 +33,65 @@
         </div>
       </div>
       <div class="center">
-        <a id="btnEntrar" class="btn blue waves-effect">Entrar</a>
+        <!-- antes: <a id="btnEntrar" class="btn blue waves-effect">Entrar</a> -->
+        <button id="btnEntrar" class="btn blue waves-effect">Entrar</button>
       </div>
     </div>
   </div>
 
   <!-- Materialize JS -->
  <script>
-   document.addEventListener('DOMContentLoaded', () => {
-      // Atualiza labels quando já há valores (autofill)
-      if (window.M && M.updateTextFields) M.updateTextFields();
-    });
-   
-  // URL do seu Web App (Deployment URL do GAS)
-  const GAS_BASE = 'https://script.google.com/macros/s/AKfycbwwVf2cI1AgvUF6LgV9LYPhM1jNDFSQNdoB3YrzRCHXJBV-S-XEcC5iKVWV8_egNouq/exec'; 
-  const ORIGIN = location.origin;  // usado para CORS
+  document.addEventListener('DOMContentLoaded', () => {
+    if (window.M && M.updateTextFields) M.updateTextFields();
 
-  document.getElementById('btnEntrar').addEventListener('click', async () => {
-    const login = document.getElementById('login').value.trim();
-    const senha = document.getElementById('senha').value.trim();
+    const GAS_BASE = 'https://script.google.com/macros/s/AKfycbwwVf2cI1AgvUF6LgV9LYPhM1jNDFSQNdoB3YrzRCHXJBV-S-XEcC5iKVWV8_egNouq/exec';
+    const ORIGIN = location.origin;
 
-    if (!login || !senha) { 
-      M.toast({html: 'Preencha login e senha!'}); 
-      return; 
-    }
+    const btn = document.getElementById('btnEntrar');
+    const doLogin = async () => {
+      const login = document.getElementById('login').value.trim();
+      const senha = document.getElementById('senha').value.trim();
+      if (!login || !senha) { M.toast({html: 'Preencha login e senha!'}); return; }
 
-    try {
-      const r = await fetch(`${GAS_BASE}?action=login&origin=${encodeURIComponent(ORIGIN)}`, {
-        method: 'POST',
-        //headers: {'Content-Type': 'text/plain;charset=utf-8'}, // <- evita preflight
-        body: JSON.stringify({ login, senha })
-      });
+      try {
+        btn.classList.add('disabled');
 
-      const j = await r.json();
+        const body = new URLSearchParams({ login, senha }).toString();
+        const r = await fetch(`${GAS_BASE}?action=login&origin=${encodeURIComponent(ORIGIN)}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+          body
+        });
 
-      if (!r.ok || !j.ok) {
-        M.toast({html: 'Login inválido'});
-        return;
+        const j = await r.json();
+
+        if (!r.ok || !j.ok) {
+          M.toast({html: j?.error ? `Erro: ${j.error}` : 'Login inválido'});
+          btn.classList.remove('disabled');
+          return;
+        }
+
+        localStorage.setItem('tok_corr', j.token);
+        localStorage.setItem('nome_corr', j.nome);
+        localStorage.setItem('cod_corr', j.codUnidade);
+        location.href = './app.html';
+      } catch (err) {
+        console.error(err);
+        M.toast({html: 'Erro de conexão com servidor'});
+        btn.classList.remove('disabled');
       }
+    };
 
-      // guarda a sessão no navegador
-      localStorage.setItem('tok_corr', j.token);
-      localStorage.setItem('nome_corr', j.nome);
-      localStorage.setItem('cod_corr', j.codUnidade);
-
-      // redireciona para a "home" do corretor
-      location.href = './app.html';
-    } catch (err) {
-      console.error(err);
-      M.toast({html: 'Erro de conexão com servidor'});
-    }
+    btn.addEventListener('click', (e)=>{ e.preventDefault(); doLogin(); });
+    // Enter para enviar
+    ['login','senha'].forEach(id => {
+      document.getElementById(id).addEventListener('keydown', (ev)=>{
+        if (ev.key === 'Enter') { ev.preventDefault(); doLogin(); }
+      });
+    });
   });
 </script>
+
 </body>
 </html>
 
