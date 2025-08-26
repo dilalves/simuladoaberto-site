@@ -21,7 +21,7 @@
 
   <div class="card login-card z-depth-3">
     <div class="card-content">
-      <span class="card-title center">Corretor</span>
+      <span class="card-title center">Correção de Redações</span>
       <div class="row">
         <div class="input-field col s12">
           <input id="login" type="text" required autocomplete="username">
@@ -44,7 +44,7 @@
 document.addEventListener('DOMContentLoaded', () => {
   if (window.M && M.updateTextFields) M.updateTextFields();
 
-  const  = 'https://script.google.com/macros/s/AKfycbwwVf2cI1AgvUF6LgV9LYPhM1jNDFSQNdoB3YrzRCHXJBV-S-XEcC5iKVWV8_egNouq/exec';
+  const GAS_BASE = 'https://script.google.com/macros/s/AKfycbwwVf2cI1AgvUF6LgV9LYPhM1jNDFSQNdoB3YrzRCHXJBV-S-XEcC5iKVWV8_egNouq/exec';
   const btn = document.getElementById('btnEntrar');
 
   async function doLogin(){
@@ -74,7 +74,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     };
 
-    const url = `${}?action=login`
+    const url = `${GAS_BASE}?action=login`
               + `&login=${encodeURIComponent(login)}`
               + `&senha=${encodeURIComponent(senha)}`
               + `&callback=${cb}`
