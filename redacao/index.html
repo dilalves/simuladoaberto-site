@@ -41,56 +41,60 @@
 
   <!-- Materialize JS -->
  <script>
-  document.addEventListener('DOMContentLoaded', () => {
-    if (window.M && M.updateTextFields) M.updateTextFields();
+document.addEventListener('DOMContentLoaded', () => {
+  if (window.M && M.updateTextFields) M.updateTextFields();
 
-    const GAS_BASE = 'https://script.google.com/macros/s/AKfycbwwVf2cI1AgvUF6LgV9LYPhM1jNDFSQNdoB3YrzRCHXJBV-S-XEcC5iKVWV8_egNouq/exec';
-    const ORIGIN = location.origin;
+  const  = 'https://script.google.com/macros/s/AKfycbwwVf2cI1AgvUF6LgV9LYPhM1jNDFSQNdoB3YrzRCHXJBV-S-XEcC5iKVWV8_egNouq/exec';
+  const btn = document.getElementById('btnEntrar');
 
-    const btn = document.getElementById('btnEntrar');
-    const doLogin = async () => {
-      const login = document.getElementById('login').value.trim();
-      const senha = document.getElementById('senha').value.trim();
-      if (!login || !senha) { M.toast({html: 'Preencha login e senha!'}); return; }
+  async function doLogin(){
+    const login = document.getElementById('login').value.trim();
+    const senha = document.getElementById('senha').value.trim();
+    if (!login || !senha) { M.toast({html:'Preencha login e senha!'}); return; }
 
+    btn.classList.add('disabled');
+
+    // JSONP: cria callback global e injeta <script>
+    const cb = 'loginCb_' + Date.now();
+    window[cb] = (j) => {
       try {
-        btn.classList.add('disabled');
-
-        const body = new URLSearchParams({ login, senha }).toString();
-        const r = await fetch(`${GAS_BASE}?action=login&origin=${encodeURIComponent(ORIGIN)}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
-          body
-        });
-
-        const j = await r.json();
-
-        if (!r.ok || !j.ok) {
+        if (!j || !j.ok) {
           M.toast({html: j?.error ? `Erro: ${j.error}` : 'Login inválido'});
           btn.classList.remove('disabled');
           return;
         }
-
         localStorage.setItem('tok_corr', j.token);
         localStorage.setItem('nome_corr', j.nome);
         localStorage.setItem('cod_corr', j.codUnidade);
         location.href = './app.html';
-      } catch (err) {
-        console.error(err);
-        M.toast({html: 'Erro de conexão com servidor'});
-        btn.classList.remove('disabled');
+      } finally {
+        // limpeza
+        delete window[cb];
+        if (scr && scr.parentNode) scr.parentNode.removeChild(scr);
       }
     };
 
-    btn.addEventListener('click', (e)=>{ e.preventDefault(); doLogin(); });
-    // Enter para enviar
-    ['login','senha'].forEach(id => {
-      document.getElementById(id).addEventListener('keydown', (ev)=>{
-        if (ev.key === 'Enter') { ev.preventDefault(); doLogin(); }
-      });
+    const url = `${}?action=login`
+              + `&login=${encodeURIComponent(login)}`
+              + `&senha=${encodeURIComponent(senha)}`
+              + `&callback=${cb}`
+              + `&t=${Date.now()}`;
+
+    const scr = document.createElement('script');
+    scr.src = url;
+    scr.onerror = () => { M.toast({html:'Erro de conexão'}); btn.classList.remove('disabled'); };
+    document.body.appendChild(scr);
+  }
+
+  btn.addEventListener('click', (e)=>{ e.preventDefault(); doLogin(); });
+  ['login','senha'].forEach(id => {
+    document.getElementById(id).addEventListener('keydown', ev => {
+      if (ev.key === 'Enter') { ev.preventDefault(); doLogin(); }
     });
   });
+});
 </script>
+
 
 </body>
 </html>
