@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Pendentes – Correção de Redações</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
+  <style>
+    body { background:#f7f9fc; }
+    .wrap { max-width:1100px; margin:24px auto; padding:0 12px; }
+    .table-wrap { overflow-x:auto; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  </style>
+</head>
+<body>
+  <nav class="blue darken-3">
+    <div class="nav-wrapper wrap">
+      <a class="brand-logo">Correção de Redações</a>
+      <ul class="right">
+        <li><a id="userLabel"></a></li>
+        <li><a id="btnLogout">Sair</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <div class="wrap">
+    <div class="card">
+      <div class="card-content">
+        <span class="card-title">Redações pendentes <small class="grey-text" id="subinfo"></small></span>
+        <div class="input-field">
+          <input id="filtro" type="text" placeholder="Filtrar por inscrição/arquivo...">
+        </div>
+        <div class="table-wrap">
+          <table class="highlight responsive-table">
+            <thead>
+              <tr>
+                <th class="mono">Inscrição</th>
+                <th>Arquivo</th>
+                <th>Data</th>
+                <th>Status</th>
+                <th>Abrir</th>
+              </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+  <script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // mesma URL /exec do login
+    const GAS_BASE = 'https://script.google.com/macros/s/AKfycbwwVf2cI1AgvUF6LgV9LYPhM1jNDFSQNdoB3YrzRCHXJBV-S-XEcC5iKVWV8_egNouq/exec';
+
+    const tok  = localStorage.getItem('tok_corr');
+    const nome = localStorage.getItem('nome_corr');
+    if (!tok) { location.href = './'; return; }
+
+    document.getElementById('userLabel').textContent = nome || '';
+    document.getElementById('btnLogout').onclick = () => {
+      localStorage.clear(); location.href = './';
+    };
+
+    const tbody  = document.getElementById('tbody');
+    const filtro = document.getElementById('filtro');
+    const subinfo= document.getElementById('subinfo');
+    let DATA = [];
+
+    function render(list){
+      tbody.innerHTML = '';
+      list.forEach(it => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="mono">${it.inscricao || ''}</td>
+          <td title="${it.arquivo||''}">${(it.arquivo||'').slice(0,48)}</td>
+          <td>${it.timestamp || ''}</td>
+          <td>${it.status || ''}</td>
+          <td>${it.link ? `<a class="btn-small blue" target="_blank" rel="noopener" href="${it.link}">Abrir</a>` : '-'}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    filtro.addEventListener('input', () => {
+      const q = filtro.value.trim().toLowerCase();
+      if (!q) { render(DATA); return; }
+      const out = DATA.filter(it =>
+        String(it.inscricao||'').toLowerCase().includes(q) ||
+        String(it.arquivo||'').toLowerCase().includes(q)
+      );
+      render(out);
+    });
+
+    function fetchPendentes(){
+      const cb = 'cbPend_' + Date.now();
+      window[cb] = (j) => {
+        try {
+          if (!j || !j.ok) {
+            M.toast({html: j?.error || 'Falha ao carregar pendentes'}); return;
+          }
+          DATA = j.items || [];
+          subinfo.textContent = `Unidade ${j.codUnidade} — ${DATA.length} pendente(s)`;
+          render(DATA);
+        } finally {
+          delete window[cb];
+          if (scr && scr.parentNode) scr.parentNode.removeChild(scr);
+        }
+      };
+      const scr = document.createElement('script');
+      scr.src = `${GAS_BASE}?action=pendentes&token=${encodeURIComponent(tok)}&callback=${cb}&t=${Date.now()}`;
+      scr.onerror = () => M.toast({html:'Erro de conexão'});
+      document.body.appendChild(scr);
+    }
+
+    fetchPendentes();
+  });
+  </script>
+</body>
+</html>
