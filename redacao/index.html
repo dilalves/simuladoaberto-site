@@ -1,1 +1,61 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Login - Correção de Redações</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Materialize CSS -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
+  <style>
+    body { background: #f7f9fc; }
+    .login-card {
+      max-width: 400px;
+      margin: 60px auto;
+      padding: 32px;
+      border-radius: 12px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="card login-card z-depth-3">
+    <div class="card-content">
+      <span class="card-title center">Login do Corretor</span>
+      <div class="row">
+        <div class="input-field col s12">
+          <input id="login" type="text" required>
+          <label for="login">Usuário</label>
+        </div>
+        <div class="input-field col s12">
+          <input id="senha" type="password" required>
+          <label for="senha">Senha</label>
+        </div>
+      </div>
+      <div class="center">
+        <a id="btnEntrar" class="btn blue waves-effect">Entrar</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Materialize JS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+  <script>
+    document.getElementById('btnEntrar').addEventListener('click', () => {
+      const login = document.getElementById('login').value.trim();
+      const senha = document.getElementById('senha').value.trim();
+      
+      if (!login || !senha) {
+        M.toast({html: 'Preencha login e senha!'});
+        return;
+      }
+
+      // Aqui depois vamos chamar o Apps Script (fetch)
+      console.log("Login digitado:", login);
+      console.log("Senha digitada:", senha);
+
+      M.toast({html: 'Tentando logar...'});
+    });
+  </script>
+</body>
+</html>
 
