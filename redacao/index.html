@@ -61,7 +61,7 @@
     try {
       const r = await fetch(`${GAS_BASE}?action=login&origin=${encodeURIComponent(ORIGIN)}`, {
         method: 'POST',
-        headers: {'Content-Type': 'text/plain;charset=utf-8'}, // <- evita preflight
+        //headers: {'Content-Type': 'text/plain;charset=utf-8'}, // <- evita preflight
         body: JSON.stringify({ login, senha })
       });
 
