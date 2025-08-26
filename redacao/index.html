@@ -38,24 +38,47 @@
   </div>
 
   <!-- Materialize JS -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
-  <script>
-    document.getElementById('btnEntrar').addEventListener('click', () => {
-      const login = document.getElementById('login').value.trim();
-      const senha = document.getElementById('senha').value.trim();
-      
-      if (!login || !senha) {
-        M.toast({html: 'Preencha login e senha!'});
+ <script>
+  // URL do seu Web App (Deployment URL do GAS)
+  const GAS_BASE = 'https://script.google.com/macros/s/AKfycbwVf2c1.../exec'; 
+  const ORIGIN = location.origin;  // usado para CORS
+
+  document.getElementById('btnEntrar').addEventListener('click', async () => {
+    const login = document.getElementById('login').value.trim();
+    const senha = document.getElementById('senha').value.trim();
+
+    if (!login || !senha) { 
+      M.toast({html: 'Preencha login e senha!'}); 
+      return; 
+    }
+
+    try {
+      const r = await fetch(`${GAS_BASE}?action=login&origin=${encodeURIComponent(ORIGIN)}`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ login, senha })
+      });
+
+      const j = await r.json();
+
+      if (!r.ok || !j.ok) {
+        M.toast({html: 'Login inválido'});
         return;
       }
 
-      // Aqui depois vamos chamar o Apps Script (fetch)
-      console.log("Login digitado:", login);
-      console.log("Senha digitada:", senha);
+      // guarda a sessão no navegador
+      localStorage.setItem('tok_corr', j.token);
+      localStorage.setItem('nome_corr', j.nome);
+      localStorage.setItem('cod_corr', j.codUnidade);
 
-      M.toast({html: 'Tentando logar...'});
-    });
-  </script>
+      // redireciona para a "home" do corretor
+      location.href = './app.html';
+    } catch (err) {
+      console.error(err);
+      M.toast({html: 'Erro de conexão com servidor'});
+    }
+  });
+</script>
 </body>
 </html>
 
