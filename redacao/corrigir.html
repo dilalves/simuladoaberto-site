@@ -162,6 +162,34 @@
         setTimeout(()=> location.href='./pendentes.html', 600);
       });
     };
+    
+    // atalhos de teclado (depois de declarar c1..c5, soma(), btnSalvar etc.)
+    const comps = [c1, c2, c3, c4, c5];
+    
+    // ↑ / ↓ ajusta em passos de 40 pontos
+    comps.forEach(el => {
+      el.addEventListener('keydown', (e) => {
+        const cur = Number(el.value || 0);
+        if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          el.value = Math.min(200, cur + 40);
+          soma();
+        }
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          el.value = Math.max(0, cur - 40);
+          soma();
+        }
+      });
+    });
+    
+    // Ctrl+S salva
+    window.addEventListener('keydown', (e) => {
+      if (e.ctrlKey && (e.key === 's' || e.key === 'S')) {
+        e.preventDefault();
+        if (!btnSalvar.classList.contains('disabled')) btnSalvar.click();
+      }
+    });  
   });
   </script>
 </body>
