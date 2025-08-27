@@ -77,7 +77,9 @@
           <td title="${it.arquivo||''}">${(it.arquivo||'').slice(0,48)}</td>
           <td>${it.timestamp || ''}</td>
           <td>${it.status || ''}</td>
-          <td>${it.link ? `<a class="btn-small blue" target="_blank" rel="noopener" href="${it.link}">Abrir</a>` : '-'}</td>
+          <td>
+            <a class="btn-small blue" href="./corrigir.html?id=${encodeURIComponent(it.id)}">Corrigir</a>
+          </td>
         `;
         tbody.appendChild(tr);
       });
