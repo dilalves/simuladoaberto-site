@@ -130,7 +130,9 @@
       if (!j || !j.ok) { M.toast({html: j?.error || 'Não encontrado'}); return; }
       insc.textContent = j.inscricao || '';
       status.textContent = j.status || '';
-      viewer.src = j.link || '';
+      
+      viewer.src = `${GAS_BASE}?action=file&token=${encodeURIComponent(tok)}&id=${encodeURIComponent(id)}`;
+      //viewer.src = j.link || '';
       if (j.status === 'EM TRATAMENTO') {
         btnSalvar.classList.remove('disabled');
         btnIniciar.classList.add('disabled');
