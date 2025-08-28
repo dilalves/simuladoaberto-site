@@ -86,8 +86,13 @@
     document.getElementById('btnSair').onclick = () => { localStorage.clear(); location.href = './'; };
 
     const params = new URLSearchParams(location.search);
-    const id = params.get('id') || '';
-    if (!id) { M.toast({html:'ID inválido'}); location.href='./pendentes.html'; return; }
+    const id = params.get('id');
+    if (!id || id === 'undefined' || id === 'null') {
+      M.toast({html:'ID inválido'});
+      location.href = './pendentes.html';
+      return;
+    }
+
 
     const idLabel    = document.getElementById('idLabel');
     const insc       = document.getElementById('insc');
