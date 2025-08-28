@@ -56,91 +56,84 @@
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
   <script>
-  document.addEventListener('DOMContentLoaded', () => {
-    const GAS_BASE = 'https://script.google.com/macros/s/AKfycbwwVf2cI1AgvUF6LgV9LYPhM1jNDFSQNdoB3YrzRCHXJBV-S-XEcC5iKVWV8_egNouq/exec';
+document.addEventListener('DOMContentLoaded', () => {
+  const GAS_BASE = 'https://script.google.com/macros/s/AKfycbwwVf2cI1AgvUF6LgV9LYPhM1jNDFSQNdoB3YrzRCHXJBV-S-XEcC5iKVWV8_egNouq/exec';
 
-    const tok  = localStorage.getItem('tok_corr');
-    const nome = localStorage.getItem('nome_corr');
-    if (!tok) { location.href = './'; return; }
+  const tok  = localStorage.getItem('tok_corr');
+  const nome = localStorage.getItem('nome_corr');
+  if (!tok) { location.href = './'; return; }
 
-    document.getElementById('userLabel').textContent = nome || '';
-    document.getElementById('btnLogout').onclick = () => {
-      localStorage.clear(); location.href = './';
-    };
+  document.getElementById('userLabel').textContent = nome || '';
+  document.getElementById('btnLogout').onclick = () => { localStorage.clear(); location.href = './'; };
 
-    // Helper JSONP genérico
-    function jsonp(action, qs, cb){
-      const name = 'cb_'+action+'_'+Date.now();
-      let scr;
-      window[name] = (j)=>{ try{ cb(j); } finally{ delete window[name]; if (scr) scr.remove(); } };
-      scr = document.createElement('script');
-      const extra = qs ? ('&'+qs) : '';
-      scr.src = `${GAS_BASE}?action=${action}&token=${encodeURIComponent(tok)}&callback=${name}${extra}&t=${Date.now()}`;
-      scr.onerror = ()=> M.toast({html:'Erro de conexão'});
-      document.body.appendChild(scr);
-    }
+  const tbody  = document.getElementById('tbody');
+  const filtro = document.getElementById('filtro');
+  const subinfo= document.getElementById('subinfo');
+  const btnPegar = document.getElementById('btnPegar');
+  let DATA = [];
 
-    const tbody   = document.getElementById('tbody');
-    const filtro  = document.getElementById('filtro');
-    const subinfo = document.getElementById('subinfo');
-    const btnPegar= document.getElementById('btnPegar');
-    let DATA = [];
+  // helper JSONP
+  function jsonp(action, qs, cb){
+    const name = 'cb_'+action+'_'+Date.now();
+    let scr;
+    window[name] = (j)=>{ try{ cb(j); } finally{ delete window[name]; if (scr) scr.remove(); } };
+    scr = document.createElement('script');
+    const url = `${GAS_BASE}?action=${action}&token=${encodeURIComponent(tok)}&callback=${name}` + (qs ? `&${qs}` : '') + `&t=${Date.now()}`;
+    scr.src = url;
+    scr.onerror = ()=> M.toast({html:'Erro de conexão'});
+    document.body.appendChild(scr);
+  }
 
-    function render(list){
-      tbody.innerHTML = '';
-      list.forEach(it => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td class="mono">${it.inscricao || ''}</td>
-          <td title="${it.arquivo||''}">${(it.arquivo||'').slice(0,48)}</td>
-          <td>${it.timestamp || ''}</td>
-          <td>${it.status || ''}</td>
-          <td><a class="btn-small blue" href="./corrigir.html?id=${encodeURIComponent(it.id)}">Corrigir</a></td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
-
-    filtro.addEventListener('input', () => {
-      const q = filtro.value.trim().toLowerCase();
-      if (!q) { render(DATA); return; }
-      const out = DATA.filter(it =>
-        String(it.inscricao||'').toLowerCase().includes(q) ||
-        String(it.arquivo||'').toLowerCase().includes(q)
-      );
-      render(out);
+  function render(list){
+    tbody.innerHTML = '';
+    list.forEach(it => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="mono">${it.inscricao || ''}</td>
+        <td title="${it.arquivo||''}">${(it.arquivo||'').slice(0,48)}</td>
+        <td>${it.timestamp || ''}</td>
+        <td>${it.status || ''}</td>
+        <td><a class="btn-small blue" href="./corrigir.html?id=${encodeURIComponent(it.id)}">Corrigir</a></td>
+      `;
+      tbody.appendChild(tr);
     });
+  }
 
-    function fetchPendentes(){
-      jsonp('pendentes','', (j)=>{
-        if (!j || !j.ok) {
-          M.toast({html: j?.error || 'Falha ao carregar pendentes'}); 
-          return;
-        }
-        DATA = j.items || [];
-        subinfo.textContent = `Unidade ${j.codUnidade} — ${DATA.length} pendente(s)`;
-        render(DATA);
-      });
-    }
-    fetchPendentes();
-
-    // Pegar próxima (distribuição + lock)
-    btnPegar.onclick = () => {
-      if (btnPegar.classList.contains('disabled')) return;
-      btnPegar.classList.add('disabled');
-      jsonp('claim_next','', (j)=>{
-        btnPegar.classList.remove('disabled');
-        if (!j || !j.ok) {
-          const msg = (j && j.error === 'none_available')
-            ? 'Não há redações disponíveis'
-            : (j?.error || 'Falha ao buscar próxima');
-          M.toast({html: msg});
-          return;
-        }
-        location.href = './corrigir.html?id=' + encodeURIComponent(j.id);
-      });
-    };
+  filtro.addEventListener('input', () => {
+    const q = filtro.value.trim().toLowerCase();
+    if (!q) { render(DATA); return; }
+    const out = DATA.filter(it =>
+      String(it.inscricao||'').toLowerCase().includes(q) ||
+      String(it.arquivo||'').toLowerCase().includes(q)
+    );
+    render(out);
   });
-  </script>
+
+  function fetchPendentes(){
+    jsonp('pendentes','', (j)=>{
+      if (!j || !j.ok) { M.toast({html: j?.error || 'Falha ao carregar pendentes'}); return; }
+      DATA = j.items || [];
+      subinfo.textContent = `Unidade ${j.codUnidade} — ${DATA.length} pendente(s)`;
+      render(DATA);
+    });
+  }
+  fetchPendentes();
+
+  // Pegar próxima (com lock no servidor)
+  btnPegar.onclick = () => {
+    btnPegar.classList.add('disabled');
+    jsonp('claim_next','', (j)=>{
+      btnPegar.classList.remove('disabled');
+      if (!j || !j.ok) {
+        const msg = (j && j.error === 'none_available') ? 'Não há redações disponíveis' : (j?.error || 'Falha ao buscar próxima');
+        M.toast({html: msg});
+        return;
+      }
+      location.href = './corrigir.html?id=' + encodeURIComponent(j.id);
+    });
+  };
+});
+</script>
+
 </body>
 </html>
