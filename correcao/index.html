@@ -2,18 +2,12 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Login 2</title>
+  <title>Login</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <!-- Materialize CSS -->
   <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
-
-  <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
-
-
   <style>
     body { background: #f7f9fc; }
     .login-card {
@@ -56,7 +50,6 @@
     appId: "1:193249946367:web:7baabd56fb5185a97fcc1f"
   };
 
-  // Inicializa o Firebase
   const app = firebase.initializeApp(firebaseConfig);
   const db = firebase.firestore();
 
@@ -64,13 +57,21 @@
     if (window.M && M.updateTextFields) M.updateTextFields();
     const btn = document.getElementById('btnEntrar');
 
+    async function sha256(texto) {
+      const encoder = new TextEncoder();
+      const data = encoder.encode(texto);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
     async function doLogin() {
       const login = document.getElementById('login').value.trim();
       const senha = document.getElementById('senha').value.trim();
-    
+
       console.log('Login digitado:', JSON.stringify(login));
       console.log('Senha digitada:', JSON.stringify(senha));
-    
+
       if (!login || !senha) {
         M.toast({ html: 'Preencha login e senha!' });
         return;
@@ -103,7 +104,7 @@
           return;
         }
 
-        // Login bem-sucedido
+        // Login ok
         localStorage.setItem('tok_corr', doc.id);
         localStorage.setItem('nome_corr', dados.nome);
         localStorage.setItem('cod_corr', dados.codund);
@@ -114,19 +115,6 @@
         M.toast({ html: 'Erro de login!' });
         btn.classList.remove('disabled');
       }
-    }
-
-    async function sha256(texto) {
-      const encoder = new TextEncoder();
-      const data = encoder.encode(texto);
-      const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-      const hashArray = Array.from(new Uint8Array(hashBuffer));
-      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-    }
-
-      //testar o que tá vindo na senha. 
-        console.log("Hash calculado:", hash);
-        console.log("Hash no Firebase:", dados.senha_hash);
     }
 
     btn.addEventListener('click', (e) => { e.preventDefault(); doLogin(); });
