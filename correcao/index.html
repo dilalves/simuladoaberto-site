@@ -94,6 +94,9 @@
         const dados = doc.data();
         const hash = await sha256(senha);
 
+        console.log("Hash calculado:", hash);
+        console.log("Hash no Firebase:", dados.senha_hash);
+
         if (dados.senha_hash !== hash) {
           M.toast({ html: 'Senha incorreta!' });
           btn.classList.remove('disabled');
