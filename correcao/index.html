@@ -122,6 +122,9 @@
       return [...new Uint8Array(buffer)]
         .map(b => b.toString(16).padStart(2, '0'))
         .join('');
+      //testar o que tá vindo na senha. 
+        console.log("Hash calculado:", hash);
+        console.log("Hash no Firebase:", dados.senha_hash);
     }
 
     btn.addEventListener('click', (e) => { e.preventDefault(); doLogin(); });
