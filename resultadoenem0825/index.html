@@ -9,18 +9,44 @@
   <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
 
   <style>
-    header { margin:0; padding:20px 0; background:#002776; color:#fff; text-align:center }
-    body { background:#fafafa }
-    h1 { margin:0; font-size:24px }
-    footer { text-align:center; padding:20px; font-size:14px; color:#888 }
-    .msg-box { padding:10px; border-left:4px solid #1976d2; background:#e3f2fd; margin:8px 0; border-radius:4px }
-    #chartWrap { display:none } /* canvas oculto só para gerar imagem do gráfico no PDF */
-    img.redacao { max-width:100%; border:1px solid #ddd; border-radius:4px }
+    header{margin:0;padding:20px 0;background:#002776;color:#fff;text-align:center}
+    body{background:#fafafa}
+    h1{margin:0;font-size:24px}
+    footer{text-align:center;padding:20px;font-size:14px;color:#888}
+    #chartWrap{display:none} /* canvas oculto só p/ gráfico do PDF */
+
+    /* mensagem embutida abaixo da nota */
+    .mini-msg{
+      margin-top:6px;
+      font-size:13px;
+      line-height:1.25;
+      color:#1565c0;
+      background:#e3f2fd;
+      border-left:4px solid #1976d2;
+      border-radius:4px;
+      padding:8px;
+    }
+
+    /* bloco “Redação (Total) + Competências” movido para baixo dos textos */
+    #blocoRedacao{
+      display:none;               /* fica escondido até termos dados */
+      margin-top:16px;
+      background:#f5f5f5;
+      border-radius:6px;
+      padding:12px 14px;
+    }
+    #blocoRedacao .item{
+      margin:4px 0;
+      font-size:15px;
+    }
+
+    /* esconder linhas antigas de “Redação (Total)” e “Competências” na tabela */
+    tr.hide-row{display:none}
   </style>
 </head>
 <body>
   <header>
-    <h1>Simulados Abertos — Curso Objetivo Vestibulares - v4</h1>
+    <h1>Simulados Abertos — Curso Objetivo Vestibulares</h1>
   </header>
 
   <div class="container" style="max-width:900px; margin-top:28px">
@@ -60,25 +86,29 @@
             <tbody>
               <tr><th>Inscrição</th><td id="inscOut"></td></tr>
               <tr><th>Unidade</th><td id="unidOut"></td></tr>
+
+              <!-- Notas + mensagens embutidas -->
               <tr><th>LINGUAGENS</th><td id="n_ling"></td></tr>
               <tr><th>HUMANAS</th><td id="n_hum"></td></tr>
               <tr><th>NATUREZA</th><td id="n_nat"></td></tr>
               <tr><th>MATEMÁTICA</th><td id="n_mat"></td></tr>
-              <tr><th>Redação (Total)</th><td id="n_red_total"></td></tr>
+
+              <!-- Estas duas linhas ficam escondidas: vamos mostrar num bloco mais abaixo -->
+              <tr id="row_red_total" class="hide-row"><th>Redação (Total)</th><td id="n_red_total"></td></tr>
+              <tr id="row_red_comp"  class="hide-row"><th>Competências (C1–C5)</th><td id="n_red_comp"></td></tr>
+
               <tr><th>CLS_G (Class. geral)</th><td id="n_CLS_G"></td></tr>
               <tr><th>CLS_U (Class. na unidade)</th><td id="n_CLS_U"></td></tr>
-              <tr><th>Competências (C1–C5)</th><td id="n_red_comp"></td></tr>
             </tbody>
           </table>
 
-          <div id="mensagens" style="margin-top:10px">
-            <div id="msg_ling" class="msg-box"></div>
-            <div id="msg_hum"  class="msg-box"></div>
-            <div id="msg_nat"  class="msg-box"></div>
-            <div id="msg_mat"  class="msg-box"></div>
-            <div id="msg_red"  class="msg-box"></div>
+          <!-- Bloco movido: Redação (Total) + Competências, logo abaixo das mensagens -->
+          <div id="blocoRedacao">
+            <div class="item"><strong>Redação (Total):</strong> <span id="out_red_total">-</span></div>
+            <div class="item"><strong>Competências (C1–C5):</strong> <span id="out_red_comp">-</span></div>
           </div>
 
+          <!-- Imagem da redação vem depois -->
           <div style="margin-top:16px">
             <h6 class="blue-text text-darken-2">Imagem da Redação</h6>
             <div id="imgBox"></div>
@@ -87,12 +117,8 @@
       </div>
     </div>
 
-    <!-- Canvas escondidos só para gerar as imagens dos gráficos no PDF -->
-    <div id="chartWrap" style="display:none">
-      <canvas id="grafico"  width="900" height="420"></canvas>   <!-- comparativo Aluno x Média -->
-      <canvas id="graficoC" width="520" height="220"></canvas>   <!-- competências C1..C5 -->
-    </div>
-    
+    <!-- Canvas escondido para gerar gráfico para o PDF -->
+    <div id="chartWrap"><canvas id="grafico" width="900" height="420"></canvas></div>
   </div>
 
   <footer>simuladoaberto.com - Curso Objetivo Vestibulares</footer>
@@ -102,17 +128,12 @@
   <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
 
   <script>
-  /* ===== CONFIG ===== */
+  /* ===== CONFIG BÁSICA ===== */
   const ENDPOINT = 'https://script.google.com/macros/s/AKfycbwradbKRivZtlC3TAWqqPuIsC1UoM6Lgh53FRsM0Z9GryRZ6EcPAXP6NVj_3KqNwJw3/exec';
-  // PDF de fundo (página 1 do template)
   const TEMPLATE_URL = 'https://raw.githubusercontent.com/dilalves/simuladoaberto-site/main/RESULTADO_PADRAO_2.pdf';
 
-
-  /* ===== ESTADO ===== */
   let ultimoResultado = null;
-  let mediasGlobais   = null; 
 
-  /* ===== EVENTOS ===== */
   document.getElementById('btnConsultar').addEventListener('click', consultar);
   document.getElementById('btnPdf').addEventListener('click', gerarPDF);
 
@@ -139,18 +160,8 @@
       if (!j.ok) { msg.textContent = j.error || 'Não encontrado'; status.textContent=''; return; }
 
       ultimoResultado = j;
-      
-      // carrega as médias globais (cacheadas no servidor)
-      try {
-        const r2 = await fetch(`${ENDPOINT}?action=stats`, { cache:'no-store' });
-        const j2 = await r2.json();
-        mediasGlobais = (j2.ok && j2.medias) ? j2.medias : null;
-      } catch(_) {
-        mediasGlobais = null; // se falhar, seguimos só com o aluno
-      }
 
-
-      // Cabeçalho e tabela
+      // Cabeçalho
       document.getElementById('alunoNome').textContent = (j.aluno && j.aluno.nome) ? j.aluno.nome : `Inscrição ${j.inscricao}`;
       document.getElementById('inscOut').textContent = j.inscricao;
       document.getElementById('unidOut').textContent = (j.aluno && j.aluno.unidadeNome) ? j.aluno.unidadeNome : '-';
@@ -158,27 +169,25 @@
       const A = j.areas || {};
       const R = j.redacao || {};
       const C = j.classificacao || {};
-      setText('n_ling', A.linguagens);
-      setText('n_hum',  A.humanas);
-      setText('n_nat',  A.natureza);
-      setText('n_mat',  A.matematica);
-      setText('n_red_total', R.total);
+      const msgs = getMessages(A, R);
 
+      // notas + mensagens (no mesmo <td>)
+      setScoreWithMsg('n_ling', A.linguagens, msgs.linguagens);
+      setScoreWithMsg('n_hum',  A.humanas,    msgs.humanas);
+      setScoreWithMsg('n_nat',  A.natureza,   msgs.natureza);
+      setScoreWithMsg('n_mat',  A.matematica, msgs.matematica);
+
+      // classificação
       setText('n_CLS_G', C.cls_g ?? j.cls_g ?? '-');
       setText('n_CLS_U', C.cls_u ?? j.cls_u ?? '-');
 
+      // bloco Redação + Competências (aqui embaixo dos textos)
+      document.getElementById('out_red_total').textContent = val(R.total);
       const comps = [R.c1,R.c2,R.c3,R.c4,R.c5].filter(x=>x!=null).join(' / ') || '-';
-      document.getElementById('n_red_comp').textContent = comps;
+      document.getElementById('out_red_comp').textContent  = comps;
+      document.getElementById('blocoRedacao').style.display = 'block';
 
-      // Mensagens
-      const msgs = getMessages(A, R);
-      document.getElementById('msg_ling').textContent = msgs.linguagens;
-      document.getElementById('msg_hum').textContent  = msgs.humanas;
-      document.getElementById('msg_nat').textContent  = msgs.natureza;
-      document.getElementById('msg_mat').textContent  = msgs.matematica;
-      document.getElementById('msg_red').textContent  = msgs.redacao;
-
-      // Redação
+      // Imagem/preview da Redação
       const L = j.links || {};
       montarRedacao(L.imagemRedacao);
 
@@ -193,9 +202,18 @@
   }
 
   function setText(id, v){ document.getElementById(id).textContent = (v==null?'-':v); }
+  function val(x){ return (x==null?'-':x); }
+
+  // Mostra pontuação + caixinha com a mensagem logo abaixo
+  function setScoreWithMsg(id, score, message){
+    const el = document.getElementById(id);
+    const nota = (score==null?'-':score);
+    const msgHtml = message ? `<div class="mini-msg">${message}</div>` : '';
+    el.innerHTML = `${nota}${msgHtml}`;
+  }
 
   /* ===== Redação: imagem/iframe + link ===== */
-  function montarRedacao(link) {
+  function montarRedacao(link){
     const box = document.getElementById('imgBox');
     if (!box) return;
     box.innerHTML = '';
@@ -205,11 +223,10 @@
     const idMatch2 = String(link).match(/[?&]id=([^&]+)/);
     const id = idMatch1 ? idMatch1[1] : (idMatch2 ? idMatch2[1] : null);
 
-    const direct  = id ? `https://drive.google.com/uc?id=${id}&export=view`  : link;   // imagem direta
-    const preview = id ? `https://drive.google.com/file/d/${id}/preview`     : link;   // iframe preview
-    const view    = id ? `https://drive.google.com/file/d/${id}/view`        : link;   // link "abrir"
+    const direct  = id ? `https://drive.google.com/uc?id=${id}&export=view`  : link;
+    const preview = id ? `https://drive.google.com/file/d/${id}/preview`     : link;
+    const view    = id ? `https://drive.google.com/file/d/${id}/view`        : link;
 
-    // tenta carregar como <img>
     const img = new Image();
     img.className = 'redacao';
     img.alt = 'Redação';
@@ -241,7 +258,7 @@
     box.appendChild(img);
   }
 
-  /* ===== MENSAGENS POR NOTA (faixas por área) ===== */
+  /* ===== MENSAGENS POR NOTA (mesmo conteúdo que já usamos) ===== */
   function getMessages(A, R){
     const L = A?.linguagens ?? null;
     const H = A?.humanas    ?? null;
