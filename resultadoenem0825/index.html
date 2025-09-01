@@ -20,7 +20,7 @@
 </head>
 <body>
   <header>
-    <h1>Simulados Abertos — Curso Objetivo Vestibulares</h1>
+    <h1>Simulados Abertos — Curso Objetivo Vestibulares - v2</h1>
   </header>
 
   <div class="container" style="max-width:900px; margin-top:28px">
@@ -316,93 +316,119 @@
   }
 
   /* ===== PDF (pdf-lib) com gráfico (Chart.js) ===== */
-  async function gerarPDF(){
+   async function gerarPDF(){
     if (!ultimoResultado) return;
-
+  
     const { PDFDocument, StandardFonts } = PDFLib;
-
-    // Tenta carregar o template
+  
+    // 1) tenta abrir o template do fundo
     let tplPdf = null;
     try{
-      const b = await fetch(TEMPLATE_URL, { cache:'no-store' }).then(r => r.arrayBuffer());
-      tplPdf = await PDFDocument.load(b);
+      const ab = await fetch(TEMPLATE_URL, { cache:'no-store' }).then(r => r.arrayBuffer());
+      tplPdf = await PDFDocument.load(ab);
     }catch(e){
-      console.warn('Não consegui carregar o TEMPLATE_URL, caindo no layout simples.', e);
+      console.warn('Não consegui carregar TEMPLATE_URL; usando página em branco.', e);
     }
-
-    // Cria doc e página (com ou sem template)
-    const doc = await PDFDocument.create();
+  
+    // 2) cria doc e página (com ou sem template)
+    const doc  = await PDFDocument.create();
     let page;
     if (tplPdf){
       const [tpl] = await doc.copyPages(tplPdf, [0]);
       page = doc.addPage(tpl);
-    }else{
-      page = doc.addPage([595.28, 841.89]); // A4 fallback
+    } else {
+      page = doc.addPage([595.28, 841.89]); // A4
     }
-
-    // Fonte e contexto
+  
+    // 3) fonte + contexto pros helpers
     const font = await doc.embedFont(StandardFonts.Helvetica);
     setPdfContext(doc, page, font);
-
-    // Dados
+  
+    // ===== layout =====
+    const LEFT   = 48;                        // margem esquerda
+    const GAP    = 14;                        // espaçamento entre linhas
+    const TOP_Y  = page.getHeight() - 160;    // desce tudo p/ não pegar o logo do template
+    let y        = TOP_Y;
+  
+    // 4) dados
     const j  = ultimoResultado;
     const A  = j.areas || {};
     const R  = j.redacao || {};
     const C  = j.classificacao || {};
-    const nm = (j.aluno && j.aluno.nome) || '-';
-    const un = (j.aluno && j.aluno.unidadeNome) || '-';
-
-    // Cabeçalho (ajuste coordenadas conforme o seu PDF de fundo)
-    drawTextLine('Resultado ENEM', 40, page.getHeight() - 60, 18);
-    drawTextLine(`Aluno: ${nm}`,   40, page.getHeight() - 80, 12);
-    drawTextLine(`Inscrição: ${j.inscricao}`, 40, page.getHeight() - 96, 12);
-    drawTextLine(`Unidade: ${un}`,             240, page.getHeight() - 96, 12);
-
-    // Bloco de notas (esquerda)
-    const notasY0 = page.getHeight() - 130;
+    const nome = (j.aluno && j.aluno.nome) || '-';
+    const unid = (j.aluno && j.aluno.unidadeNome) || '-';
+  
+    // título + cabeçalho
+    drawTextLine('Resultado ENEM', LEFT, y + 18, 16);
+    drawTextLine(`Aluno: ${nome}`, LEFT, y, 12);             y -= GAP;
+    drawTextLine(`Inscrição: ${j.inscricao}`, LEFT, y, 12);
+    drawTextLine(`Unidade: ${unid}`, LEFT + 220, y, 12);     y -= GAP;
+  
+    // linhas de notas
     const linhas = [
-      ['Linguagens',  A.linguagens],
-      ['Humanas',     A.humanas],
-      ['Natureza',    A.natureza],
-      ['Matemática',  A.matematica],
-      ['Redação (total)', R.total],
-      ['CLS_G', C.cls_g ?? j.cls_g],
-      ['CLS_U', C.cls_u ?? j.cls_u],
+      ['Linguagens',        A.linguagens],
+      ['Humanas',           A.humanas],
+      ['Natureza',          A.natureza],
+      ['Matemática',        A.matematica],
+      ['Redação (total)',   R.total],
+      ['CLS_G',             C.cls_g ?? j.cls_g],
+      ['CLS_U',             C.cls_u ?? j.cls_u],
     ];
-    let yy = notasY0;
     for (const [k,v] of linhas){
-      drawTextLine(`${k}: ${v==null?'-':v}`, 40, yy, 12);
-      yy -= 14;
+      drawTextLine(`${k}: ${v == null ? '-' : v}`, LEFT, y, 12);
+      y -= GAP;
     }
-
-    // Gráfico (direita)
+  
+    // competências (C1–C5)
+    const comps = [R.c1, R.c2, R.c3, R.c4, R.c5]
+      .filter(x => x != null)
+      .join(' / ') || '-';
+    drawTextLine(`Competências (C1–C5): ${comps}`, LEFT, y, 12);
+    y -= GAP + 4; // pequeno respiro antes do gráfico
+  
+    // 5) gráfico largo, entre dados e comentários
     try{
       const chartUrl = await makeChartImage(A, R);
       if (chartUrl){
         const bytes = dataURLtoBytes(chartUrl);
-        const png = await doc.embedPng(bytes);
-        const w = 260, h = 120;
-        page.drawImage(png, { x: page.getWidth()-w-40, y: notasY0-h+20, width:w, height:h });
+        const png   = await doc.embedPng(bytes);
+  
+        const MAX_W = page.getWidth() - LEFT*2; // ocupa toda a largura útil
+        const H     = 160;
+        const W     = MAX_W;
+  
+        page.drawImage(png, {
+          x: LEFT,
+          y: y - H,
+          width: W,
+          height: H
+        });
+        y -= (H + 12); // espaço após o gráfico
       }
-    }catch(e){ console.warn('Falha ao desenhar gráfico', e); }
-
-    // Mensagens em bullets
+    }catch(e){
+      console.warn('Falha ao desenhar gráfico', e);
+    }
+  
+    // 6) comentários (pula linha antes; bullets, com quebra automática)
+    y -= 6;                        // linha em branco
+    _pdf_ctx.y = y;                // informa aos helpers por onde começar
+  
     const msgs = getMessages(A, R);
-    _pdf_ctx.y = Math.min(yy - 10, page.getHeight() - 300);
     drawBullet(msgs.linguagens, 12);
     drawBullet(msgs.humanas,    12);
     drawBullet(msgs.natureza,   12);
     drawBullet(msgs.matematica, 12);
     drawBullet(msgs.redacao,    12);
-
-    // Baixa
+  
+    // 7) salva
     const bytes = await doc.save();
-    const blob = new Blob([bytes], { type:'application/pdf' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `resultado_ENEM_${j.inscricao}.pdf`;
+    const blob  = new Blob([bytes], { type:'application/pdf' });
+    const a     = document.createElement('a');
+    a.href      = URL.createObjectURL(blob);
+    a.download  = `resultado_ENEM_${j.inscricao}.pdf`;
     a.click();
   }
+
 
   /* ===== helpers gerais ===== */
   function val(x){ return (x==null?'-':x); }
