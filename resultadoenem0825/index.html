@@ -131,6 +131,7 @@ async function consultar(){
 
     const A = j.areas || {};
     const R = j.redacao || {};
+    const C = j.classificacao || {};
     setText('n_ling', A.linguagens);
     setText('n_hum',  A.humanas);
     setText('n_nat',  A.natureza);
@@ -138,8 +139,8 @@ async function consultar(){
     setText('n_red_total', R.total);
 
     // CLS_G / CLS_U
-    setText('n_CLS_G', j.cls_g ?? j.clsG ?? j.CLS_G ?? '-');
-    setText('n_CLS_U', j.cls_u ?? j.clsU ?? j.CLS_U ?? '-');
+    setText('n_CLS_G', C.cls_g ?? j.cls_g ?? '-');
+    setText('n_CLS_U', C.cls_u ?? j.cls_u ?? '-');
 
     const comps = [R.c1,R.c2,R.c3,R.c4,R.c5].filter(x=>x!=null).join(' / ') || '-';
     document.getElementById('n_red_comp').textContent = comps;
@@ -251,12 +252,14 @@ async function gerarPDF(){
   draw(page, `Inscrição: ${j.inscricao}   Unidade: ${(j.aluno&&j.aluno.unidadeNome)||'-'}`, 40, y); y-=20;
 
   const A = j.areas || {}, R = j.redacao || {};
+  const C = j.classificacao || {};
+  
   const linhas = [
     ['Linguagens', val(A.linguagens)], ['Humanas', val(A.humanas)],
     ['Natureza', val(A.natureza)], ['Matemática', val(A.matematica)],
     ['Redação (total)', val(R.total)],
-    ['CLS_G', val(j.cls_g ?? j.clsG ?? j.CLS_G)],
-    ['CLS_U', val(j.cls_u ?? j.clsU ?? j.CLS_U)]
+    ['CLS_G', val(C.cls_g ?? j.cls_g)],
+    ['CLS_U', val(C.cls_u ?? j.cls_u)]
   ];
   linhas.forEach(([k,v])=>{ draw(page, `${k}: ${v}`, 40, y); y-=14; });
 
