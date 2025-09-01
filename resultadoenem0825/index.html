@@ -1,3 +1,290 @@
--Tela para resultados do Simludo ENEM Agosto
--mostrar imagem da redação e demais notas dos testes
--baixa arquivo pdf com notas e comentários
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Resultado - Simulado Aberto ENEM Agosto</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
+  <style>
+    body { background:#fafafa }
+    .msg-box { padding:10px; border-left:4px solid #1976d2; background:#e3f2fd; margin:8px 0; border-radius:4px }
+    #chartWrap { display:none } /* canvas oculto só para gerar a imagem do gráfico no PDF */
+    img.redacao { max-width:100%; border:1px solid #ddd; border-radius:4px }
+  </style>
+</head>
+<body>
+<div class="container" style="max-width:900px; margin-top:28px">
+  <h5 class="blue-text text-darken-2">Consultar Resultado</h5>
+
+  <div class="card">
+    <div class="card-content">
+      <div class="row">
+        <div class="input-field col s12 m6">
+          <input id="inscricao" type="text" required>
+          <label for="inscricao">Inscrição</label>
+        </div>
+        <div class="input-field col s12 m6">
+          <input id="cpf" type="text" required placeholder="somente números">
+          <label for="cpf">CPF</label>
+        </div>
+      </div>
+
+      <div class="row" style="margin-bottom:0">
+        <div class="col s12">
+          <button id="btnConsultar" class="btn waves-effect waves-light">Consultar</button>
+          <button id="btnPdf" class="btn grey waves-effect waves-light" disabled>Baixar PDF</button>
+          <span id="status" class="grey-text text-darken-1" style="margin-left:12px"></span>
+        </div>
+      </div>
+
+      <div id="msg" style="margin-top:12px; color:#d32f2f"></div>
+    </div>
+  </div>
+
+  <div id="resultado" style="display:none">
+    <div class="card">
+      <div class="card-content">
+        <span class="card-title" id="alunoNome"></span>
+
+        <table class="striped">
+          <tbody>
+            <tr><th>Inscrição</th><td id="inscOut"></td></tr>
+            <tr><th>Unidade</th><td id="unidOut"></td></tr>
+            <tr><th>LINGUAGENS</th><td id="n_ling"></td></tr>
+            <tr><th>HUMANAS</th><td id="n_hum"></td></tr>
+            <tr><th>NATUREZA</th><td id="n_nat"></td></tr>
+            <tr><th>MATEMÁTICA</th><td id="n_mat"></td></tr>
+            <tr><th>Redação (Total)</th><td id="n_red_total"></td></tr>
+            <tr><th>Competências (C1–C5)</th><td id="n_red_comp"></td></tr>
+          </tbody>
+        </table>
+
+        <div id="mensagens" style="margin-top:10px">
+          <div id="msg_ling" class="msg-box"></div>
+          <div id="msg_hum"  class="msg-box"></div>
+          <div id="msg_nat"  class="msg-box"></div>
+          <div id="msg_mat"  class="msg-box"></div>
+          <div id="msg_red"  class="msg-box"></div>
+        </div>
+
+        <div style="margin-top:16px">
+          <h6 class="blue-text text-darken-2">Imagem da Redação</h6>
+          <div id="imgBox"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Canvas escondido para gerar gráfico para o PDF -->
+  <div id="chartWrap"><canvas id="grafico" width="900" height="420"></canvas></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+
+<script>
+/* ===== CONFIGURE AQUI =====
+ * Cole a URL de deployment do seu Apps Script Web App (termina com /exec)
+ * Ex.: const ENDPOINT = 'https://script.google.com/macros/s/AKfycb.../exec';
+ */
+const ENDPOINT = 'https://script.google.com/macros/s/AKfycbwradbKRivZtlC3TAWqqPuIsC1UoM6Lgh53FRsM0Z9GryRZ6EcPAXP6NVj_3KqNwJw3/exec'; // action=resultado
+
+/* ===== ESTADO ===== */
+let ultimoResultado = null;
+
+/* ===== EVENTOS ===== */
+document.getElementById('btnConsultar').addEventListener('click', consultar);
+document.getElementById('btnPdf').addEventListener('click', gerarPDF);
+
+/* ===== CONSULTA ===== */
+async function consultar(){
+  const status = document.getElementById('status');
+  const msg = document.getElementById('msg');
+  const resDiv = document.getElementById('resultado');
+  const btnPdf = document.getElementById('btnPdf');
+
+  status.textContent = 'Consultando...';
+  msg.textContent = '';
+  resDiv.style.display = 'none';
+  btnPdf.disabled = true; btnPdf.classList.add('grey');
+
+  const insc = document.getElementById('inscricao').value.replace(/\D/g,'');
+  const cpf  = document.getElementById('cpf').value.replace(/\D/g,'');
+  if (!insc || cpf.length < 11) { msg.textContent = 'Preencha inscrição e CPF válidos.'; status.textContent=''; return; }
+
+  try{
+    const url = `${ENDPOINT}?action=resultado&inscricao=${encodeURIComponent(insc)}&cpf=${encodeURIComponent(cpf)}`;
+    const r = await fetch(url, { cache:'no-store' });
+    const j = await r.json();
+    if (!j.ok) { msg.textContent = j.error || 'Não encontrado'; status.textContent=''; return; }
+
+    ultimoResultado = j;
+
+    // Preenche tabela
+    document.getElementById('alunoNome').textContent = (j.aluno && j.aluno.nome) ? j.aluno.nome : `Inscrição ${j.inscricao}`;
+    document.getElementById('inscOut').textContent = j.inscricao;
+    document.getElementById('unidOut').textContent = (j.aluno && j.aluno.unidadeCodigo) ? j.aluno.unidadeCodigo : '-';
+
+    const A = j.areas || {};
+    const R = j.redacao || {};
+    setText('n_ling', A.linguagens);
+    setText('n_hum',  A.humanas);
+    setText('n_nat',  A.natureza);
+    setText('n_mat',  A.matematica);
+    setText('n_red_total', R.total);
+    const comps = [R.c1,R.c2,R.c3,R.c4,R.c5].filter(x=>x!=null).join(' / ') || '-';
+    document.getElementById('n_red_comp').textContent = comps;
+
+    // Mensagens personalizadas
+    const msgs = getMessages(A, R);
+    document.getElementById('msg_ling').textContent = msgs.linguagens;
+    document.getElementById('msg_hum').textContent  = msgs.humanas;
+    document.getElementById('msg_nat').textContent  = msgs.natureza;
+    document.getElementById('msg_mat').textContent  = msgs.matematica;
+    document.getElementById('msg_red').textContent  = msgs.redacao;
+
+    // Imagem da redação
+    const L = j.links || {};
+    const imgBox = document.getElementById('imgBox');
+    imgBox.innerHTML = '';
+    if (L.imagemRedacao) {
+      const img = document.createElement('img');
+      img.src = L.imagemRedacao; // use uc?id=...&export=view
+      img.alt = 'Redação';
+      img.className = 'redacao';
+      imgBox.appendChild(img);
+    }
+
+    resDiv.style.display = 'block';
+    btnPdf.disabled = false; btnPdf.classList.remove('grey');
+    status.textContent = '';
+  }catch(e){
+    msg.textContent = 'Erro ao consultar. Tente novamente.';
+    console.error(e);
+    status.textContent='';
+  }
+}
+
+function setText(id, v){ document.getElementById(id).textContent = (v==null?'-':v); }
+
+/* ===== MENSAGENS POR NOTA (edite as faixas à vontade) ===== */
+function getMessages(A, R){
+  const mk = (x, name)=>{
+    if (x==null) return `${name}: sem nota registrada.`;
+    if (x >= 700) return `${name}: Excelente! Você está acima das melhores referências.`;
+    if (x >= 600) return `${name}: Muito bom. Foque em consolidar conteúdos e treinos.`;
+    if (x >= 500) return `${name}: Bom. Reforce pontos fracos e intensifique práticas.`;
+    return `${name}: Abaixo do ideal. Priorize revisões e simulados.`;
+  };
+  const red = ()=>{
+    if (!R || R.total==null) return 'Redação: sem nota registrada.';
+    if (R.total >= 900) return 'Redação: Excelente! Muito próximo do ideal.';
+    if (R.total >= 800) return 'Redação: Muito bom. Ajuste coesão e repertório para subir ainda mais.';
+    if (R.total >= 700) return 'Redação: Bom. Trabalhe tese clara e aprofundamento dos argumentos.';
+    return 'Redação: Abaixo do ideal. Revise estrutura, repertório e intervenção.';
+  };
+  return {
+    linguagens: mk(A.linguagens, 'Linguagens'),
+    humanas:    mk(A.humanas, 'Humanas'),
+    natureza:   mk(A.natureza, 'Natureza'),
+    matematica: mk(A.matematica, 'Matemática'),
+    redacao:    red()
+  };
+}
+
+/* ===== PDF (pdf-lib) com gráfico (Chart.js) + imagem da redação ===== */
+async function gerarPDF(){
+  if (!ultimoResultado) return;
+  const { PDFDocument, rgb, StandardFonts } = PDFLib;
+  const doc = await PDFDocument.create();
+  const page = doc.addPage([595.28, 841.89]); // A4 portrait em pt (72dpi)
+  const font = await doc.embedFont(StandardFonts.Helvetica);
+  const draw = (p, txt, x, y, size=12)=> p.drawText(txt, { x, y, size, font, color: rgb(0,0,0) });
+
+  const j = ultimoResultado;
+  let y = 800;
+  draw(page, 'Resultado ENEM', 40, y, 18); y-=24;
+  draw(page, `Aluno: ${ (j.aluno&&j.aluno.nome) || '-' }`, 40, y); y-=16;
+  draw(page, `Inscrição: ${j.inscricao}   Unidade: ${(j.aluno&&j.aluno.unidadeCodigo)||'-'}`, 40, y); y-=20;
+
+  const A = j.areas || {}, R = j.redacao || {};
+  const linhas = [
+    ['Linguagens', val(A.linguagens)], ['Humanas', val(A.humanas)],
+    ['Natureza', val(A.natureza)], ['Matemática', val(A.matematica)],
+    ['Redação (total)', val(R.total)]
+  ];
+  linhas.forEach(([k,v])=>{ draw(page, `${k}: ${v}`, 40, y); y-=14; });
+
+  // Gráfico
+  const chartUrl = await makeChartImage(A, R);
+  if (chartUrl){
+    const chartBytes = dataURLtoBytes(chartUrl);
+    const chartImg = await doc.embedPng(chartBytes);
+    const w = 500, h = 230;
+    page.drawImage(chartImg, { x: 40, y: y - h - 10, width: w, height: h });
+    y -= (h + 20);
+  }
+
+  // Mensagens
+  const msgs = getMessages(A, R);
+  [msgs.linguagens, msgs.humanas, msgs.natureza, msgs.matematica, msgs.redacao]
+    .forEach(m=>{ y -= 14; draw(page, '• ' + m, 40, y); });
+
+  // Página 2: imagem da redação
+  const L = j.links || {};
+  if (L.imagemRedacao){
+    const page2 = doc.addPage([595.28, 841.89]);
+    draw(page2, 'Redação', 40, 812, 16);
+    try {
+      const imgBytes = await (await fetch(L.imagemRedacao)).arrayBuffer();
+      let img;
+      try { img = await doc.embedJpg(imgBytes); }
+      catch { img = await doc.embedPng(imgBytes); }
+      const maxW = 515, maxH = 740;
+      const ratio = Math.min(maxW / img.width, maxH / img.height);
+      const w = img.width * ratio, h = img.height * ratio;
+      page2.drawImage(img, { x: 40, y: 812 - h - 10, width: w, height: h });
+    } catch(e){
+      draw(page2, '(Não foi possível carregar a imagem da redação)', 40, 780);
+      console.error('Erro ao baixar imagem da Redação:', e);
+    }
+  }
+
+  const bytes = await doc.save();
+  const blob = new Blob([bytes], { type:'application/pdf' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `resultado_ENEM_${j.inscricao}.pdf`;
+  a.click();
+}
+
+/* ===== helpers ===== */
+function val(x){ return (x==null?'-':x); }
+function dataURLtoBytes(dataURL){
+  const base64 = dataURL.split(',')[1];
+  const bin = atob(base64); const len = bin.length;
+  const bytes = new Uint8Array(len);
+  for (let i=0;i<len;i++) bytes[i] = bin.charCodeAt(i);
+  return bytes;
+}
+async function makeChartImage(A, R){
+  const el = document.getElementById('grafico');
+  if (!el) return null;
+  if (window._chartInst) { window._chartInst.destroy(); }
+
+  const labels = ['LING', 'HUM', 'NAT', 'MAT', 'RED'];
+  const data = [A.linguagens ?? null, A.humanas ?? null, A.natureza ?? null, A.matematica ?? null, R.total ?? null];
+
+  window._chartInst = new Chart(el.getContext('2d'), {
+    type: 'bar',
+    data: { labels, datasets: [{ label:'Notas', data }] },
+    options: { responsive: false, animation: false, scales: { y: { suggestedMin: 0, suggestedMax: 1000 } } }
+  });
+
+  await new Promise(r=>setTimeout(r, 50));
+  return el.toDataURL('image/png');
+}
+</script>
+</body>
+</html>
