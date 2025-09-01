@@ -87,8 +87,12 @@
       </div>
     </div>
 
-    <!-- Canvas escondido para gerar gráfico para o PDF -->
-    <div id="chartWrap"><canvas id="grafico" width="900" height="420"></canvas></div>
+    <!-- Canvas escondidos só para gerar as imagens dos gráficos no PDF -->
+    <div id="chartWrap" style="display:none">
+      <canvas id="grafico"  width="900" height="420"></canvas>   <!-- comparativo Aluno x Média -->
+      <canvas id="graficoC" width="320" height="150"></canvas>   <!-- mini chart C1..C5 -->
+    </div>
+    
   </div>
 
   <footer>simuladoaberto.com - Curso Objetivo Vestibulares</footer>
@@ -106,6 +110,7 @@
 
   /* ===== ESTADO ===== */
   let ultimoResultado = null;
+  let mediasGlobais   = null; 
 
   /* ===== EVENTOS ===== */
   document.getElementById('btnConsultar').addEventListener('click', consultar);
@@ -134,6 +139,16 @@
       if (!j.ok) { msg.textContent = j.error || 'Não encontrado'; status.textContent=''; return; }
 
       ultimoResultado = j;
+      
+      // carrega as médias globais (cacheadas no servidor)
+      try {
+        const r2 = await fetch(`${ENDPOINT}?action=stats`, { cache:'no-store' });
+        const j2 = await r2.json();
+        mediasGlobais = (j2.ok && j2.medias) ? j2.medias : null;
+      } catch(_) {
+        mediasGlobais = null; // se falhar, seguimos só com o aluno
+      }
+
 
       // Cabeçalho e tabela
       document.getElementById('alunoNome').textContent = (j.aluno && j.aluno.nome) ? j.aluno.nome : `Inscrição ${j.inscricao}`;
@@ -315,119 +330,131 @@
     ], "Redação: sem nota registrada.");
   }
 
-  /* ===== PDF (pdf-lib) com gráfico (Chart.js) ===== */
-   async function gerarPDF(){
-    if (!ultimoResultado) return;
-  
-    const { PDFDocument, StandardFonts } = PDFLib;
-  
-    // 1) tenta abrir o template do fundo
-    let tplPdf = null;
-    try{
-      const ab = await fetch(TEMPLATE_URL, { cache:'no-store' }).then(r => r.arrayBuffer());
-      tplPdf = await PDFDocument.load(ab);
-    }catch(e){
-      console.warn('Não consegui carregar TEMPLATE_URL; usando página em branco.', e);
-    }
-  
-    // 2) cria doc e página (com ou sem template)
-    const doc  = await PDFDocument.create();
-    let page;
-    if (tplPdf){
-      const [tpl] = await doc.copyPages(tplPdf, [0]);
-      page = doc.addPage(tpl);
-    } else {
-      page = doc.addPage([595.28, 841.89]); // A4
-    }
-  
-    // 3) fonte + contexto pros helpers
-    const font = await doc.embedFont(StandardFonts.Helvetica);
-    setPdfContext(doc, page, font);
-  
-    // ===== layout =====
-    const LEFT   = 48;                        // margem esquerda
-    const GAP    = 14;                        // espaçamento entre linhas
-    const TOP_Y  = page.getHeight() - 160;    // desce tudo p/ não pegar o logo do template
-    let y        = TOP_Y;
-  
-    // 4) dados
-    const j  = ultimoResultado;
-    const A  = j.areas || {};
-    const R  = j.redacao || {};
-    const C  = j.classificacao || {};
-    const nome = (j.aluno && j.aluno.nome) || '-';
-    const unid = (j.aluno && j.aluno.unidadeNome) || '-';
-  
-    // título + cabeçalho
-    drawTextLine('Resultado ENEM', LEFT, y + 18, 16);
-    drawTextLine(`Aluno: ${nome}`, LEFT, y, 12);             y -= GAP;
-    drawTextLine(`Inscrição: ${j.inscricao}`, LEFT, y, 12);
-    drawTextLine(`Unidade: ${unid}`, LEFT + 220, y, 12);     y -= GAP;
-  
-    // linhas de notas
-    const linhas = [
-      ['Linguagens',        A.linguagens],
-      ['Humanas',           A.humanas],
-      ['Natureza',          A.natureza],
-      ['Matemática',        A.matematica],
-      ['Redação (total)',   R.total],
-      ['CLS_G',             C.cls_g ?? j.cls_g],
-      ['CLS_U',             C.cls_u ?? j.cls_u],
-    ];
-    for (const [k,v] of linhas){
-      drawTextLine(`${k}: ${v == null ? '-' : v}`, LEFT, y, 12);
-      y -= GAP;
-    }
-  
-    // competências (C1–C5)
-    const comps = [R.c1, R.c2, R.c3, R.c4, R.c5]
-      .filter(x => x != null)
-      .join(' / ') || '-';
-    drawTextLine(`Competências (C1–C5): ${comps}`, LEFT, y, 12);
-    y -= GAP + 4; // pequeno respiro antes do gráfico
-  
-    // 5) gráfico largo, entre dados e comentários
-    try{
-      const chartUrl = await makeChartImage(A, R);
-      if (chartUrl){
-        const bytes = dataURLtoBytes(chartUrl);
-        const png   = await doc.embedPng(bytes);
-  
-        const MAX_W = page.getWidth() - LEFT*2; // ocupa toda a largura útil
-        const H     = 160;
-        const W     = MAX_W;
-  
-        page.drawImage(png, {
-          x: LEFT,
-          y: y - H,
-          width: W,
-          height: H
-        });
-        y -= (H + 12); // espaço após o gráfico
+  //* ===== PDF (pdf-lib) com template + comparativo + mini C1..C5 ===== */
+    async function gerarPDF(){
+      if (!ultimoResultado) return;
+    
+      const { PDFDocument, StandardFonts } = PDFLib;
+    
+      // tenta abrir o template de fundo
+      let tplPdf = null;
+      try{
+        const ab = await fetch(TEMPLATE_URL, { cache:'no-store' }).then(r => r.arrayBuffer());
+        tplPdf = await PDFDocument.load(ab);
+      }catch(e){
+        console.warn('Não consegui carregar TEMPLATE_URL; usando página em branco.', e);
       }
-    }catch(e){
-      console.warn('Falha ao desenhar gráfico', e);
+    
+      // cria doc + página
+      const doc  = await PDFDocument.create();
+      let page;
+      if (tplPdf){
+        const [tpl] = await doc.copyPages(tplPdf, [0]);
+        page = doc.addPage(tpl);
+      } else {
+        page = doc.addPage([595.28, 841.89]); // A4
+      }
+    
+      // fonte + contexto p/ helpers
+      const font = await doc.embedFont(StandardFonts.Helvetica);
+      setPdfContext(doc, page, font);
+    
+      // ===== layout/base =====
+      const LEFT   = 48;                         // margem esquerda
+      const GAP    = 14;                         // espaçamento de linha
+      const TOP_Y  = page.getHeight() - 160;     // abaixa tudo pra respirar abaixo do logo
+      let y        = TOP_Y;
+    
+      // dados
+      const j  = ultimoResultado;
+      const A  = j.areas || {};
+      const R  = j.redacao || {};
+      const C  = j.classificacao || {};
+      const nome = (j.aluno && j.aluno.nome)       || '-';
+      const unid = (j.aluno && j.aluno.unidadeNome)|| '-';
+    
+      // cabeçalho
+      drawTextLine('Resultado ENEM', LEFT, y + 18, 16);
+      drawTextLine(`Aluno: ${nome}`,             LEFT, y, 12); y -= GAP;
+      drawTextLine(`Inscrição: ${j.inscricao}`,  LEFT, y, 12);
+      drawTextLine(`Unidade: ${unid}`,           LEFT + 220, y, 12); y -= GAP;
+    
+      // notas principais
+      const linhas = [
+        ['Linguagens',        A.linguagens],
+        ['Humanas',           A.humanas],
+        ['Natureza',          A.natureza],
+        ['Matemática',        A.matematica],
+        ['Redação (total)',   R.total],
+        ['CLS_G',             C.cls_g ?? j.cls_g],
+        ['CLS_U',             C.cls_u ?? j.cls_u],
+      ];
+      for (const [k,v] of linhas){
+        drawTextLine(`${k}: ${v == null ? '-' : v}`, LEFT, y, 12);
+        y -= GAP;
+      }
+    
+      // competências textuais
+      const comps = [R.c1, R.c2, R.c3, R.c4, R.c5].filter(x => x != null).join(' / ') || '-';
+      drawTextLine(`Competências (C1–C5): ${comps}`, LEFT, y, 12);
+      y -= GAP + 6;
+    
+      // ===== linha de gráficos =====
+      // à esquerda: comparativo das 4 áreas (Aluno x Média)
+      // à direita: mini colunas C1..C5
+      const COL_GAP   = 18;
+      const RIGHT_COL = 180;           // largura reservada às mini colunas
+      const W_LEFT    = page.getWidth() - LEFT*2 - COL_GAP - RIGHT_COL;
+      const H_GRAPH   = 170;
+    
+      try{
+        // comparativo (Aluno x Média)
+        const urlComparativo = await makeChartImageComparativo(A, mediasGlobais);
+        if (urlComparativo){
+          const png  = await doc.embedPng(dataURLtoBytes(urlComparativo));
+          page.drawImage(png, {
+            x: LEFT,
+            y: y - H_GRAPH,
+            width:  W_LEFT,
+            height: H_GRAPH
+          });
+        }
+    
+        // mini C1..C5
+        const urlMini = await makeChartImageCompetencias(R);
+        if (urlMini){
+          const pngC = await doc.embedPng(dataURLtoBytes(urlMini));
+          page.drawImage(pngC, {
+            x: LEFT + W_LEFT + COL_GAP,
+            y: y - 120,           // altura menor que H_GRAPH
+            width:  RIGHT_COL,
+            height: 110
+          });
+        }
+    
+        y -= (H_GRAPH + 16); // espaço após a linha de gráficos
+      }catch(e){
+        console.warn('Falha ao desenhar gráficos', e);
+      }
+    
+      // ===== comentários com bullets
+      const msgs = getMessages(A, R);
+      _pdf_ctx.y = y;
+      drawBullet(msgs.linguagens, 12);
+      drawBullet(msgs.humanas,    12);
+      drawBullet(msgs.natureza,   12);
+      drawBullet(msgs.matematica, 12);
+      drawBullet(msgs.redacao,    12);
+    
+      // salva
+      const bytes = await doc.save();
+      const blob  = new Blob([bytes], { type:'application/pdf' });
+      const a     = document.createElement('a');
+      a.href      = URL.createObjectURL(blob);
+      a.download  = `resultado_ENEM_${j.inscricao}.pdf`;
+      a.click();
     }
-  
-    // 6) comentários (pula linha antes; bullets, com quebra automática)
-    y -= 6;                        // linha em branco
-    _pdf_ctx.y = y;                // informa aos helpers por onde começar
-  
-    const msgs = getMessages(A, R);
-    drawBullet(msgs.linguagens, 12);
-    drawBullet(msgs.humanas,    12);
-    drawBullet(msgs.natureza,   12);
-    drawBullet(msgs.matematica, 12);
-    drawBullet(msgs.redacao,    12);
-  
-    // 7) salva
-    const bytes = await doc.save();
-    const blob  = new Blob([bytes], { type:'application/pdf' });
-    const a     = document.createElement('a');
-    a.href      = URL.createObjectURL(blob);
-    a.download  = `resultado_ENEM_${j.inscricao}.pdf`;
-    a.click();
-  }
+
 
 
   /* ===== helpers gerais ===== */
@@ -535,6 +562,68 @@
       drawTextLine(lines[i], _pdf_ctx.MARGIN_X + bulletWidth, _pdf_ctx.y, size);
     }
   }
+
+    // gráfico comparativo: 4 áreas (Aluno x Média)
+async function makeChartImageComparativo(A, medias){
+  const el = document.getElementById('grafico');
+  if (!el) return null;
+  if (window._chartInst) window._chartInst.destroy();
+
+  const labels = ['LING', 'HUM', 'NAT', 'MAT'];
+  const aluno  = [A.linguagens ?? null, A.humanas ?? null, A.natureza ?? null, A.matematica ?? null];
+
+  const datasets = [{ label:'Aluno', data: aluno }];
+
+  if (medias){
+    datasets.push({
+      label: 'Média',
+      data: [
+        medias.linguagens ?? null,
+        medias.humanas    ?? null,
+        medias.natureza   ?? null,
+        medias.matematica ?? null
+      ]
+    });
+  }
+
+  window._chartInst = new Chart(el.getContext('2d'), {
+    type: 'bar',
+    data: { labels, datasets },
+    options: {
+      responsive: false, animation: false,
+      scales: { y: { suggestedMin: 0, suggestedMax: 1000 } },
+      plugins: { legend: { position: 'top' } }
+    }
+  });
+
+  await new Promise(r=>setTimeout(r, 50));
+  return el.toDataURL('image/png');
+}
+
+// mini colunas C1..C5
+async function makeChartImageCompetencias(R){
+  const c = document.getElementById('graficoC');
+  if (!c) return null;
+  if (window._chartInstC) window._chartInstC.destroy();
+
+  const labels = ['C1','C2','C3','C4','C5'];
+  const data   = [R.c1, R.c2, R.c3, R.c4, R.c5].map(x => x ?? null);
+
+  window._chartInstC = new Chart(c.getContext('2d'), {
+    type: 'bar',
+    data: { labels, datasets: [{ label:'Comp.', data }] },
+    options: {
+      responsive:false, animation:false,
+      scales:{ y:{ suggestedMin:0, suggestedMax:200 } },
+      plugins:{ legend:{ display:false } }
+    }
+  });
+
+  await new Promise(r=>setTimeout(r, 50));
+  return c.toDataURL('image/png');
+}
+
+    
   </script>
 </body>
 </html>
