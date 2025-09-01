@@ -26,6 +26,7 @@
   </style>
 </head>
 <body>
+  <img src="https://lh3.googleusercontent.com/5nyUCpU0Fz51OEgk2kJNCfAEJ4mbrWWsmw1-MnI0Sxr0N0QLOUcCfIhEKKc9bfjpA1Z6C5AbRZGqkO42snJrTMPFhvwDEAl5FosWt4xpmJ9xuh1NxZT7to9WbIXm3AjGiSob5nLJHYi0-I23tp7VCNzoN-w5hEABhsUG2dkTW5g-zP0mvXqiOw=w1280" class="CENy8b" role="img">
   <header>
     <h1>Simulados Abertos — Curso Objetivo Vestibulares</h1>
   </header>
@@ -194,37 +195,47 @@ function driveIdFrom(link){
   return m2 ? m2[1] : null;
 }
 
-function montarRedacao(link){
-  const box   = document.getElementById('imgBox');
-  const pLink = document.getElementById('red_link_p');
-  const aLink = document.getElementById('red_link_a');
-  box.innerHTML = ''; pLink.style.display = 'none';
+function montarRedacao(link) {
+  const box = document.getElementById('imgBox');
+  if (!box) return;               // se não existe, não faz nada
+  box.innerHTML = '';
+  if (!link) return;              // sem link, só deixa vazio
 
-  if (!link) return;
-
-  const id = driveIdFrom(link);
-  const openUrl = id ? `https://drive.google.com/file/d/${id}/view` : link;
-  const imgUrl  = id ? `https://drive.google.com/uc?id=${id}&export=view` : link;
-  const prevUrl = id ? `https://drive.google.com/file/d/${id}/preview` : link;
-
-  // link para abrir no Drive
-  aLink.href = openUrl; pLink.style.display = 'block';
-
-  // tenta como imagem, se falhar cai para preview
-  const img = document.createElement('img');
-  img.className = 'redacao';
-  img.alt = 'Redação';
-  img.onload  = () => box.appendChild(img);
-  img.onerror = () => {
-    const iframe = document.createElement('iframe');
-    iframe.style.width = '100%';
-    iframe.style.height = '820px';
-    iframe.style.border = '0';
-    iframe.src = prevUrl;
-    box.appendChild(iframe);
+  // converte links do Drive do tipo /file/d/<id>/view -> uc?id=<id>&export=view
+  const toUc = (l) => {
+    if (!l) return null;
+    const m = String(l).match(/\/file\/d\/([^/]+)\//);
+    return m ? `https://drive.google.com/uc?id=${m[1]}&export=view` : l;
   };
-  img.src = imgUrl;
+  const url = toUc(link);
+
+  // se vier como imagem (uc?id=...), tenta <img>; senão, usa <iframe> preview
+  const isImage = url.includes('/uc?');
+  if (isImage) {
+    const img = new Image();
+    img.className = 'redacao';
+    img.alt = 'Redação';
+    img.src = url;
+    box.appendChild(img);
+  } else {
+    const ifr = document.createElement('iframe');
+    ifr.style.width = '100%';
+    ifr.style.height = '820px';
+    ifr.style.border = '0';
+    ifr.src = url.replace('/view','/preview').replace('open?','preview?');
+    box.appendChild(ifr);
+  }
+
+  // link alternativo
+  const p = document.createElement('p');
+  p.style.marginTop = '8px';
+  const a = document.createElement('a');
+  a.href = url; a.target = '_blank'; a.rel = 'noopener';
+  a.textContent = 'Abrir no Google Drive';
+  p.append('Não carregou como imagem? ', a);
+  box.appendChild(p);
 }
+
 
 /* ===== MENSAGENS POR NOTA ===== */
 function getMessages(A, R){
