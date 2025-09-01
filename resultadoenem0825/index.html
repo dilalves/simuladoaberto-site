@@ -55,6 +55,8 @@
             <tr><th>NATUREZA</th><td id="n_nat"></td></tr>
             <tr><th>MATEMÁTICA</th><td id="n_mat"></td></tr>
             <tr><th>Redação (Total)</th><td id="n_red_total"></td></tr>
+            <tr><th>CLS_G (Class. geral)</th><td id="n_CLS_G"></td></tr>
+            <tr><th>CLS_U (Class. na unidade)</th><td id="n_CLS_U"></td></tr>
             <tr><th>Competências (C1–C5)</th><td id="n_red_comp"></td></tr>
           </tbody>
         </table>
@@ -70,6 +72,9 @@
         <div style="margin-top:16px">
           <h6 class="blue-text text-darken-2">Imagem da Redação</h6>
           <div id="imgBox"></div>
+          <p id="red_link_p" style="display:none;margin-top:8px;">
+            Não carregou como imagem? <a id="red_link_a" href="#" target="_blank" rel="noopener">Abrir no Google Drive</a>
+          </p>
         </div>
       </div>
     </div>
@@ -84,10 +89,7 @@
 <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
 
 <script>
-/* ===== CONFIGURE AQUI =====
- * Cole a URL de deployment do seu Apps Script Web App (termina com /exec)
- * Ex.: const ENDPOINT = 'https://script.google.com/macros/s/AKfycb.../exec';
- */
+/* ===== CONFIGURE AQUI ===== */
 const ENDPOINT = 'https://script.google.com/macros/s/AKfycbwradbKRivZtlC3TAWqqPuIsC1UoM6Lgh53FRsM0Z9GryRZ6EcPAXP6NVj_3KqNwJw3/exec'; // action=resultado
 
 /* ===== ESTADO ===== */
@@ -121,10 +123,11 @@ async function consultar(){
 
     ultimoResultado = j;
 
-    // Preenche tabela
+    // Cabeçalho e tabela
     document.getElementById('alunoNome').textContent = (j.aluno && j.aluno.nome) ? j.aluno.nome : `Inscrição ${j.inscricao}`;
     document.getElementById('inscOut').textContent = j.inscricao;
-    document.getElementById('unidOut').textContent = (j.aluno && j.aluno.unidadeCodigo) ? j.aluno.unidadeCodigo : '-';
+    // 👉 mostrar NOME da unidade (não o código)
+    document.getElementById('unidOut').textContent = (j.aluno && j.aluno.unidadeNome) ? j.aluno.unidadeNome : '-';
 
     const A = j.areas || {};
     const R = j.redacao || {};
@@ -133,6 +136,11 @@ async function consultar(){
     setText('n_nat',  A.natureza);
     setText('n_mat',  A.matematica);
     setText('n_red_total', R.total);
+
+    // CLS_G / CLS_U
+    setText('n_CLS_G', j.cls_g ?? j.clsG ?? j.CLS_G ?? '-');
+    setText('n_CLS_U', j.cls_u ?? j.clsU ?? j.CLS_U ?? '-');
+
     const comps = [R.c1,R.c2,R.c3,R.c4,R.c5].filter(x=>x!=null).join(' / ') || '-';
     document.getElementById('n_red_comp').textContent = comps;
 
@@ -144,17 +152,9 @@ async function consultar(){
     document.getElementById('msg_mat').textContent  = msgs.matematica;
     document.getElementById('msg_red').textContent  = msgs.redacao;
 
-    // Imagem da redação
+    // Imagem/preview da Redação (com fallback)
     const L = j.links || {};
-    const imgBox = document.getElementById('imgBox');
-    imgBox.innerHTML = '';
-    if (L.imagemRedacao) {
-      const img = document.createElement('img');
-      img.src = L.imagemRedacao; // use uc?id=...&export=view
-      img.alt = 'Redação';
-      img.className = 'redacao';
-      imgBox.appendChild(img);
-    }
+    montarRedacao(L.imagemRedacao);
 
     resDiv.style.display = 'block';
     btnPdf.disabled = false; btnPdf.classList.remove('grey');
@@ -168,7 +168,48 @@ async function consultar(){
 
 function setText(id, v){ document.getElementById(id).textContent = (v==null?'-':v); }
 
-/* ===== MENSAGENS POR NOTA (edite as faixas à vontade) ===== */
+/* ===== Drive helpers + fallback imagem/preview ===== */
+function driveIdFrom(link){
+  if (!link) return null;
+  const m1 = String(link).match(/\/file\/d\/([^/]+)\//); // /file/d/ID/
+  if (m1) return m1[1];
+  const m2 = String(link).match(/[?&]id=([^&]+)/);       // ?id=ID
+  return m2 ? m2[1] : null;
+}
+
+function montarRedacao(link){
+  const box   = document.getElementById('imgBox');
+  const pLink = document.getElementById('red_link_p');
+  const aLink = document.getElementById('red_link_a');
+  box.innerHTML = ''; pLink.style.display = 'none';
+
+  if (!link) return;
+
+  const id = driveIdFrom(link);
+  const openUrl = id ? `https://drive.google.com/file/d/${id}/view` : link;
+  const imgUrl  = id ? `https://drive.google.com/uc?id=${id}&export=view` : link;
+  const prevUrl = id ? `https://drive.google.com/file/d/${id}/preview` : link;
+
+  // link para abrir no Drive
+  aLink.href = openUrl; pLink.style.display = 'block';
+
+  // tenta como imagem, se falhar cai para preview
+  const img = document.createElement('img');
+  img.className = 'redacao';
+  img.alt = 'Redação';
+  img.onload  = () => box.appendChild(img);
+  img.onerror = () => {
+    const iframe = document.createElement('iframe');
+    iframe.style.width = '100%';
+    iframe.style.height = '820px';
+    iframe.style.border = '0';
+    iframe.src = prevUrl;
+    box.appendChild(iframe);
+  };
+  img.src = imgUrl;
+}
+
+/* ===== MENSAGENS POR NOTA ===== */
 function getMessages(A, R){
   const mk = (x, name)=>{
     if (x==null) return `${name}: sem nota registrada.`;
@@ -193,7 +234,7 @@ function getMessages(A, R){
   };
 }
 
-/* ===== PDF (pdf-lib) com gráfico (Chart.js) + imagem da redação ===== */
+/* ===== PDF (pdf-lib) com gráfico (Chart.js) ===== */
 async function gerarPDF(){
   if (!ultimoResultado) return;
   const { PDFDocument, rgb, StandardFonts } = PDFLib;
@@ -206,13 +247,16 @@ async function gerarPDF(){
   let y = 800;
   draw(page, 'Resultado ENEM', 40, y, 18); y-=24;
   draw(page, `Aluno: ${ (j.aluno&&j.aluno.nome) || '-' }`, 40, y); y-=16;
-  draw(page, `Inscrição: ${j.inscricao}   Unidade: ${(j.aluno&&j.aluno.unidadeCodigo)||'-'}`, 40, y); y-=20;
+  // 👉 usa NOME da unidade
+  draw(page, `Inscrição: ${j.inscricao}   Unidade: ${(j.aluno&&j.aluno.unidadeNome)||'-'}`, 40, y); y-=20;
 
   const A = j.areas || {}, R = j.redacao || {};
   const linhas = [
     ['Linguagens', val(A.linguagens)], ['Humanas', val(A.humanas)],
     ['Natureza', val(A.natureza)], ['Matemática', val(A.matematica)],
-    ['Redação (total)', val(R.total)]
+    ['Redação (total)', val(R.total)],
+    ['CLS_G', val(j.cls_g ?? j.clsG ?? j.CLS_G)],
+    ['CLS_U', val(j.cls_u ?? j.clsU ?? j.CLS_U)]
   ];
   linhas.forEach(([k,v])=>{ draw(page, `${k}: ${v}`, 40, y); y-=14; });
 
@@ -230,26 +274,6 @@ async function gerarPDF(){
   const msgs = getMessages(A, R);
   [msgs.linguagens, msgs.humanas, msgs.natureza, msgs.matematica, msgs.redacao]
     .forEach(m=>{ y -= 14; draw(page, '• ' + m, 40, y); });
-
-  // Página 2: imagem da redação
-  const L = j.links || {};
-  if (L.imagemRedacao){
-    const page2 = doc.addPage([595.28, 841.89]);
-    draw(page2, 'Redação', 40, 812, 16);
-    try {
-      const imgBytes = await (await fetch(L.imagemRedacao)).arrayBuffer();
-      let img;
-      try { img = await doc.embedJpg(imgBytes); }
-      catch { img = await doc.embedPng(imgBytes); }
-      const maxW = 515, maxH = 740;
-      const ratio = Math.min(maxW / img.width, maxH / img.height);
-      const w = img.width * ratio, h = img.height * ratio;
-      page2.drawImage(img, { x: 40, y: 812 - h - 10, width: w, height: h });
-    } catch(e){
-      draw(page2, '(Não foi possível carregar a imagem da redação)', 40, 780);
-      console.error('Erro ao baixar imagem da Redação:', e);
-    }
-  }
 
   const bytes = await doc.save();
   const blob = new Blob([bytes], { type:'application/pdf' });
