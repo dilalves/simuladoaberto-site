@@ -67,7 +67,7 @@
 </head>
 <body>
   <header>
-    <h1>Simulados Abertos — Curso Objetivo Vestibulares - V4</h1>
+    <h1>Simulados Abertos — Curso Objetivo Vestibulares - V1</h1>
   </header>
 
   <div class="container" style="max-width:900px; margin-top:28px">
@@ -185,29 +185,24 @@
 
     ultimoResultado = j;
 
-    /* === PATCH: médias globais (Aluno x Média no gráfico) === */
-    // 1) tenta vir já no próprio payload do resultado
-    ultimoResultado.medias = j.medias || null;
-
-    // 2) se não veio, busca num endpoint separado (?action=medias)
+    /* === MÉDIAS GLOBAIS (p/ comparativo) === */
+    ultimoResultado.medias = normalizeMedias(j.medias);
+    
     if (!ultimoResultado.medias) {
       try {
         const rMed = await fetch(`${ENDPOINT}?action=medias`, { cache: 'no-store' });
         if (rMed.ok) {
           const jMed = await rMed.json();
-          // aceita tanto {ok:true, medias:{...}} quanto {linguagens:..., humanas:...}
-          const medias = jMed?.medias ?? jMed ?? null;
-          if (medias && (medias.linguagens!=null || medias.humanas!=null || medias.natureza!=null || medias.matematica!=null)) {
-            ultimoResultado.medias = medias;
-          }
+          const medias = normalizeMedias(jMed?.medias ?? jMed ?? null);
+          if (medias) ultimoResultado.medias = medias;
         }
-      } catch (e) {
-        console.warn('Sem médias do endpoint.', e);
+      } catch(e) {
+        console.warn('Sem médias do endpoint', e);
       }
     }
-    // opcional, só para conferir
     console.log('MEDIAS USADAS:', ultimoResultado.medias);
-    /* === /PATCH === */
+    
+    /* === /MÉDIAS === */
 
     // Cabeçalho
     document.getElementById('alunoNome').textContent = (j.aluno && j.aluno.nome) ? j.aluno.nome : `Inscrição ${j.inscricao}`;
@@ -455,9 +450,9 @@
     }
     y -= 6;
   
-    // gráfico comparativo grande (Aluno x Média)
-    try {
-      const medias = j.medias ?? ultimoResultado.medias ?? null; // <- pega do estado se não vier no resultado
+    // gráfico comparativo grande
+    try{
+      const medias = normalizeMedias(j.medias ?? ultimoResultado.medias ?? null);
       const urlComp = await makeChartImageComparativo(A, medias);
       if (urlComp){
         const png = await doc.embedPng(dataURLtoBytes(urlComp));
@@ -466,7 +461,8 @@
         page1.drawImage(png, { x: LEFT, y: y - H, width: W, height: H });
         y -= (H + 16);
       }
-    } catch(e){ console.warn('comparativo', e); }
+    }catch(e){ console.warn('comparativo', e); }
+
 
 
   
@@ -637,16 +633,19 @@ async function makeChartImageComparativo(A, medias){
   const el = document.getElementById('grafico');
   if (!el) return null;
 
-  // garante que o canvas está “ativo” para o Chart.js
   const restore = useOffscreenCanvas();
-
   if (window._chartInst) window._chartInst.destroy();
 
   const labels = ['LING', 'HUM', 'NAT', 'MAT'];
   const aluno  = [A.linguagens ?? null, A.humanas ?? null, A.natureza ?? null, A.matematica ?? null];
 
   const datasets = [{ label:'Aluno', data: aluno }];
-  if (medias){
+
+  const hasAnyMedia =
+    medias && [medias.linguagens, medias.humanas, medias.natureza, medias.matematica]
+      .some(v => v != null && Number.isFinite(Number(v)));
+
+  if (hasAnyMedia){
     datasets.push({
       label:'Média',
       data:[
@@ -662,25 +661,23 @@ async function makeChartImageComparativo(A, medias){
     type: 'bar',
     data: { labels, datasets },
     options: {
-      responsive:false,
-      animation:false,
+      responsive:false, animation:false,
       scales:{ y:{ suggestedMin:0, suggestedMax:1000 } },
-      plugins:{ legend:{ position:'top' } }
+      plugins:{ legend:{ display:true, position:'top' } }
     },
     plugins:[chartValueLabels]
   });
 
-  // garante layout antes do snapshot
   window._chartInst.update();
   await new Promise(r => requestAnimationFrame(r));
-  await sleep(80);
+  await new Promise(r => setTimeout(r, 100));
 
   const url = el.toDataURL('image/png');
-
   window._chartInst.destroy();
   restore();
   return url;
 }
+
 
 
 // ——— Competências C1..C5 (com rótulos) ———
@@ -763,6 +760,28 @@ async function makeChartImageCompetencias(R){
       wrap.style.visibility = 'hidden';
       return () => Object.assign(wrap.style, prev);
     }
+
+    function normalizeMedias(m){
+  if (!m) return null;
+  const pick = (obj, ...keys) =>
+    keys.reduce((v,k)=> v ?? obj?.[k], null);
+
+  const toNum = v => {
+    if (v == null) return null;
+    const n = Number(String(v).replace(',', '.'));
+    return Number.isFinite(n) ? n : null;
+  };
+
+  const out = {
+    linguagens: toNum(pick(m, 'linguagens','ling','Linguagens','LING')),
+    humanas:    toNum(pick(m, 'humanas','hum','Humanas','HUM')),
+    natureza:   toNum(pick(m, 'natureza','nat','Natureza','NAT')),
+    matematica: toNum(pick(m, 'matematica','mat','Matemática','MAT'))
+  };
+
+  // se tudo deu null, considera inválido
+  return (out.linguagens ?? out.humanas ?? out.natureza ?? out.matematica) != null ? out : null;
+}
     
   </script>
 </body>
