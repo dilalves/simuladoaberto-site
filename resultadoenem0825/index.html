@@ -67,7 +67,7 @@
 </head>
 <body>
   <header>
-    <h1>Simulados Abertos — Curso Objetivo Vestibulares - V1</h1>
+    <h1>Simulados Abertos — Curso Objetivo Vestibulares - V2</h1>
   </header>
 
   <div class="container" style="max-width:900px; margin-top:28px">
@@ -636,7 +636,7 @@ async function makeChartImageComparativo(A, medias){
   const restore = useOffscreenCanvas();
   if (window._chartInst) window._chartInst.destroy();
 
-  const labels = ['LINGUAGEM', 'HUMANAS', 'NATUREZA', 'MATEMÁTICA'];
+  const labels = ['LING', 'HUM', 'NAT', 'MAT'];
   const aluno  = [A.linguagens ?? null, A.humanas ?? null, A.natureza ?? null, A.matematica ?? null];
 
   const datasets = [{ label:'Aluno', data: aluno }];
