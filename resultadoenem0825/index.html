@@ -67,7 +67,7 @@
 </head>
 <body>
   <header>
-    <h1>Simulados Abertos — Curso Objetivo Vestibulares - v1</h1>
+    <h1>Simulados Abertos — Curso Objetivo Vestibulares - V2</h1>
   </header>
 
   <div class="container" style="max-width:900px; margin-top:28px">
@@ -608,6 +608,10 @@
 async function makeChartImageComparativo(A, medias){
   const el = document.getElementById('grafico');
   if (!el) return null;
+
+  // garante que o canvas está “ativo” para o Chart.js
+  const restore = useOffscreenCanvas();
+
   if (window._chartInst) window._chartInst.destroy();
 
   const labels = ['LING', 'HUM', 'NAT', 'MAT'];
@@ -630,21 +634,34 @@ async function makeChartImageComparativo(A, medias){
     type: 'bar',
     data: { labels, datasets },
     options: {
-      responsive:false, animation:false,
+      responsive:false,
+      animation:false,
       scales:{ y:{ suggestedMin:0, suggestedMax:1000 } },
       plugins:{ legend:{ position:'top' } }
     },
     plugins:[chartValueLabels]
   });
 
-  await new Promise(r=>setTimeout(r,50));
-  return el.toDataURL('image/png');
+  // garante layout antes do snapshot
+  window._chartInst.update();
+  await new Promise(r => requestAnimationFrame(r));
+  await sleep(80);
+
+  const url = el.toDataURL('image/png');
+
+  window._chartInst.destroy();
+  restore();
+  return url;
 }
+
 
 // ——— Competências C1..C5 (com rótulos) ———
 async function makeChartImageCompetencias(R){
   const c = document.getElementById('graficoC');
   if (!c) return null;
+
+  const restore = useOffscreenCanvas();
+
   if (window._chartInstC) window._chartInstC.destroy();
 
   const labels = ['C1','C2','C3','C4','C5'];
@@ -654,15 +671,25 @@ async function makeChartImageCompetencias(R){
     type: 'bar',
     data: { labels, datasets:[{ label:'Competências', data }] },
     options: {
-      responsive:false, animation:false,
+      responsive:false,
+      animation:false,
       scales:{ y:{ suggestedMin:0, suggestedMax:200 } },
       plugins:{ legend:{ display:false } }
     },
     plugins:[chartValueLabels]
   });
-  await new Promise(r=>setTimeout(r,50));
-  return c.toDataURL('image/png');
+
+  window._chartInstC.update();
+  await new Promise(r => requestAnimationFrame(r));
+  await sleep(80);
+
+  const url = c.toDataURL('image/png');
+
+  window._chartInstC.destroy();
+  restore();
+  return url;
 }
+
 
 
 // ——— Plugin: escreve o valor em cima de cada barra ———
@@ -685,6 +712,29 @@ async function makeChartImageCompetencias(R){
         ctx.restore();
       }
     };
+
+    // espera simples
+    const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+    
+    // liga o "laboratório" de gráficos fora da tela e retorna um restore()
+    function useOffscreenCanvas() {
+      const wrap = document.getElementById('chartWrap');
+      if (!wrap) return () => {};
+      const prev = {
+        display: wrap.style.display,
+        position: wrap.style.position,
+        left: wrap.style.left,
+        top: wrap.style.top,
+        visibility: wrap.style.visibility,
+      };
+      // mostra o container, mas fora da tela (nada pisca)
+      wrap.style.display = 'block';
+      wrap.style.position = 'absolute';
+      wrap.style.left = '-10000px';
+      wrap.style.top = '-10000px';
+      wrap.style.visibility = 'hidden';
+      return () => Object.assign(wrap.style, prev);
+    }
     
   </script>
 </body>
