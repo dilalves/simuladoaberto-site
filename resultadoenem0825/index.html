@@ -666,13 +666,9 @@ async function makeChartImageComparativo(A, medias){
       scales: { y: { suggestedMin: 0, suggestedMax: 1000 } },
       plugins: {
         legend: { display: true, position: 'top' },
-        // 👇 força 2 casas nos rótulos
-        chartValueLabels: {
-          formatter: (v) => v.toFixed(2)
-        }
+        chartValueLabels: { formatter: v => v.toFixed(2) } // 👈 2 casas
       }
-    },
-    plugins: [chartValueLabels]
+    }
   });
 
   window._chartInst.update();
@@ -708,13 +704,9 @@ async function makeChartImageCompetencias(R){
       scales: { y: { suggestedMin: 0, suggestedMax: 200 } },
       plugins: {
         legend: { display: false },
-        // 👇 sem casas decimais
-        chartValueLabels: {
-          formatter: (v) => String(Math.round(v))
-        }
+        chartValueLabels: { formatter: v => String(Math.round(v)) } // 👈 inteiro
       }
-    },
-    plugins: [chartValueLabels]
+    }
   });
 
   window._chartInstC.update();
@@ -728,17 +720,12 @@ async function makeChartImageCompetencias(R){
   return url;
 }
 
-
-
-// Plugin: rótulos nas barras com formatação customizável
+// Plugin: rótulos nas barras com formatação customizável (Chart.js v4)
 const chartValueLabels = {
   id: 'chartValueLabels',
-  afterDatasetsDraw(chart) {
+  afterDatasetsDraw(chart, _args, pluginOptions) {
     const { ctx } = chart;
-    // pega formatter passado nas opções; se não houver, vira string normal
-    const fmt =
-      chart.options?.plugins?.chartValueLabels?.formatter ||
-      ((v) => String(v));
+    const fmt = pluginOptions?.formatter || ((v) => String(v));
 
     ctx.save();
     ctx.font = '10px sans-serif';
@@ -748,17 +735,19 @@ const chartValueLabels = {
     chart.data.datasets.forEach((ds, di) => {
       const meta = chart.getDatasetMeta(di);
       meta.data.forEach((el, i) => {
-        const raw = ds.data[i];
-        const n = Number(raw);
+        const n = Number(ds.data[i]);
         if (!Number.isFinite(n)) return;
-        const text = fmt(n, ds, chart, i);
-        ctx.fillText(text, el.x, el.y - 4);
+        ctx.fillText(fmt(n, ds, chart, i), el.x, el.y - 4);
       });
     });
 
     ctx.restore();
   }
 };
+
+// registra o plugin globalmente
+Chart.register(chartValueLabels);
+
 
 
     // espera simples
