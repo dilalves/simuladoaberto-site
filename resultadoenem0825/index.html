@@ -69,7 +69,7 @@
 </head>
 <body>
   <header>
-    <h1>Simulados Abertos — Curso Objetivo Vestibulares - V1</h1>
+    <h1>Simulados Abertos — Curso Objetivo Vestibulares - V2</h1>
   </header>
 
   <div class="container" style="max-width:900px; margin-top:28px">
@@ -438,17 +438,8 @@
     drawTextLine(`Unidade: ${unid}`,          LEFT + 220, y, 12); y -= GAP;
   
     // notas em tabela (valores alinhados)
-    const linhas1 = [
-      ['Linguagens', fmt2(A.linguagens)],
-      ['Humanas',    fmt2(A.humanas)],
-      ['Natureza',   fmt2(A.natureza)],
-      ['Matemática', fmt2(A.matematica)],
-      ['Classificação Geral',      C.cls_g ?? j.cls_g ?? '-'],
-      ['Classificação na Unidade',      C.cls_u ?? j.cls_u ?? '-'],
-    ];
-    y = drawKeyValTable(linhas1, LEFT, y, {
-      size: 12, labelW: 115, valueW: 90, rowH: 18
-    });
+    y = drawScoreTableCentered(A, C, y);   // devolve o novo Y logo abaixo da tabela
+
   
     // gráfico comparativo grande
     try{
@@ -893,6 +884,71 @@ function drawKeyValTable(rows, x, y, opts={}){
   });
 
   return y - hTotal - gap;
+}
+
+    // Tabela centralizada, translúcida e com 2 casas nas áreas
+function drawScoreTableCentered(A, C, yTop) {
+  const size = 12;
+  const lh   = Math.round(size * 1.25);
+  const pad  = 8;
+
+  // linhas: [rótulo, valor, ehNota?]  (ehNota => 2 casas decimais)
+  const linhas = [
+    ['Linguagens', A.linguagens, true],
+    ['Humanas',    A.humanas,    true],
+    ['Natureza',   A.natureza,   true],
+    ['Matemática', A.matematica, true],
+    ['Classificação Geral',   (C.cls_g ?? '-'), false],
+    ['Classificação na Unidade', (C.cls_u ?? '-'), false],
+  ];
+
+  // larguras das colunas
+  const COL1 = 190;   // rótulos
+  const COL2 = 90;    // valores (alinhados à direita)
+  const W    = COL1 + COL2 + pad*2;
+  const H    = linhas.length * lh + pad*2;
+
+  // centraliza horizontalmente
+  const x = Math.round((_pdf_ctx.page.getWidth() - W) / 2);
+  const y = yTop;                 // topo da caixa
+  const yBox = y - H;             // base da caixa
+
+  // fundo translúcido (mostra a marca d’água)
+  _pdf_ctx.page.drawRectangle({
+    x, y: yBox, width: W, height: H,
+    color: PDFLib.rgb(1,1,1),     // branco
+    opacity: 0.55,                // transparência
+    borderColor: PDFLib.rgb(0.85,0.9,1),
+    borderWidth: 1,
+    borderOpacity: 0.8
+  });
+
+  // escreve linhas
+  for (let i = 0; i < linhas.length; i++) {
+    const yy = y - pad - (i+0.8)*lh;   // posição da linha (um tiquinho acima do centro do lh)
+    const [rot, val, ehNota] = linhas[i];
+
+    // rótulo (esq.)
+    drawTextLine(rot, x + pad, yy, size);
+
+    // valor (dir., alinhado à direita)
+    let texto;
+    if (val == null || val === '-') {
+      texto = '-';
+    } else if (ehNota) {
+      const n = Number(val);
+      texto = Number.isFinite(n) ? n.toFixed(2) : String(val);
+    } else {
+      texto = String(val);
+    }
+
+    const tw = _pdf_ctx.font.widthOfTextAtSize(texto, size);
+    const xRight = x + pad + COL1 + COL2;          // borda direita da coluna de valores
+    drawTextLine(texto, xRight - tw, yy, size);
+  }
+
+  // retorna o novo Y logo abaixo da caixa, com um espacinho
+  return (yBox - 10);
 }
 
     
