@@ -69,7 +69,7 @@
 </head>
 <body>
   <header>
-    <h1>Simulados Abertos — Curso Objetivo Vestibulares - V2</h1>
+    <h1>Simulados Abertos — Curso Objetivo Vestibulares - V1</h1>
   </header>
 
   <div class="container" style="max-width:900px; margin-top:28px">
@@ -437,20 +437,18 @@
     drawTextLine(`Inscrição: ${j.inscricao}`, LEFT, y, 12);
     drawTextLine(`Unidade: ${unid}`,          LEFT + 220, y, 12); y -= GAP;
   
-    // notas (sem colocar Redação total aqui, fica na pág. 2)
+    // notas em tabela (valores alinhados)
     const linhas1 = [
-      ['Linguagens', A.linguagens],
-      ['Humanas',    A.humanas],
-      ['Natureza',   A.natureza],
-      ['Matemática', A.matematica],
-      ['CLS_G',      C.cls_g ?? j.cls_g],
-      ['CLS_U',      C.cls_u ?? j.cls_u],
+      ['Linguagens', fmt2(A.linguagens)],
+      ['Humanas',    fmt2(A.humanas)],
+      ['Natureza',   fmt2(A.natureza)],
+      ['Matemática', fmt2(A.matematica)],
+      ['Classificação Geral',      C.cls_g ?? j.cls_g ?? '-'],
+      ['Classificação na Unidade',      C.cls_u ?? j.cls_u ?? '-'],
     ];
-    for (const [k,v] of linhas1){
-      drawTextLine(`${k}: ${v==null?'-':v}`, LEFT, y, 12);
-      y -= GAP;
-    }
-    y -= 6;
+    y = drawKeyValTable(linhas1, LEFT, y, {
+      size: 12, labelW: 115, valueW: 90, rowH: 18
+    });
   
     // gráfico comparativo grande
     try{
@@ -838,6 +836,66 @@ Chart.register(chartValueLabels);
     if (i < gaps) cursor += spaceW + extraPerGap;
   }
 }
+
+
+    // 2 casas para números; se não for número, devolve como veio ou '-'
+function fmt2(v){
+  if (v == null) return '-';
+  const n = Number(v);
+  return Number.isFinite(n) ? n.toFixed(2) : String(v);
+}
+
+/**
+ * Desenha uma tabela simples de 2 colunas (rótulo / valor)
+ * rows: [ [label, value], ... ]
+ * Retorna o novo y (já descontado a altura + um pequeno espaçamento)
+ */
+function drawKeyValTable(rows, x, y, opts={}){
+  const { page, font } = _pdf_ctx;
+  const size   = opts.size   ?? 12;
+  const rowH   = opts.rowH   ?? Math.round(size * 1.35);   // altura da linha
+  const labW   = opts.labelW ?? 115;                       // largura da coluna de rótulos
+  const valW   = opts.valueW ?? 90;                        // largura da coluna de valores
+  const padX   = opts.padX   ?? 6;
+  const gap    = opts.gap    ?? 10;                        // espaço abaixo da tabela
+  const wTotal = labW + valW;
+  const hTotal = rowH * rows.length;
+
+  // borda da tabela
+  page.drawRectangle({
+    x, y: y - hTotal, width: wTotal, height: hTotal,
+    borderWidth: 0.5,
+    borderColor: PDFLib.rgb(0.82, 0.86, 0.94),
+    color: PDFLib.rgb(1,1,1)
+  });
+
+  // linhas com “zebra”
+  rows.forEach((r, i) => {
+    const rowTop = y - rowH * (i + 1);
+    if (i % 2 === 0) {
+      page.drawRectangle({
+        x, y: rowTop, width: wTotal, height: rowH,
+        color: PDFLib.rgb(0.97, 0.98, 1)
+      });
+    }
+    const base = rowTop + Math.round((rowH - size) / 2); // “centraliza” verticalmente
+
+    // rótulo
+    page.drawText(String(r[0] ?? ''), {
+      x: x + padX, y: base, size, font, color: PDFLib.rgb(0,0,0)
+    });
+
+    // valor (alinhado à direita)
+    const valStr = String(r[1] ?? '-');
+    const tw = font.widthOfTextAtSize(valStr, size);
+    const vx = x + labW + valW - padX - tw;
+    page.drawText(valStr, { x: vx, y: base, size, font, color: PDFLib.rgb(0,0,0) });
+  });
+
+  return y - hTotal - gap;
+}
+
+    
     
   </script>
 </body>
