@@ -67,7 +67,7 @@
 </head>
 <body>
   <header>
-    <h1>Simulados Abertos — Curso Objetivo Vestibulares - V2</h1>
+    <h1>Simulados Abertos — Curso Objetivo Vestibulares - V3</h1>
   </header>
 
   <div class="container" style="max-width:900px; margin-top:28px">
@@ -431,16 +431,25 @@
     y -= 6;
   
     // gráfico comparativo grande
-    try{
-      const urlComp = await makeChartImageComparativo(A, mediasGlobais);
+    try {
+      // use as médias vindas do backend; se não vier nada, o gráfico mostrará só o Aluno
+      const medias =
+            j.medias ??
+            j.mediasGlobais ??   // compat opcional, se seu backend usar outro nome
+            null;
+    
+      const urlComp = await makeChartImageComparativo(A, medias);
       if (urlComp){
         const png = await doc.embedPng(dataURLtoBytes(urlComp));
-        const W = page1.getWidth() - LEFT*2; // quase a largura toda
+        const W = page1.getWidth() - LEFT*2;
         const H = 210;
         page1.drawImage(png, { x: LEFT, y: y - H, width: W, height: H });
         y -= (H + 16);
       }
-    }catch(e){ console.warn('comparativo', e); }
+    } catch (e) {
+      console.warn('comparativo', e);
+    }
+
   
     // mensagens (somente das áreas)
     const msgs = getMessages(A, R);
