@@ -67,7 +67,7 @@
 </head>
 <body>
   <header>
-    <h1>Simulados Abertos — Curso Objetivo Vestibulares - V3</h1>
+    <h1>Simulados Abertos — Curso Objetivo Vestibulares - V4</h1>
   </header>
 
   <div class="container" style="max-width:900px; margin-top:28px">
@@ -163,67 +163,92 @@
 
   /* ===== CONSULTA ===== */
   async function consultar(){
-    const status = document.getElementById('status');
-    const msg = document.getElementById('msg');
-    const resDiv = document.getElementById('resultado');
-    const btnPdf = document.getElementById('btnPdf');
+  const status = document.getElementById('status');
+  const msg = document.getElementById('msg');
+  const resDiv = document.getElementById('resultado');
+  const btnPdf = document.getElementById('btnPdf');
 
-    status.textContent = 'Consultando...';
-    msg.textContent = '';
-    resDiv.style.display = 'none';
-    btnPdf.disabled = true; btnPdf.classList.add('grey');
+  status.textContent = 'Consultando...';
+  msg.textContent = '';
+  resDiv.style.display = 'none';
+  btnPdf.disabled = true; btnPdf.classList.add('grey');
 
-    const insc = document.getElementById('inscricao').value.replace(/\D/g,'');
-    const cpf  = document.getElementById('cpf').value.replace(/\D/g,'');
-    if (!insc || cpf.length < 11) { msg.textContent = 'Preencha inscrição e CPF válidos.'; status.textContent=''; return; }
+  const insc = document.getElementById('inscricao').value.replace(/\D/g,'');
+  const cpf  = document.getElementById('cpf').value.replace(/\D/g,'');
+  if (!insc || cpf.length < 11) { msg.textContent = 'Preencha inscrição e CPF válidos.'; status.textContent=''; return; }
 
-    try{
-      const url = `${ENDPOINT}?action=resultado&inscricao=${encodeURIComponent(insc)}&cpf=${encodeURIComponent(cpf)}`;
-      const r = await fetch(url, { cache:'no-store' });
-      const j = await r.json();
-      if (!j.ok) { msg.textContent = j.error || 'Não encontrado'; status.textContent=''; return; }
+  try{
+    const url = `${ENDPOINT}?action=resultado&inscricao=${encodeURIComponent(insc)}&cpf=${encodeURIComponent(cpf)}`;
+    const r = await fetch(url, { cache:'no-store' });
+    const j = await r.json();
+    if (!j.ok) { msg.textContent = j.error || 'Não encontrado'; status.textContent=''; return; }
 
-      ultimoResultado = j;
+    ultimoResultado = j;
 
-      // Cabeçalho
-      document.getElementById('alunoNome').textContent = (j.aluno && j.aluno.nome) ? j.aluno.nome : `Inscrição ${j.inscricao}`;
-      document.getElementById('inscOut').textContent = j.inscricao;
-      document.getElementById('unidOut').textContent = (j.aluno && j.aluno.unidadeNome) ? j.aluno.unidadeNome : '-';
+    /* === PATCH: médias globais (Aluno x Média no gráfico) === */
+    // 1) tenta vir já no próprio payload do resultado
+    ultimoResultado.medias = j.medias || null;
 
-      const A = j.areas || {};
-      const R = j.redacao || {};
-      const C = j.classificacao || {};
-      const msgs = getMessages(A, R);
-
-      // notas + mensagens (no mesmo <td>)
-      setScoreWithMsg('n_ling', A.linguagens, msgs.linguagens);
-      setScoreWithMsg('n_hum',  A.humanas,    msgs.humanas);
-      setScoreWithMsg('n_nat',  A.natureza,   msgs.natureza);
-      setScoreWithMsg('n_mat',  A.matematica, msgs.matematica);
-
-      // classificação
-      setText('n_CLS_G', C.cls_g ?? j.cls_g ?? '-');
-      setText('n_CLS_U', C.cls_u ?? j.cls_u ?? '-');
-
-      // bloco Redação + Competências (aqui embaixo dos textos)
-      document.getElementById('out_red_total').textContent = val(R.total);
-      const comps = [R.c1,R.c2,R.c3,R.c4,R.c5].filter(x=>x!=null).join(' / ') || '-';
-      document.getElementById('out_red_comp').textContent  = comps;
-      document.getElementById('blocoRedacao').style.display = 'block';
-
-      // Imagem/preview da Redação
-      const L = j.links || {};
-      montarRedacao(L.imagemRedacao);
-
-      resDiv.style.display = 'block';
-      btnPdf.disabled = false; btnPdf.classList.remove('grey');
-      status.textContent = '';
-    }catch(e){
-      msg.textContent = 'Erro ao consultar. Tente novamente.';
-      console.error(e);
-      status.textContent='';
+    // 2) se não veio, busca num endpoint separado (?action=medias)
+    if (!ultimoResultado.medias) {
+      try {
+        const rMed = await fetch(`${ENDPOINT}?action=medias`, { cache: 'no-store' });
+        if (rMed.ok) {
+          const jMed = await rMed.json();
+          // aceita tanto {ok:true, medias:{...}} quanto {linguagens:..., humanas:...}
+          const medias = jMed?.medias ?? jMed ?? null;
+          if (medias && (medias.linguagens!=null || medias.humanas!=null || medias.natureza!=null || medias.matematica!=null)) {
+            ultimoResultado.medias = medias;
+          }
+        }
+      } catch (e) {
+        console.warn('Sem médias do endpoint.', e);
+      }
     }
+    // opcional, só para conferir
+    console.log('MEDIAS USADAS:', ultimoResultado.medias);
+    /* === /PATCH === */
+
+    // Cabeçalho
+    document.getElementById('alunoNome').textContent = (j.aluno && j.aluno.nome) ? j.aluno.nome : `Inscrição ${j.inscricao}`;
+    document.getElementById('inscOut').textContent = j.inscricao;
+    document.getElementById('unidOut').textContent = (j.aluno && j.aluno.unidadeNome) ? j.aluno.unidadeNome : '-';
+
+    const A = j.areas || {};
+    const R = j.redacao || {};
+    const C = j.classificacao || {};
+    const msgs = getMessages(A, R);
+
+    // notas + mensagens (no mesmo <td>)
+    setScoreWithMsg('n_ling', A.linguagens, msgs.linguagens);
+    setScoreWithMsg('n_hum',  A.humanas,    msgs.humanas);
+    setScoreWithMsg('n_nat',  A.natureza,   msgs.natureza);
+    setScoreWithMsg('n_mat',  A.matematica, msgs.matematica);
+
+    // classificação
+    setText('n_CLS_G', C.cls_g ?? j.cls_g ?? '-');
+    setText('n_CLS_U', C.cls_u ?? j.cls_u ?? '-');
+
+    // bloco Redação + Competências
+    document.getElementById('out_red_total').textContent = val(R.total);
+    const comps = [R.c1,R.c2,R.c3,R.c4,R.c5].filter(x=>x!=null).join(' / ') || '-';
+    document.getElementById('out_red_comp').textContent  = comps;
+    document.getElementById('blocoRedacao').style.display = 'block';
+
+    // Imagem/preview da Redação
+    const L = j.links || {};
+    montarRedacao(L.imagemRedacao);
+
+    resDiv.style.display = 'block';
+    btnPdf.disabled = false; btnPdf.classList.remove('grey');
+    status.textContent = '';
+  }catch(e){
+    msg.textContent = 'Erro ao consultar. Tente novamente.';
+    console.error(e);
+    status.textContent='';
   }
+}
+
 
   function setText(id, v){ document.getElementById(id).textContent = (v==null?'-':v); }
   function val(x){ return (x==null?'-':x); }
@@ -430,14 +455,9 @@
     }
     y -= 6;
   
-    // gráfico comparativo grande
+    // gráfico comparativo grande (Aluno x Média)
     try {
-      // use as médias vindas do backend; se não vier nada, o gráfico mostrará só o Aluno
-      const medias =
-            j.medias ??
-            j.mediasGlobais ??   // compat opcional, se seu backend usar outro nome
-            null;
-    
+      const medias = j.medias ?? ultimoResultado.medias ?? null; // <- pega do estado se não vier no resultado
       const urlComp = await makeChartImageComparativo(A, medias);
       if (urlComp){
         const png = await doc.embedPng(dataURLtoBytes(urlComp));
@@ -446,9 +466,8 @@
         page1.drawImage(png, { x: LEFT, y: y - H, width: W, height: H });
         y -= (H + 16);
       }
-    } catch (e) {
-      console.warn('comparativo', e);
-    }
+    } catch(e){ console.warn('comparativo', e); }
+
 
   
     // mensagens (somente das áreas)
