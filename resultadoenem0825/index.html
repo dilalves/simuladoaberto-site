@@ -25,6 +25,8 @@
       border-left:4px solid #1976d2;
       border-radius:4px;
       padding:8px;
+      text-align: justify;
+      hyphens: auto;
     }
 
     /* bloco “Redação (Total) + Competências” movido para baixo dos textos */
@@ -67,7 +69,7 @@
 </head>
 <body>
   <header>
-    <h1>Simulados Abertos — Curso Objetivo Vestibulares - V1</h1>
+    <h1>Simulados Abertos — Curso Objetivo Vestibulares - V2</h1>
   </header>
 
   <div class="container" style="max-width:900px; margin-top:28px">
@@ -469,10 +471,10 @@
     // mensagens (somente das áreas)
     const msgs = getMessages(A, R);
     _pdf_ctx.y = y;
-    drawBullet(msgs.linguagens, 12);
-    drawBullet(msgs.humanas,    12);
-    drawBullet(msgs.natureza,   12);
-    drawBullet(msgs.matematica, 12);
+    drawBullet(msgs.linguagens, 12, 'justify');
+    drawBullet(msgs.humanas,    12, 'justify');
+    drawBullet(msgs.natureza,   12, 'justify');
+    drawBullet(msgs.matematica, 12, 'justify');
   
     // ======== PÁGINA 2 (Redação) ========
     let page2;
@@ -600,34 +602,52 @@
     }
   }
 
-  function drawParagraph(text, size=12, indentLeft=0){
-    const lineHeight = Math.round(size*1.25);
-    const maxW = contentWidth() - indentLeft;
+  function drawParagraph(text, size=12, indentLeft=0, align='left'){
+    const lineH = Math.round(size*1.25);
+    const maxW  = contentWidth() - indentLeft;
     const lines = splitIntoLines(text, size, maxW);
     ensureSpace(lines.length, size);
+  
     const x0 = _pdf_ctx.MARGIN_X + indentLeft;
-    for (const ln of lines){
-      _pdf_ctx.y -= lineHeight;
-      drawTextLine(ln, x0, _pdf_ctx.y, size);
-    }
+    lines.forEach((ln, i) => {
+      _pdf_ctx.y -= lineH;
+      const isLast = i === lines.length - 1;
+      if (align === 'justify' && !isLast) {
+        drawJustifiedLine(ln, x0, _pdf_ctx.y, size, maxW);
+      } else {
+        drawTextLine(ln, x0, _pdf_ctx.y, size);
+      }
+    });
   }
-
-  function drawBullet(text, size=12){
+  
+  function drawBullet(text, size=12, align='left'){
     const bullet = '• ';
-    const bulletWidth = _pdf_ctx.font.widthOfTextAtSize(bullet, size);
-    const lineHeight = Math.round(size*1.25);
-    const lines = splitIntoLines(text, size, contentWidth() - bulletWidth);
+    const bW = _pdf_ctx.font.widthOfTextAtSize(bullet, size);
+    const lineH = Math.round(size*1.25);
+    const maxW  = contentWidth() - bW;
+    const lines = splitIntoLines(text, size, maxW);
     ensureSpace(lines.length, size);
-
-    _pdf_ctx.y -= lineHeight;
-    drawTextLine(bullet + (lines[0]||''), _pdf_ctx.MARGIN_X, _pdf_ctx.y, size);
-
+  
+    // primeira linha: desenha bolinha e justifica só o texto
+    _pdf_ctx.y -= lineH;
+    drawTextLine(bullet, _pdf_ctx.MARGIN_X, _pdf_ctx.y, size);
+    if (align === 'justify' && lines.length > 1){
+      drawJustifiedLine(lines[0], _pdf_ctx.MARGIN_X + bW, _pdf_ctx.y, size, maxW);
+    } else {
+      drawTextLine(lines[0], _pdf_ctx.MARGIN_X + bW, _pdf_ctx.y, size);
+    }
+  
+    // demais linhas (sem o bullet)
     for (let i=1;i<lines.length;i++){
-      _pdf_ctx.y -= lineHeight;
-      drawTextLine(lines[i], _pdf_ctx.MARGIN_X + bulletWidth, _pdf_ctx.y, size);
+      _pdf_ctx.y -= lineH;
+      const isLast = i === lines.length - 1;
+      if (align === 'justify' && !isLast){
+        drawJustifiedLine(lines[i], _pdf_ctx.MARGIN_X + bW, _pdf_ctx.y, size, maxW);
+      } else {
+        drawTextLine(lines[i], _pdf_ctx.MARGIN_X + bW, _pdf_ctx.y, size);
+      }
     }
   }
-
 // gráfico comparativo: 4 áreas (Aluno x Média)
 async function makeChartImageComparativo(A, medias){
   const el = document.getElementById('grafico');
@@ -793,6 +813,30 @@ Chart.register(chartValueLabels);
 
   // se tudo deu null, considera inválido
   return (out.linguagens ?? out.humanas ?? out.natureza ?? out.matematica) != null ? out : null;
+}
+
+  //justificar o texto do pdf
+  function drawJustifiedLine(text, x, y, size=12, maxWidth=contentWidth()){
+  const { page, font } = _pdf_ctx;
+  const words = String(text||'').trim().split(/\s+/);
+  if (words.length <= 1) { drawTextLine(text, x, y, size); return; }
+
+  const spaceW = font.widthOfTextAtSize(' ', size);
+  const wordsW = words.reduce((s,w)=> s + font.widthOfTextAtSize(w, size), 0);
+  const gaps   = words.length - 1;
+  const normal = wordsW + gaps*spaceW;
+
+  // se já está “cheio”, não força
+  if (normal >= maxWidth * 0.985) { drawTextLine(text, x, y, size); return; }
+
+  const extraPerGap = (maxWidth - normal) / gaps;
+  let cursor = x;
+  for (let i=0;i<words.length;i++){
+    const w = words[i];
+    page.drawText(w, { x: cursor, y, size, font });
+    cursor += font.widthOfTextAtSize(w, size);
+    if (i < gaps) cursor += spaceW + extraPerGap;
+  }
 }
     
   </script>
