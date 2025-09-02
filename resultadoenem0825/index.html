@@ -67,7 +67,7 @@
 </head>
 <body>
   <header>
-    <h1>Simulados Abertos — Curso Objetivo Vestibulares - V2</h1>
+    <h1>Simulados Abertos — Curso Objetivo Vestibulares - V1</h1>
   </header>
 
   <div class="container" style="max-width:900px; margin-top:28px">
@@ -636,7 +636,7 @@ async function makeChartImageComparativo(A, medias){
   const restore = useOffscreenCanvas();
   if (window._chartInst) window._chartInst.destroy();
 
-  const labels = ['LING', 'HUM', 'NAT', 'MAT'];
+  const labels = ['LINGUAGEM', 'HUMANAS', 'NATUREZA', 'MATEMÁTICA'];
   const aluno  = [A.linguagens ?? null, A.humanas ?? null, A.natureza ?? null, A.matematica ?? null];
 
   const datasets = [{ label:'Aluno', data: aluno }];
@@ -657,15 +657,22 @@ async function makeChartImageComparativo(A, medias){
     });
   }
 
-  window._chartInst = new Chart(el.getContext('2d'), {
+   window._chartInst = new Chart(el.getContext('2d'), {
     type: 'bar',
     data: { labels, datasets },
     options: {
-      responsive:false, animation:false,
-      scales:{ y:{ suggestedMin:0, suggestedMax:1000 } },
-      plugins:{ legend:{ display:true, position:'top' } }
+      responsive: false,
+      animation: false,
+      scales: { y: { suggestedMin: 0, suggestedMax: 1000 } },
+      plugins: {
+        legend: { display: true, position: 'top' },
+        // 👇 força 2 casas nos rótulos
+        chartValueLabels: {
+          formatter: (v) => v.toFixed(2)
+        }
+      }
     },
-    plugins:[chartValueLabels]
+    plugins: [chartValueLabels]
   });
 
   window._chartInst.update();
@@ -694,14 +701,20 @@ async function makeChartImageCompetencias(R){
 
   window._chartInstC = new Chart(c.getContext('2d'), {
     type: 'bar',
-    data: { labels, datasets:[{ label:'Competências', data }] },
+    data: { labels, datasets: [{ label: 'Competências', data }] },
     options: {
-      responsive:false,
-      animation:false,
-      scales:{ y:{ suggestedMin:0, suggestedMax:200 } },
-      plugins:{ legend:{ display:false } }
+      responsive: false,
+      animation: false,
+      scales: { y: { suggestedMin: 0, suggestedMax: 200 } },
+      plugins: {
+        legend: { display: false },
+        // 👇 sem casas decimais
+        chartValueLabels: {
+          formatter: (v) => String(Math.round(v))
+        }
+      }
     },
-    plugins:[chartValueLabels]
+    plugins: [chartValueLabels]
   });
 
   window._chartInstC.update();
@@ -717,26 +730,36 @@ async function makeChartImageCompetencias(R){
 
 
 
-// ——— Plugin: escreve o valor em cima de cada barra ———
-    const chartValueLabels = {
-      id: 'chartValueLabels',
-      afterDatasetsDraw(chart) {
-        const { ctx } = chart;
-        ctx.save();
-        ctx.font = '10px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'bottom';
-        chart.data.datasets.forEach((ds, di) => {
-          const meta = chart.getDatasetMeta(di);
-          meta.data.forEach((el, i) => {
-            const v = ds.data[i];
-            if (v == null || isNaN(v)) return;
-            ctx.fillText(String(Math.round(v)), el.x, el.y - 4);
-          });
-        });
-        ctx.restore();
-      }
-    };
+// Plugin: rótulos nas barras com formatação customizável
+const chartValueLabels = {
+  id: 'chartValueLabels',
+  afterDatasetsDraw(chart) {
+    const { ctx } = chart;
+    // pega formatter passado nas opções; se não houver, vira string normal
+    const fmt =
+      chart.options?.plugins?.chartValueLabels?.formatter ||
+      ((v) => String(v));
+
+    ctx.save();
+    ctx.font = '10px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+
+    chart.data.datasets.forEach((ds, di) => {
+      const meta = chart.getDatasetMeta(di);
+      meta.data.forEach((el, i) => {
+        const raw = ds.data[i];
+        const n = Number(raw);
+        if (!Number.isFinite(n)) return;
+        const text = fmt(n, ds, chart, i);
+        ctx.fillText(text, el.x, el.y - 4);
+      });
+    });
+
+    ctx.restore();
+  }
+};
+
 
     // espera simples
     const sleep = (ms) => new Promise(r => setTimeout(r, ms));
