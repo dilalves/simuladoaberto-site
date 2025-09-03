@@ -69,7 +69,7 @@
 </head>
 <body>
   <header>
-    <h1>Simulados Abertos — Curso Objetivo Vestibulares - V2</h1>
+    <h1>Simulados Abertos — Curso Objetivo Vestibulares - V1</h1>
   </header>
 
   <div class="container" style="max-width:900px; margin-top:28px">
@@ -393,6 +393,73 @@
     ], "Redação: sem nota registrada.");
   }
 
+    function msgC1(nota){
+  return faixa(nota, [
+    {min:0,   max:99,  msg:"C1: Texto com muitos desvios gramaticais e de convenções da escrita, comprometendo a compreensão."},
+    {min:100, max:129, msg:"C1: Texto apresenta alguns desvios de pontuação, grafia e morfossintaxe, com comprometimento parcial da estrutura."},
+    {min:130, max:149, msg:"C1: Domínio razoável da norma padrão, ainda com desvios que não comprometem a compreensão global."},
+    {min:150, max:169, msg:"C1: Bom domínio da modalidade escrita formal, com poucos desvios gramaticais e de convenções."},
+    {min:170, max:189, msg:"C1: Ótimo domínio da modalidade escrita formal; eventuais desvios são raros e não afetam a qualidade do texto."},
+    {min:190, max:null,msg:"C1: Excelente domínio da modalidade escrita formal, com plena adequação às convenções da escrita."}
+  ], "C1: sem nota registrada.");
+}
+
+function msgC2(nota){
+  return faixa(nota, [
+    {min:0,   max:99,  msg:"C2: Texto tangencia o tema ou apresenta argumentação incoerente/insuficiente, com pouco repertório."},
+    {min:100, max:129, msg:"C2: Desenvolvimento limitado do tema, com argumentação previsível ou pouco consistente."},
+    {min:130, max:149, msg:"C2: Desenvolve o tema com coerência parcial e repertório suficiente, ainda com limitações de aprofundamento."},
+    {min:150, max:169, msg:"C2: Desenvolvimento consistente do tema, com uso adequado de repertório sociocultural."},
+    {min:170, max:189, msg:"C2: Argumentação consistente e fluente, articulada ao projeto do texto, com repertório produtivo."},
+    {min:190, max:null,msg:"C2: Excelente desenvolvimento do tema, com autoria marcada e repertório diversificado, plenamente adequado ao gênero."}
+  ], "C2: sem nota registrada.");
+}
+
+function msgC3(nota){
+  return faixa(nota, [
+    {min:0,   max:99,  msg:"C3: Apresenta informações desconexas e pouco relacionadas ao ponto de vista."},
+    {min:100, max:129, msg:"C3: Organização incipiente; argumentos previsíveis e pouco articulados."},
+    {min:130, max:149, msg:"C3: Em defesa de um ponto de vista, apresenta informações relacionadas ao tema, de forma organizada, com indícios de autoria."},
+    {min:150, max:169, msg:"C3: Seleciona e organiza informações/argumentos de forma consistente, com autoria e progressão."},
+    {min:170, max:189, msg:"C3: Argumentos relevantes e bem articulados, com boa progressão e consistência."},
+    {min:190, max:null,msg:"C3: Seleção e organização exemplares; argumentos originais e plenamente articulados em defesa do ponto de vista."}
+  ], "C3: sem nota registrada.");
+}
+
+function msgC4(nota){
+  return faixa(nota, [
+    {min:0,   max:99,  msg:"C4: Grande dificuldade em articular as partes do texto, comprometendo a coesão."},
+    {min:100, max:129, msg:"C4: Articula de forma mediana, com inadequações/desvios e repertório coesivo pouco diversificado."},
+    {min:130, max:149, msg:"C4: Articulação adequada na maior parte do texto, embora ainda ocorram alguns desvios de coesão."},
+    {min:150, max:169, msg:"C4: Boa articulação entre as partes do texto, com poucos desvios e uso variado de recursos coesivos."},
+    {min:170, max:189, msg:"C4: Ótima articulação textual; repertório coesivo diversificado, com raras inadequações."},
+    {min:190, max:null,msg:"C4: Excelente articulação; repertório amplo de mecanismos linguísticos e coesivos, sem inadequações relevantes."}
+  ], "C4: sem nota registrada.");
+}
+
+function msgC5(nota){
+  return faixa(nota, [
+    {min:0,   max:99,  msg:"C5: Proposta de intervenção insuficiente, inadequada ou pouco relacionada ao problema abordado."},
+    {min:100, max:129, msg:"C5: Proposta incipiente, pouco detalhada e não plenamente articulada ao desenvolvimento do texto."},
+    {min:130, max:149, msg:"C5: Proposta bem elaborada e articulada ao tema, ainda sem detalhamento suficiente."},
+    {min:150, max:169, msg:"C5: Proposta bem elaborada, articulada e consistente; atende ao problema discutido."},
+    {min:170, max:189, msg:"C5: Proposta completa e abrangente, bem detalhada e viável, respeitando os direitos humanos."},
+    {min:190, max:null,msg:"C5: Proposta completa, detalhada e plenamente articulada, com respeito aos direitos humanos."}
+  ], "C5: sem nota registrada.");
+}
+
+function getFeedbackCompetencias(R){
+  return {
+    c1: msgC1(R?.c1 ?? null),
+    c2: msgC2(R?.c2 ?? null),
+    c3: msgC3(R?.c3 ?? null),
+    c4: msgC4(R?.c4 ?? null),
+    c5: msgC5(R?.c5 ?? null),
+  };
+}
+
+    
+
   //* ===== PDF (pdf-lib) com template + comparativo + mini C1..C5 ===== */
   async function gerarPDF(){
     if (!ultimoResultado) return;
@@ -503,6 +570,18 @@
     const msgs2 = getMessages(A, R);
     _pdf_ctx.y = y2;
     drawBullet(msgs2.redacao, 12);
+
+    _pdf_ctx.y -= 6;
+    drawTextLine('Feedback por competência', _pdf_ctx.MARGIN_X, _pdf_ctx.y, 12, [0.13,0.16,0.20]);
+    _pdf_ctx.y -= 6;    
+    
+    // feedback por competência
+    const fbc = getFeedbackCompetencias(R);
+    drawBullet(fbc.c1, 12);
+    drawBullet(fbc.c2, 12);
+    drawBullet(fbc.c3, 12);
+    drawBullet(fbc.c4, 12);
+    drawBullet(fbc.c5, 12);
   
     // baixa
     const bytes = await doc.save();
@@ -691,14 +770,12 @@ async function makeChartImageComparativo(A, medias){
 }
 
 
-
 // ——— Competências C1..C5 (com rótulos) ———
 async function makeChartImageCompetencias(R){
   const c = document.getElementById('graficoC');
   if (!c) return null;
 
   const restore = useOffscreenCanvas();
-
   if (window._chartInstC) window._chartInstC.destroy();
 
   const labels = ['C1','C2','C3','C4','C5'];
@@ -710,12 +787,21 @@ async function makeChartImageCompetencias(R){
     options: {
       responsive: false,
       animation: false,
-      scales: { y: { suggestedMin: 0, suggestedMax: 200 } },
+      layout: { padding: { top: 12 } },               // folga no topo
+      scales: {
+        y: {
+          suggestedMin: 0,
+          suggestedMax: 210,                           // sobe o teto p/ não cortar “200”
+          grace: 10,                                   // mais um respiro
+          ticks: { stepSize: 20 }
+        }
+      },
       plugins: {
         legend: { display: false },
-        chartValueLabels: { formatter: v => String(Math.round(v)) } // 👈 inteiro
+        chartValueLabels: { formatter: (v) => String(Math.round(v)) }
       }
-    }
+    },
+    plugins: [chartValueLabels]
   });
 
   window._chartInstC.update();
@@ -723,11 +809,42 @@ async function makeChartImageCompetencias(R){
   await sleep(80);
 
   const url = c.toDataURL('image/png');
-
   window._chartInstC.destroy();
   restore();
   return url;
 }
+
+// Plugin: rótulos nas barras com formatação customizável
+const chartValueLabels = {
+  id: 'chartValueLabels',
+  afterDatasetsDraw(chart) {
+    const { ctx } = chart;
+    const fmt = chart.options?.plugins?.chartValueLabels?.formatter || ((v) => String(v));
+    const areaTop = chart.chartArea?.top ?? 0;
+
+    ctx.save();
+    ctx.font = '10px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+
+    chart.data.datasets.forEach((ds, di) => {
+      const meta = chart.getDatasetMeta(di);
+      meta.data.forEach((el, i) => {
+        const raw = ds.data[i];
+        const n = Number(raw);
+        if (!Number.isFinite(n)) return;
+
+        const text = fmt(n, ds, chart, i);
+        let y = el.y - 4;
+        if (y < areaTop + 8) y = areaTop + 8;         // 👈 impede cortar no topo
+        ctx.fillText(text, el.x, y);
+      });
+    });
+
+    ctx.restore();
+  }
+};
+
 
 // Plugin: rótulos nas barras com formatação customizável (Chart.js v4)
 const chartValueLabels = {
