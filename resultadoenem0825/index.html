@@ -64,13 +64,56 @@
 
     table.striped td, table.striped th{ padding:10px 14px }
   .card-content{ padding:18px } /* um pouco mais compacto */
+
+    /* MOBILE: empilha rótulo, nota e mensagem; desliga hífens */
+    @media (max-width: 600px){
+      /* a tabela vira “cards” por linha */
+      table.striped tbody tr{
+        display:block;
+        margin:14px 0;
+        padding:10px 0 12px;
+        border-top:1px solid #eee;
+      }
+      table.striped th{
+        display:block;        /* rótulo acima */
+        width:auto !important;
+        padding:0 0 6px 0;
+        font-size:13px;
+        color:#607d8b;
+        letter-spacing:.2px;
+      }
+      table.striped td{
+        display:block;        /* conteúdo abaixo do rótulo */
+        padding:0;            /* remove padding lateral que estreita o texto */
+      }
+    
+      /* nota grande, antes da mensagem */
+      td .nota{
+        display:block;
+        font-size:22px;
+        margin:0 0 8px 0;
+      }
+    
+      /* mensagem ocupa toda a largura, sem hífens */
+      .mini-msg{
+        padding:10px 12px;
+        font-size:14px;
+        line-height:1.4;
+        hyphens: none;              /* <- desliga hifenização */
+        word-break: normal;
+        overflow-wrap: break-word;  /* quebra só quando precisa */
+      }
+    
+      /* dá um respiro geral na card */
+      .card-content{ padding:14px }
+    }
     
   </style>
 </head>
 <body>
  
   <header>
-    <h1>Simulado Aberto ENEM Agosto/2025 * </h1>
+    <h1>Simulado Aberto ENEM Agosto/2025</h1>
   </header>
 
    <img src="https://raw.githubusercontent.com/dilalves/simuladoaberto-site/main/resultadoenem0825/Digital---Simulado-Aberto-728X90.png" 
