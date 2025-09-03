@@ -69,7 +69,7 @@
 </head>
 <body>
   <header>
-    <h1>Simulados Abertos — Curso Objetivo Vestibulares - V2</h1>
+    <h1>Simulados Abertos — Curso Objetivo Vestibulares - V1</h1>
   </header>
 
   <div class="container" style="max-width:900px; margin-top:28px">
@@ -521,9 +521,6 @@ function getFeedbackCompetencias(R){
       }
     }catch(e){ console.warn('comparativo', e); }
 
-
-
-  
     // mensagens (somente das áreas)
     const msgs = getMessages(A, R);
     _pdf_ctx.y = y;
@@ -571,9 +568,16 @@ function getFeedbackCompetencias(R){
     _pdf_ctx.y = y2;
     drawBullet(msgs2.redacao, 12);
 
-    _pdf_ctx.y -= 6;
+    drawBullet(msgs2.redacao, 12);
+
+    // dá um respiro generoso e garante espaço na página
+    const gap = Math.round(12 * 1.5);   // ~18px
+    _pdf_ctx.y -= gap;
+    ensureSpace(1, 12);                  // previne cortar no rodapé
+    
     drawTextLine('Feedback por competência', _pdf_ctx.MARGIN_X, _pdf_ctx.y, 12, [0.13,0.16,0.20]);
-    _pdf_ctx.y -= 6;    
+    _pdf_ctx.y -= Math.round(12 * 0.75); // mais um espacinho abaixo do título
+    
     
     // feedback por competência
     const fbc = getFeedbackCompetencias(R);
