@@ -598,6 +598,47 @@ function getFeedbackCompetencias(R){
     a.href      = URL.createObjectURL(blob);
     a.download  = `resultado_ENEM_${j.inscricao}.pdf`;
     a.click();
+
+
+  // ======== PÁGINA 3 (Imagem da Redação) ========
+  if (j.links && j.links.imagemRedacao) {
+    try {
+      const link = j.links.imagemRedacao;
+      const idMatch1 = String(link).match(/\/file\/d\/([^/]+)\//);
+      const idMatch2 = String(link).match(/[?&]id=([^&]+)/);
+      const id = idMatch1 ? idMatch1[1] : (idMatch2 ? idMatch2[1] : null);
+      const direct = id ? `https://drive.google.com/uc?id=${id}&export=download` : link;
+  
+      // baixa a imagem
+      const ab = await fetch(direct, { cache:'no-store' }).then(r => r.arrayBuffer());
+      const jpg = await doc.embedJpg(ab);
+  
+      // cria página nova com template ou em branco
+      let page3;
+      if (tplPdf) {
+        const [tpl3] = await doc.copyPages(tplPdf, [0]);
+        page3 = doc.addPage(tpl3);
+      } else {
+        page3 = doc.addPage([595.28, 841.89]); // A4
+      }
+  
+      // desenha a imagem centralizada
+      const maxW = page3.getWidth() - 80;
+      const maxH = page3.getHeight() - 160;
+      const scale = Math.min(maxW / jpg.width, maxH / jpg.height);
+      const w = jpg.width * scale;
+      const h = jpg.height * scale;
+      const x = (page3.getWidth() - w) / 2;
+      const y = (page3.getHeight() - h) / 2;
+  
+      page3.drawImage(jpg, { x, y, width:w, height:h });
+    } catch(e) {
+      console.warn("Erro ao carregar imagem da redação:", e);
+    }
+  }
+
+
+    
   }
 
   /* ===== helpers gerais ===== */
