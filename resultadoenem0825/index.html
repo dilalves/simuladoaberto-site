@@ -89,12 +89,17 @@
         </div>
 
         <div class="row" style="margin-bottom:0">
-          <div class="col s12">
-            <button id="btnConsultar" class="btn waves-effect waves-light">Consultar</button>
-            <button id="btnPdf" class="btn grey waves-effect waves-light" disabled>Baixar PDF</button>
+          <div class="col s12 center-align">
+            <button id="btnConsultar" class="btn waves-effect waves-light blue darken-2">
+              Consultar
+            </button>
+            <button id="btnPdf" class="btn blue waves-effect waves-light" disabled>
+              Baixar PDF
+            </button>
             <span id="status" class="grey-text text-darken-1" style="margin-left:12px"></span>
           </div>
         </div>
+
 
         <div id="msg" style="margin-top:12px; color:#d32f2f"></div>
       </div>
@@ -499,7 +504,7 @@ function getFeedbackCompetencias(R){
     const unid = (j.aluno && j.aluno.unidadeNome) || '-';
   
     // cabeçalho
-    drawTextLine('Resultado ENEM', LEFT, y + 18, 16);
+    drawTextLine('Simulado ENEM Agosto/2025 - Resultado do Candidato', LEFT, y + 18, 16);
     drawTextLine(`Aluno: ${nome}`,            LEFT, y, 12); y -= GAP;
     drawTextLine(`Inscrição: ${j.inscricao}`, LEFT, y, 12);
     drawTextLine(`Unidade: ${unid}`,          LEFT + 220, y, 12); y -= GAP;
