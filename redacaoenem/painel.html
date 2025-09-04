@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="pt-br">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Painel — Redação ENEM</title>
+<body style="font-family:system-ui,Arial;padding:24px">
+  <h2 id="title">Carregando…</h2>
+  <button id="sair">Sair</button>
+
+<script>
+const API = 'https://api.secauxiliar.com.br';
+
+(async () => {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    location.href = './index.html';
+    return;
+  }
+  const r = await fetch(`${API}/auth_me.php`, {
+    headers: {'Authorization': 'Bearer ' + token}
+  });
+  const data = await r.json();
+  if (!r.ok || !data.ok) {
+    localStorage.clear();
+    location.href = './index.html';
+    return;
+  }
+  document.getElementById('title').textContent =
+    `Bem-vindo(a), ${data.user.unidade} (login ${data.user.login})`;
+})();
+
+document.getElementById('sair').onclick = () => {
+  localStorage.clear();
+  location.href = './index.html';
+};
+</script>
+</body>
+</html>
