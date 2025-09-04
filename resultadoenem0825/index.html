@@ -113,7 +113,7 @@
 <body>
  
   <header>
-    <h1>Simulado Aberto ENEM Agosto/2025 -1</h1>
+    <h1>Simulado Aberto ENEM Agosto/2025</h1>
   </header>
 
    <img src="https://raw.githubusercontent.com/dilalves/simuladoaberto-site/main/resultadoenem0825/Digital---Simulado-Aberto-728X90.png" 
@@ -652,42 +652,37 @@ function getFeedbackCompetencias(R){
    const imgTag = document.querySelector('#imgBox img');
     if (imgTag && imgTag.src) {
       try {
-        // cria a 3ª página
+        // 3ª página
         const page3 = doc.addPage([595.28, 841.89]);
         setPdfContext(doc, page3, font);
-    
-        // desenha título
         drawTextLine('Redação - Imagem', 50, page3.getHeight() - 60, 14);
     
-        // baixa a imagem já carregada
-        const resp = await fetch(imgTag.src, { mode: 'no-cors' });
-        const blob = await resp.blob();
-        const bytes = new Uint8Array(await blob.arrayBuffer());
-        const ext = blob.type.includes('png') ? 'png' : 'jpg';
+        // pega via proxy do Apps Script (libera CORS)
+        const proxUrl = `${ENDPOINT}?action=img&u=${encodeURIComponent(imgTag.src)}`;
+        const resp    = await fetch(proxUrl, { cache:'no-store' });
+        if (!resp.ok) throw new Error('proxy resp not ok');
+        const bytes   = new Uint8Array(await resp.arrayBuffer());
     
+        // tenta JPG, cai pra PNG se falhar
         let imgEmbed;
-        if (ext === 'png') imgEmbed = await doc.embedPng(bytes);
-        else imgEmbed = await doc.embedJpg(bytes);
+        try { imgEmbed = await doc.embedJpg(bytes); }
+        catch { imgEmbed = await doc.embedPng(bytes); }
     
-        // calcula tamanho proporcional
-        const maxW = page3.getWidth() - 100;
+        // escala proporcional
+        const maxW = page3.getWidth()  - 100;
         const maxH = page3.getHeight() - 120;
         const scale = Math.min(maxW / imgEmbed.width, maxH / imgEmbed.height);
     
         page3.drawImage(imgEmbed, {
           x: 50,
           y: 60,
-          width: imgEmbed.width * scale,
+          width:  imgEmbed.width  * scale,
           height: imgEmbed.height * scale,
         });
       } catch (e) {
-        console.error('Erro ao inserir imagem da redação:', e);
+        console.error('Erro ao inserir imagem da redação (proxy):', e);
       }
-    }
-
-
-
-    
+    } 
   }
 
   /* ===== helpers gerais ===== */
