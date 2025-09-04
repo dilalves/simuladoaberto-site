@@ -113,7 +113,7 @@
 <body>
  
   <header>
-    <h1>Simulado Aberto ENEM Agosto/2025</h1>
+    <h1>Simulado Aberto ENEM Agosto/2025 -1</h1>
   </header>
 
    <img src="https://raw.githubusercontent.com/dilalves/simuladoaberto-site/main/resultadoenem0825/Digital---Simulado-Aberto-728X90.png" 
@@ -649,50 +649,41 @@ function getFeedbackCompetencias(R){
 
     
   // --- Página 3: Redação (se houver imagem) -------------------
-  try{
-    const link = ultimoResultado?.links?.imagemRedacao;
-    if (link){
-      // extrai ID (se for link do Drive)
-      const idMatch = String(link).match(/\/file\/d\/([^/]+)\//) || String(link).match(/[?&]id=([^&]+)/);
-      const id = idMatch ? idMatch[1] : null;
-  
-      // chama seu Apps Script como "proxy" que devolve base64
-      const urlImg = id
-        ? `${ENDPOINT}?action=img&id=${encodeURIComponent(id)}`
-        : `${ENDPOINT}?action=img&url=${encodeURIComponent(link)}`;
-  
-      const jImg = await fetch(urlImg, { cache:'no-store' }).then(r=>r.json());
-      if (jImg?.ok && jImg?.b64){
-        const bytes = Uint8Array.from(atob(jImg.b64), c => c.charCodeAt(0));
-  
-        // Decide por jpg/png
-        const isPng = (jImg.mime||'').toLowerCase().includes('png');
-        const img = isPng ? await doc.embedPng(bytes) : await doc.embedJpg(bytes);
-  
-        // nova página (usa o mesmo template de fundo)
-        let page3;
-        if (tplPdf){
-          const [tpl3] = await doc.copyPages(tplPdf, [0]);
-          page3 = doc.addPage(tpl3);
-        } else {
-          page3 = doc.addPage([595.28, 841.89]);
-        }
-  
-        // centraliza e mantém proporção
-        const margin = 48;
-        const maxW = page3.getWidth()  - margin*2;
-        const maxH = page3.getHeight() - margin*2;
-        const iw = img.width, ih = img.height;
-        const scale = Math.min(maxW/iw, maxH/ih, 1);     // não estoura a página
-        const w = iw * scale, h = ih * scale;
-        const x = (page3.getWidth()  - w)/2;
-        const y = (page3.getHeight() - h)/2;
-        page3.drawImage(img, { x, y, width: w, height: h });
+   const imgTag = document.querySelector('#imgBox img');
+    if (imgTag && imgTag.src) {
+      try {
+        // cria a 3ª página
+        const page3 = doc.addPage([595.28, 841.89]);
+        setPdfContext(doc, page3, font);
+    
+        // desenha título
+        drawTextLine('Redação - Imagem', 50, page3.getHeight() - 60, 14);
+    
+        // baixa a imagem já carregada
+        const resp = await fetch(imgTag.src, { mode: 'no-cors' });
+        const blob = await resp.blob();
+        const bytes = new Uint8Array(await blob.arrayBuffer());
+        const ext = blob.type.includes('png') ? 'png' : 'jpg';
+    
+        let imgEmbed;
+        if (ext === 'png') imgEmbed = await doc.embedPng(bytes);
+        else imgEmbed = await doc.embedJpg(bytes);
+    
+        // calcula tamanho proporcional
+        const maxW = page3.getWidth() - 100;
+        const maxH = page3.getHeight() - 120;
+        const scale = Math.min(maxW / imgEmbed.width, maxH / imgEmbed.height);
+    
+        page3.drawImage(imgEmbed, {
+          x: 50,
+          y: 60,
+          width: imgEmbed.width * scale,
+          height: imgEmbed.height * scale,
+        });
+      } catch (e) {
+        console.error('Erro ao inserir imagem da redação:', e);
       }
     }
-  }catch(e){
-    console.warn('Falha ao inserir página 3 (redação):', e);
-  }
 
 
 
