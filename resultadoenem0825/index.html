@@ -113,7 +113,7 @@
 <body>
  
   <header>
-    <h1>Simulado Aberto ENEM Agosto/2025</h1>
+    <h1>Simulado Aberto ENEM Agosto/2025 v</h1>
   </header>
 
    <img src="https://raw.githubusercontent.com/dilalves/simuladoaberto-site/main/resultadoenem0825/Digital---Simulado-Aberto-728X90.png" 
@@ -639,14 +639,6 @@ function getFeedbackCompetencias(R){
     drawBullet(fbc.c4, 12);
     drawBullet(fbc.c5, 12);
   
-    // baixa
-    const bytes = await doc.save();
-    const blob  = new Blob([bytes], { type:'application/pdf' });
-    const a     = document.createElement('a');
-    a.href      = URL.createObjectURL(blob);
-    a.download  = `resultado_ENEM_${j.inscricao}.pdf`;
-    a.click();
-
     
   // --- Página 3: Redação (se houver imagem) -------------------
    const imgTag = document.querySelector('#imgBox img');
@@ -661,12 +653,12 @@ function getFeedbackCompetencias(R){
         const proxUrl = `${ENDPOINT}?action=img&u=${encodeURIComponent(imgTag.src)}`;
         const resp    = await fetch(proxUrl, { cache:'no-store' });
         if (!resp.ok) throw new Error('proxy resp not ok');
-        const bytes   = new Uint8Array(await resp.arrayBuffer());
+        const imgBytes = new Uint8Array(await resp.arrayBuffer());
     
         // tenta JPG, cai pra PNG se falhar
         let imgEmbed;
-        try { imgEmbed = await doc.embedJpg(bytes); }
-        catch { imgEmbed = await doc.embedPng(bytes); }
+        try { imgEmbed = await doc.embedJpg(imgBytes); }
+        catch { imgEmbed = await doc.embedPng(imgBytes); }
     
         // escala proporcional
         const maxW = page3.getWidth()  - 100;
@@ -683,6 +675,16 @@ function getFeedbackCompetencias(R){
         console.error('Erro ao inserir imagem da redação (proxy):', e);
       }
     } 
+
+    
+     // baixar arquivo final
+    const bytes = await doc.save();
+    const blob  = new Blob([bytes], { type:'application/pdf' });
+    const a     = document.createElement('a');
+    a.href      = URL.createObjectURL(blob);
+    a.download  = `resultado_ENEM_${j.inscricao}.pdf`;
+    a.click();
+    
   }
 
   /* ===== helpers gerais ===== */
