@@ -1,0 +1,149 @@
+<!-- dentro do layout padrão -->
+<div class="content">
+  <div class="row">
+    <div class="col s12 m6">
+      <div class="card edge z-depth-0">
+        <div class="card-content">
+          <span class="card-title">Cadastrar professor</span>
+          <div class="row" style="margin-bottom:0">
+            <div class="input-field col s12">
+              <input id="nome" type="text" required>
+              <label for="nome">Nome</label>
+            </div>
+            <div class="input-field col s12">
+              <input id="email" type="email" required>
+              <label for="email">E-mail</label>
+            </div>
+            <div class="input-field col s12">
+              <input id="login" type="text" required>
+              <label for="login">Login</label>
+            </div>
+            <div class="input-field col s12">
+              <label>
+                <input type="checkbox" id="ativo" checked />
+                <span>Ativo</span>
+              </label>
+            </div>
+          </div>
+        </div>
+        <div class="card-action">
+          <a class="btn blue" onclick="salvarCorretor()">Salvar</a>
+          <a class="btn-flat" onclick="limparForm()">Limpar</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="col s12 m6">
+      <div class="card edge z-depth-0">
+        <div class="card-content">
+          <span class="card-title">Corretores</span>
+          <div class="input-field">
+            <input id="busca" type="text" oninput="carregarLista()">
+            <label for="busca">Buscar</label>
+          </div>
+          <table class="striped">
+            <thead>
+              <tr><th>Nome</th><th>E-mail</th><th>Login</th><th>Ativo</th><th></th></tr>
+            </thead>
+            <tbody id="tbCorretores"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ==== helpers (reaproveite do painel) ====
+const API = 'https://api.secauxiliar.com.br';
+function getToken(){ try{ return JSON.parse(localStorage.getItem('sessao_redacao')||'{}').token || localStorage.getItem('token') || '' } catch(e){ return localStorage.getItem('token')||'' } }
+function authHeaders(){ const t=getToken(); return t?{'Authorization':'Bearer '+t}:{ } }
+async function api(path, opts={}) {
+  const headers = { 'Content-Type':'application/json', 'Accept':'application/json', ...authHeaders(), ...(opts.headers||{}) };
+  const res = await fetch(API+path, { ...opts, headers });
+  if (res.status===401) throw new Error('UNAUTHORIZED');
+  if (!res.ok) throw new Error('API_'+res.status);
+  return res.json();
+}
+
+// ==== UI ====
+let editId = 0;
+
+function limparForm(){
+  editId = 0;
+  document.getElementById('nome').value='';
+  document.getElementById('email').value='';
+  document.getElementById('login').value='';
+  document.getElementById('ativo').checked=true;
+  M.updateTextFields();
+}
+
+async function carregarLista(){
+  const q = document.getElementById('busca').value.trim();
+  const data = await api('/corretores_list.php'+(q?('?q='+encodeURIComponent(q)):''));
+  const tb = document.getElementById('tbCorretores');
+  tb.innerHTML = '';
+  (data.items||[]).forEach(row=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${row.nome}</td>
+      <td>${row.email}</td>
+      <td>${row.login}</td>
+      <td><label><input type="checkbox" ${row.ativo?'checked':''} onchange="toggleAtivo(${row.id}, this.checked)"><span></span></label></td>
+      <td class="right-align">
+        <a class="btn-flat" onclick='editar(${JSON.stringify(row).replaceAll("'", "&apos;")})'>Editar</a>
+        <a class="btn-flat" onclick='convidar(${row.id})'>Convidar</a>
+        <a class="btn-flat red-text" onclick='excluir(${row.id})'>Excluir</a>
+      </td>`;
+    tb.appendChild(tr);
+  });
+}
+
+function editar(row){
+  editId = row.id;
+  document.getElementById('nome').value = row.nome;
+  document.getElementById('email').value = row.email;
+  document.getElementById('login').value = row.login;
+  document.getElementById('ativo').checked = !!row.ativo;
+  M.updateTextFields();
+}
+
+async function salvarCorretor(){
+  const payload = {
+    id: editId,
+    nome: document.getElementById('nome').value.trim(),
+    email: document.getElementById('email').value.trim(),
+    login: document.getElementById('login').value.trim(),
+    ativo: document.getElementById('ativo').checked ? 1 : 0
+  };
+  const data = await api('/corretores_save.php', { method:'POST', body: JSON.stringify(payload) });
+  M.toast({html:'Salvo!'});
+  limparForm();
+  carregarLista();
+}
+
+async function toggleAtivo(id, ativo){
+  await api('/corretores_toggle.php', { method:'POST', body: JSON.stringify({id, ativo:ativo?1:0}) });
+  M.toast({html: ativo?'Ativado':'Desativado'});
+}
+
+async function excluir(id){
+  if (!confirm('Excluir este corretor?')) return;
+  await api('/corretores_delete.php', { method:'POST', body: JSON.stringify({id}) });
+  M.toast({html:'Excluído'});
+  carregarLista();
+}
+
+async function convidar(id){
+  const ret = await api('/corretores_invite.php', { method:'POST', body: JSON.stringify({id}) });
+  M.toast({html: ret.sent ? 'Convite enviado' : 'Convite gerado'});
+  // para testes, você pode abrir o link retornado:
+  // if (ret.link) window.open(ret.link, '_blank');
+}
+
+// boot
+document.addEventListener('DOMContentLoaded', ()=>{
+  limparForm();
+  carregarLista();
+});
+</script>
