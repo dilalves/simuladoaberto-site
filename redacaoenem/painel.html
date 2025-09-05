@@ -279,9 +279,11 @@ async function initPainel(){
 /* ===== Contexto (/me) ===== */
 async function carregarContextoDaAPI(){
   try{
-    const data = await apiFetch('/me');
+    // chama o endpoint real que você tem no servidor
+    const data = await apiFetch('/auth_me.php'); 
     if (data?.usuario?.nome) setUserName(data.usuario.nome);
     if (data?.unidade) setUnitHeader(data.unidade);
+
     const merged = { ...getSession(), ...data };
     setSession(merged);
   }catch(e){
@@ -289,6 +291,7 @@ async function carregarContextoDaAPI(){
     if (String(e.message).includes('UNAUTHORIZED')) redirectToLogin();
   }
 }
+
 
 /* ===== KPIs (mantidos apenas para futura ligação; hoje ficam em "—") ===== */
 function setKPIs({ enviadas='—', corretores='—', unidade, usuario } = {}){
