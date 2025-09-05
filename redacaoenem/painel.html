@@ -209,6 +209,30 @@
   </div>
 
   <script>
+
+    function authHeaders() {
+      const token = localStorage.getItem('token') || '';
+      return token ? { 'Authorization': `Bearer ${token}` } : {};
+    }
+    
+    async function carregarSimulados(){
+      const res = await fetch(`${API}/simulados.php`, {
+        cache: 'no-store',
+        headers: { 'Accept': 'application/json', ...authHeaders() }
+      });
+      const data = await res.json();
+      // ...
+    }
+    
+    async function carregarKPIs(simuladoId){
+      const res = await fetch(`${API}/dashboard.php?simulado=${encodeURIComponent(simuladoId)}`, {
+        cache: 'no-store',
+        headers: { 'Accept': 'application/json', ...authHeaders() }
+      });
+      const data = await res.json();
+      // ...
+    }
+
     // ===== CONFIG =====
     // Endpoint da API (ajuste para seu subdomínio real)
     const API = 'https://api.secauxiliar.com.br';
@@ -303,6 +327,9 @@
       if (unidade?.codigo && unidade?.nome) setUnitHeader(unidade);
       if (usuario?.nome) document.getElementById('userName').textContent = usuario.nome;
     }
+
+
+    
   </script>
 </body>
 </html>
