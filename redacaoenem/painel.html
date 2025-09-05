@@ -39,7 +39,6 @@
 
     /* Content */
     .content{max-width:1200px; margin:0 auto; padding:20px}
-    .selector-row{margin:6px 0 14px}
 
     /* Cards */
     .card.edge{border-radius:14px; border:1px solid var(--line)}
@@ -95,28 +94,11 @@
 
       <!-- Content -->
       <div class="content">
-        <!-- Seletor de Simulado -->
-        <div class="row selector-row">
-          <div class="col s12 m6 l4">
-            <label for="simuladoSelect" class="grey-text text-darken-1" style="font-weight:600">Simulado ENEM</label>
-            <select id="simuladoSelect" class="browser-default" style="border:1px solid var(--line); border-radius:10px; padding:10px 12px; background:#fff">
-              <option value="">Selecione...</option>
-              <!-- preenchido via JS -->
-            </select>
-          </div>
-        </div>
+        <!-- 🔴 seletor removido -->
 
-        <!-- KPIs -->
+        <!-- KPIs (apenas Enviadas e Corretores) -->
         <div class="row" style="margin-bottom:10px">
-          <div class="col s12 m4">
-            <div class="card edge kpi z-depth-0">
-              <div class="card-content center">
-                <div class="value" id="kpiInscritos">—</div>
-                <div class="label">Inscritos</div>
-              </div>
-            </div>
-          </div>
-          <div class="col s12 m4">
+          <div class="col s12 m6">
             <div class="card edge kpi z-depth-0">
               <div class="card-content center">
                 <div class="value" id="kpiEnviadas">—</div>
@@ -124,7 +106,7 @@
               </div>
             </div>
           </div>
-          <div class="col s12 m4">
+          <div class="col s12 m6">
             <div class="card edge kpi z-depth-0">
               <div class="card-content center">
                 <div class="value" id="kpiCorretores">—</div>
@@ -211,10 +193,10 @@
 <script>
 /* ===== CONFIG ===== */
 const API = 'https://api.secauxiliar.com.br';
-const LOGIN_URL = '/redacaoeenem/login.html'; // ajuste se necessário
+const LOGIN_URL = '/redacaoeenem/login.html';
 const SESS_KEY = 'sessao_redacao';
 
-/* ===== Utils de sessão ===== */
+/* ===== Sessão ===== */
 function getSession(){
   try { return JSON.parse(localStorage.getItem(SESS_KEY) || '{}'); }
   catch(e){ return {}; }
@@ -224,7 +206,6 @@ function setSession(sess){
 }
 function getToken(){
   const sess = getSession();
-  // compat: aceita token direto no localStorage também
   return (sess && sess.token) || localStorage.getItem('token') || '';
 }
 function authHeaders(){
@@ -236,44 +217,26 @@ function redirectToLogin(){
   location.replace(`${LOGIN_URL}?next=${next}`);
 }
 
-/* ===== Helpers de API (com fallback .php) ===== */
+/* ===== Fetch helper (com fallback .php) ===== */
 async function apiFetch(pathNoPhp, { method='GET', headers={}, body, cache='no-store' } = {}){
   const baseHeaders = { 'Accept': 'application/json', ...authHeaders(), ...headers };
   const opts = { method, cache, headers: baseHeaders, body };
 
-  // 1ª tentativa: rota sem .php
   let res;
-  try { res = await fetch(`${API}${pathNoPhp}`, opts); }
-  catch(e){ res = null; }
+  try { res = await fetch(`${API}${pathNoPhp}`, opts); } catch(e){ res = null; }
 
-  // se a 1ª falhar por 404/erro de rede, tenta com .php (ex.: /me -> /me.php)
-  if (!res || res.status === 404) {
-    const phpPath = pathNoPhp.replace(/\/?$/, '').endsWith('.php')
-      ? pathNoPhp
-      : pathNoPhp.replace(/\/([^\/?#]+)$/, '/$1.php'); // /me -> /me.php ; /dashboard/123 -> /dashboard.php?simulado=123 (tratamos abaixo)
-  }
-
-  // Tratamento especial para dashboard com id no path
-  if (pathNoPhp.startsWith('/dashboard/')) {
-    const simId = decodeURIComponent(pathNoPhp.split('/').pop() || '');
-    return apiFetch(`/dashboard.php?simulado=${encodeURIComponent(simId)}`, { method, headers, body, cache });
-  }
-
+  // fallback .php
   if (!res || res.status === 404) {
     const withPhp = pathNoPhp.endsWith('.php') ? pathNoPhp : pathNoPhp + '.php';
-    try { res = await fetch(`${API}${withPhp}`, opts); }
-    catch(e){ /* fica como null */ }
+    try { res = await fetch(`${API}${withPhp}`, opts); } catch(e){ /* ignore */ }
   }
 
   if (!res) throw new Error('NETWORK_FAIL');
-
   if (res.status === 401 || res.status === 403) throw new Error('UNAUTHORIZED');
-
   if (!res.ok) {
     const txt = await res.text().catch(()=> '');
     throw new Error(`API_${res.status}: ${txt || res.statusText}`);
   }
-
   return res.json();
 }
 
@@ -295,10 +258,8 @@ document.addEventListener('DOMContentLoaded', initPainel);
 
 async function initPainel(){
   try{
-    // guarda dura: sem token não entra
     if (!getToken()) return redirectToLogin();
 
-    // tenta usar sessão do login; se faltar, consulta /me(.php)
     const sess = getSession();
     if (sess?.unidade?.codigo && sess?.unidade?.nome) {
       setUnitHeader(sess.unidade);
@@ -307,25 +268,20 @@ async function initPainel(){
       await carregarContextoDaAPI();
     }
 
-    await carregarSimulados();
-    document.body.classList.add('ready'); // libere os botões quando estiver pronto
+    // 🔴 Sem simulados/KPIs por simulado neste momento
+    document.body.classList.add('ready');
   } catch(err){
     console.error('Falha na inicialização:', err);
     if (String(err.message).includes('UNAUTHORIZED')) return redirectToLogin();
-    const statusEl = document.getElementById('statusPainel');
-    if (statusEl) statusEl.textContent = 'Não foi possível carregar seus dados. Tente novamente.';
   }
 }
 
 /* ===== Contexto (/me) ===== */
 async function carregarContextoDaAPI(){
   try{
-    const data = await apiFetch('/me'); // tenta /me e /me.php
-    // esperado: { usuario:{nome}, unidade:{codigo,nome}, token? }
+    const data = await apiFetch('/me');
     if (data?.usuario?.nome) setUserName(data.usuario.nome);
     if (data?.unidade) setUnitHeader(data.unidade);
-
-    // persiste unindo com sessão existente
     const merged = { ...getSession(), ...data };
     setSession(merged);
   }catch(e){
@@ -334,87 +290,23 @@ async function carregarContextoDaAPI(){
   }
 }
 
-/* ===== Simulados ===== */
-async function carregarSimulados(){
-  try{
-    // tenta /simulados e depois /simulados.php
-    const data = await apiFetch('/simulados');
-    const lista = data?.simulados || data || [];
-    const sel = document.getElementById('simuladoSelect');
-    if (!sel) return;
-
-    // limpa e preenche
-    sel.innerHTML = '<option value="" disabled selected>Selecione...</option>';
-    (lista || []).forEach(s => {
-      const opt = document.createElement('option');
-      opt.value = s.id || s.codigo;
-      opt.textContent = s.nome || s.titulo;
-      sel.appendChild(opt);
-    });
-
-    if ((lista || []).length === 1){
-      sel.value = (lista[0].id || lista[0].codigo);
-      onChangeSimulado();
-    }
-    // reinit Materialize
-    if (window.M && M.FormSelect) M.FormSelect.init(sel);
-    sel.addEventListener('change', onChangeSimulado);
-  }catch(err){
-    console.error('Falha ao carregar simulados', err);
-    if (String(err.message).includes('UNAUTHORIZED')) redirectToLogin();
-  }
-}
-
-async function onChangeSimulado(){
-  const simId = document.getElementById('simuladoSelect')?.value;
-  if(!simId){ setKPIs({}); return; }
-  await carregarKPIs(simId);
-}
-
-/* ===== KPIs ===== */
-async function carregarKPIs(simuladoId){
-  try{
-    // 1ª tentativa: /dashboard/{id}
-    let data;
-    try {
-      data = await apiFetch(`/dashboard/${encodeURIComponent(simuladoId)}`);
-    } catch (e) {
-      // fallback: /dashboard.php?simulado=...
-      data = await apiFetch(`/dashboard.php?simulado=${encodeURIComponent(simuladoId)}`);
-    }
-    // esperado: { ok:true, inscritos, enviadas, corretores, unidade:{...}, usuario:{...} }
-    setKPIs(data);
-  }catch(err){
-    console.error('Falha KPIs', err);
-    if (String(err.message).includes('UNAUTHORIZED')) redirectToLogin();
-  }
-}
-
-function setKPIs({ inscritos='—', enviadas='—', corretores='—', unidade, usuario } = {}){
-  const elIns = document.getElementById('kpiInscritos');
+/* ===== KPIs (mantidos apenas para futura ligação; hoje ficam em "—") ===== */
+function setKPIs({ enviadas='—', corretores='—', unidade, usuario } = {}){
   const elEnv = document.getElementById('kpiEnviadas');
   const elCor = document.getElementById('kpiCorretores');
-  if (elIns) elIns.textContent = inscritos;
   if (elEnv) elEnv.textContent = enviadas;
   if (elCor) elCor.textContent = corretores;
-
   if (unidade?.codigo && unidade?.nome) setUnitHeader(unidade);
   if (usuario?.nome) setUserName(usuario.nome);
 }
 
-/* ===== Opcional: bloquear cliques até ready ===== */
+/* ===== Bloqueio de cliques até ready (opcional) ===== */
 document.addEventListener('click', (ev) => {
   if (!document.body.classList.contains('ready')) {
     const target = ev.target.closest('a,button');
-    if (target) {
-      ev.preventDefault();
-      ev.stopPropagation();
-    }
+    if (target) { ev.preventDefault(); ev.stopPropagation(); }
   }
 });
 </script>
-  
-
-
 </body>
 </html>
