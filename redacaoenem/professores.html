@@ -1,72 +1,223 @@
-<!-- dentro do layout padrão -->
-<div class="content">
-  <div class="row">
-    <div class="col s12 m6">
-      <div class="card edge z-depth-0">
-        <div class="card-content">
-          <span class="card-title">Cadastrar professor</span>
-          <div class="row" style="margin-bottom:0">
-            <div class="input-field col s12">
-              <input id="nome" type="text" required>
-              <label for="nome">Nome</label>
-            </div>
-            <div class="input-field col s12">
-              <input id="email" type="email" required>
-              <label for="email">E-mail</label>
-            </div>
-            <div class="input-field col s12">
-              <input id="login" type="text" required>
-              <label for="login">Login</label>
-            </div>
-            <div class="input-field col s12">
-              <label>
-                <input type="checkbox" id="ativo" checked />
-                <span>Ativo</span>
-              </label>
-            </div>
-          </div>
-        </div>
-        <div class="card-action">
-          <a class="btn blue" onclick="salvarCorretor()">Salvar</a>
-          <a class="btn-flat" onclick="limparForm()">Limpar</a>
-        </div>
-      </div>
-    </div>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Professores • Redação Online</title>
 
-    <div class="col s12 m6">
-      <div class="card edge z-depth-0">
-        <div class="card-content">
-          <span class="card-title">Corretores</span>
-          <div class="input-field">
-            <input id="busca" type="text" oninput="carregarLista()">
-            <label for="busca">Buscar</label>
+  <!-- Materialize -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+  <!-- Google Icons -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg:#f7f8fb; --card:#ffffff; --line:#e9edf3; --ink:#0f172a; --muted:#6b7280; --primary:#2563eb;
+    }
+    html,body{height:100%}
+    body{background:var(--bg); color:var(--ink)}
+    .app{display:grid; grid-template-columns:260px 1fr; min-height:100vh}
+    .aside{background:#fff; border-right:1px solid var(--line)}
+    .main{display:flex; flex-direction:column}
+    .topbar{background:#fff; border-bottom:1px solid var(--line)}
+    .topbar .wrap{max-width:1300px; margin:0 auto; padding:12px 18px}
+    .brand{font-weight:800; font-size:1.2rem; margin-right:16px}
+    .unit{color:var(--muted); font-weight:600}
+    .user-chip{background:#eef2ff; border-radius:12px; padding:8px 12px; color:#1e293b}
+    .aside .logo{display:flex; align-items:center; gap:10px; padding:18px}
+    .aside .logo .tick{background:#e0ebff; color:#1d4ed8; width:26px; height:26px; border-radius:6px; display:flex; align-items:center; justify-content:center}
+    .menu a{display:flex; align-items:center; gap:12px; padding:12px 18px; color:#111827; border-radius:10px; margin:6px 12px; font-weight:600}
+    .menu a:hover{background:#eef2ff}
+    .menu a.active{background:#e7efff; color:#1d4ed8}
+    .content{max-width:1200px; margin:0 auto; padding:20px}
+    .card.edge{border-radius:14px; border:1px solid var(--line)}
+    .card .card-content{padding:20px}
+    .actions .btn, .actions .btn-flat{margin-right:8px}
+    table.striped tbody tr:hover{background:#f6f8ff}
+    .right-actions a{margin-left:6px}
+    @media(max-width:992px){ .app{grid-template-columns:1fr} .aside{display:none} }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <!-- Aside -->
+    <aside class="aside">
+      <div class="logo">
+        <div class="tick"><i class="material-icons" style="font-size:18px">check</i></div>
+        <div style="font-weight:800">Redação Online</div>
+      </div>
+      <nav class="menu">
+        <a href="painel.html"><i class="material-icons">dashboard</i>Dashboard</a>
+        <a href="envio.html"><i class="material-icons">description</i>Envio de Redações</a>
+        <a class="active" href="professores.html"><i class="material-icons">group</i>Professores</a>
+        <a href="relatorios.html"><i class="material-icons">insert_chart_outlined</i>Relatórios</a>
+        <a href="config.html"><i class="material-icons">settings</i>Configurações</a>
+      </nav>
+    </aside>
+
+    <!-- Main -->
+    <section class="main">
+      <!-- Header -->
+      <div class="topbar">
+        <div class="wrap">
+          <div class="row valign-wrapper" style="margin-bottom:0">
+            <div class="col s12 m6 left-align">
+              <span class="brand">Professores</span>
+              <span class="unit">• <span id="unitIdName">—</span></span>
+            </div>
+            <div class="col s12 m6 right-align">
+              <span class="user-chip"><i class="material-icons left">account_circle</i><span id="userName">Usuário</span></span>
+            </div>
           </div>
-          <table class="striped">
-            <thead>
-              <tr><th>Nome</th><th>E-mail</th><th>Login</th><th>Ativo</th><th></th></tr>
-            </thead>
-            <tbody id="tbCorretores"></tbody>
-          </table>
         </div>
       </div>
-    </div>
+
+      <!-- Content -->
+      <div class="content">
+        <div class="row">
+          <!-- Formulário -->
+          <div class="col s12 m5">
+            <div class="card edge z-depth-0">
+              <div class="card-content">
+                <span class="card-title" style="font-weight:800">Cadastrar professor</span>
+                <div class="row" style="margin-bottom:0">
+                  <div class="input-field col s12">
+                    <input id="nome" type="text" required>
+                    <label for="nome">Nome</label>
+                  </div>
+                  <div class="input-field col s12">
+                    <input id="email" type="email" required>
+                    <label for="email">E-mail</label>
+                  </div>
+                  <div class="input-field col s12">
+                    <input id="login" type="text" required>
+                    <label for="login">Login</label>
+                  </div>
+                  <div class="col s12" style="margin:6px 0 12px">
+                    <label>
+                      <input type="checkbox" id="ativo" checked />
+                      <span>Ativo</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+              <div class="card-action actions">
+                <a class="btn blue waves-effect" onclick="salvarCorretor()"><i class="material-icons left">save</i>Salvar</a>
+                <a class="btn-flat waves-effect" onclick="limparForm()"><i class="material-icons left">refresh</i>Limpar</a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Lista -->
+          <div class="col s12 m7">
+            <div class="card edge z-depth-0">
+              <div class="card-content">
+                <div class="row valign-wrapper" style="margin-bottom:10px">
+                  <div class="col s12 m7">
+                    <span class="card-title" style="font-weight:800">Corretores</span>
+                  </div>
+                  <div class="col s12 m5">
+                    <div class="input-field" style="margin:0">
+                      <i class="material-icons prefix">search</i>
+                      <input id="busca" type="text" oninput="carregarLista()" placeholder="Buscar por nome, e-mail ou login">
+                    </div>
+                  </div>
+                </div>
+                <table class="striped responsive-table">
+                  <thead>
+                    <tr>
+                      <th>Nome</th>
+                      <th>E-mail</th>
+                      <th>Login</th>
+                      <th style="width:90px">Ativo</th>
+                      <th class="right-align" style="width:220px">Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody id="tbCorretores">
+                    <tr><td colspan="5" class="center-align grey-text">Carregando...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
   </div>
-</div>
 
 <script>
-// ==== helpers (reaproveite do painel) ====
+/* ===== CONFIG/API iguais ao painel ===== */
 const API = 'https://api.secauxiliar.com.br';
-function getToken(){ try{ return JSON.parse(localStorage.getItem('sessao_redacao')||'{}').token || localStorage.getItem('token') || '' } catch(e){ return localStorage.getItem('token')||'' } }
-function authHeaders(){ const t=getToken(); return t?{'Authorization':'Bearer '+t}:{ } }
-async function api(path, opts={}) {
-  const headers = { 'Content-Type':'application/json', 'Accept':'application/json', ...authHeaders(), ...(opts.headers||{}) };
-  const res = await fetch(API+path, { ...opts, headers });
-  if (res.status===401) throw new Error('UNAUTHORIZED');
-  if (!res.ok) throw new Error('API_'+res.status);
+const LOGIN_URL = '/redacaoeenem/login.html';
+const SESS_KEY = 'sessao_redacao';
+
+/* Sessão */
+function getSession(){ try{ return JSON.parse(localStorage.getItem(SESS_KEY)||'{}'); }catch(e){ return {}; } }
+function setSession(s){ localStorage.setItem(SESS_KEY, JSON.stringify(s||{})); }
+function getToken(){ const s=getSession(); return (s&&s.token) || localStorage.getItem('token') || ''; }
+function authHeaders(){ const t=getToken(); return t?{'Authorization':'Bearer '+t}:{ }; }
+function redirectToLogin(){ const next=encodeURIComponent(location.pathname+location.search+location.hash); location.replace(`${LOGIN_URL}?next=${next}`); }
+
+/* Fetch helper com fallback .php */
+async function apiFetch(pathNoPhp, { method='GET', headers={}, body, cache='no-store' } = {}){
+  const baseHeaders = { 'Accept': 'application/json', 'Content-Type':'application/json', ...authHeaders(), ...headers };
+  const opts = { method, cache, headers: baseHeaders, body };
+
+  let res;
+  try { res = await fetch(`${API}${pathNoPhp}`, opts); } catch(e){ res = null; }
+  if (!res || res.status === 404) {
+    const withPhp = pathNoPhp.endsWith('.php') ? pathNoPhp : pathNoPhp + '.php';
+    try { res = await fetch(`${API}${withPhp}`, opts); } catch(e){ /* ignore */ }
+  }
+  if (!res) throw new Error('NETWORK_FAIL');
+  if (res.status === 401 || res.status === 403) throw new Error('UNAUTHORIZED');
+  if (!res.ok) {
+    const txt = await res.text().catch(()=> '');
+    throw new Error(`API_${res.status}: ${txt || res.statusText}`);
+  }
   return res.json();
 }
 
-// ==== UI ====
+/* UI helpers */
+function setUnitHeader({ codigo, nome } = {}){
+  const el=document.getElementById('unitIdName');
+  if(!el) return;
+  if(codigo && nome) el.textContent = `${codigo} - ${nome}`;
+  else if(nome) el.textContent = nome; else el.textContent = '—';
+}
+function setUserName(n){ const el=document.getElementById('userName'); if(el&&n) el.textContent=n; }
+function toast(msg){ M && M.toast ? M.toast({html: msg}) : alert(msg); }
+
+/* Boot */
+document.addEventListener('DOMContentLoaded', async () => {
+  try{
+    if (!getToken()) return redirectToLogin();
+    await carregarContexto();   // preenche topo
+    limparForm();
+    await carregarLista();
+  }catch(e){
+    if (String(e.message).includes('UNAUTHORIZED')) return redirectToLogin();
+    console.error(e);
+  }
+});
+
+/* Contexto /auth_me.php */
+async function carregarContexto(){
+  const data = await apiFetch('/auth_me.php');
+  // fallback se backend retornar {user:{...}}
+  if (data?.user && !data?.usuario && !data?.unidade) {
+    const u=data.user;
+    data.usuario={nome:u.nome||u.login||'Usuário'};
+    data.unidade={codigo:u.login||'', nome:u.unidade||''};
+  }
+  if (data?.usuario?.nome) setUserName(data.usuario.nome);
+  if (data?.unidade) setUnitHeader(data.unidade);
+  setSession({ ...getSession(), ...data });
+}
+
+/* Estado form/lista */
 let editId = 0;
 
 function limparForm(){
@@ -75,25 +226,40 @@ function limparForm(){
   document.getElementById('email').value='';
   document.getElementById('login').value='';
   document.getElementById('ativo').checked=true;
-  M.updateTextFields();
+  if (window.M && M.updateTextFields) M.updateTextFields();
 }
 
+/* CRUD */
 async function carregarLista(){
   const q = document.getElementById('busca').value.trim();
-  const data = await api('/corretores_list.php'+(q?('?q='+encodeURIComponent(q)):''));
+  let url = '/corretores_list';
+  if (q) url += `?q=${encodeURIComponent(q)}`;
+  const data = await apiFetch(url);
+
   const tb = document.getElementById('tbCorretores');
   tb.innerHTML = '';
-  (data.items||[]).forEach(row=>{
+  const items = data.items || [];
+  if (!items.length){
+    tb.innerHTML = '<tr><td colspan="5" class="center-align grey-text">Nenhum professor encontrado.</td></tr>';
+    return;
+  }
+
+  items.forEach(row=>{
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>${row.nome}</td>
       <td>${row.email}</td>
       <td>${row.login}</td>
-      <td><label><input type="checkbox" ${row.ativo?'checked':''} onchange="toggleAtivo(${row.id}, this.checked)"><span></span></label></td>
-      <td class="right-align">
-        <a class="btn-flat" onclick='editar(${JSON.stringify(row).replaceAll("'", "&apos;")})'>Editar</a>
-        <a class="btn-flat" onclick='convidar(${row.id})'>Convidar</a>
-        <a class="btn-flat red-text" onclick='excluir(${row.id})'>Excluir</a>
+      <td>
+        <label>
+          <input type="checkbox" ${row.ativo?'checked':''} onchange="toggleAtivo(${row.id}, this.checked)">
+          <span></span>
+        </label>
+      </td>
+      <td class="right-align right-actions">
+        <a class="btn-flat waves-effect" onclick='editar(${JSON.stringify(row).replaceAll("'", "&apos;")})'><i class="material-icons left">edit</i>Editar</a>
+        <a class="btn-flat waves-effect" onclick='convidar(${row.id})'><i class="material-icons left">mail_outline</i>Convidar</a>
+        <a class="btn-flat red-text waves-effect" onclick='excluir(${row.id})'><i class="material-icons left">delete_outline</i>Excluir</a>
       </td>`;
     tb.appendChild(tr);
   });
@@ -101,11 +267,11 @@ async function carregarLista(){
 
 function editar(row){
   editId = row.id;
-  document.getElementById('nome').value = row.nome;
-  document.getElementById('email').value = row.email;
-  document.getElementById('login').value = row.login;
+  document.getElementById('nome').value = row.nome || '';
+  document.getElementById('email').value = row.email || '';
+  document.getElementById('login').value = row.login || '';
   document.getElementById('ativo').checked = !!row.ativo;
-  M.updateTextFields();
+  if (window.M && M.updateTextFields) M.updateTextFields();
 }
 
 async function salvarCorretor(){
@@ -116,34 +282,33 @@ async function salvarCorretor(){
     login: document.getElementById('login').value.trim(),
     ativo: document.getElementById('ativo').checked ? 1 : 0
   };
-  const data = await api('/corretores_save.php', { method:'POST', body: JSON.stringify(payload) });
-  M.toast({html:'Salvo!'});
+  if (!payload.nome || !payload.email || !payload.login) {
+    return toast('Preencha Nome, E-mail e Login');
+  }
+  await apiFetch('/corretores_save', { method:'POST', body: JSON.stringify(payload) });
+  toast(editId ? 'Professor atualizado' : 'Professor cadastrado');
   limparForm();
   carregarLista();
 }
 
 async function toggleAtivo(id, ativo){
-  await api('/corretores_toggle.php', { method:'POST', body: JSON.stringify({id, ativo:ativo?1:0}) });
-  M.toast({html: ativo?'Ativado':'Desativado'});
+  await apiFetch('/corretores_toggle', { method:'POST', body: JSON.stringify({id, ativo:ativo?1:0}) });
+  toast(ativo? 'Ativado' : 'Desativado');
 }
 
 async function excluir(id){
-  if (!confirm('Excluir este corretor?')) return;
-  await api('/corretores_delete.php', { method:'POST', body: JSON.stringify({id}) });
-  M.toast({html:'Excluído'});
+  if (!confirm('Excluir este professor?')) return;
+  await apiFetch('/corretores_delete', { method:'POST', body: JSON.stringify({id}) });
+  toast('Professor excluído');
   carregarLista();
 }
 
 async function convidar(id){
-  const ret = await api('/corretores_invite.php', { method:'POST', body: JSON.stringify({id}) });
-  M.toast({html: ret.sent ? 'Convite enviado' : 'Convite gerado'});
-  // para testes, você pode abrir o link retornado:
+  const ret = await apiFetch('/corretores_invite', { method:'POST', body: JSON.stringify({id}) });
+  toast(ret.sent ? 'Convite enviado por e-mail' : 'Convite gerado');
+  // Para teste/admin, você pode abrir o link retornado:
   // if (ret.link) window.open(ret.link, '_blank');
 }
-
-// boot
-document.addEventListener('DOMContentLoaded', ()=>{
-  limparForm();
-  carregarLista();
-});
 </script>
+</body>
+</html>
