@@ -209,20 +209,18 @@
   </div>
 
   <script>
-    // ===== CONFIG =====
-    // Altere para sua URL do WebApp do GAS ou endpoint que retorna dados do painel
-    const BASE_URL = 'https://script.google.com/macros/s/SEU_DEPLOY_AQUI/exec';
+    // ===== CONFIG =====   
+    const API = 'https://api.secauxiliar.com.br'; // ou seu subdomínio da API
 
     // ===== Boot =====
     document.addEventListener('DOMContentLoaded', () => {
-      // Carregar simulados do backend
       carregarSimulados();
     });
 
     // ===== Carrega seletor de simulados =====
     async function carregarSimulados(){
       try{
-        const url = BASE_URL + '?action=list_simulados';
+        const url = `${API}/simulados`; // 👉 endpoint GET simulados
         const res = await fetch(url, { cache:'no-store' });
         const data = await res.json();
         const sel = document.getElementById('simuladoSelect');
@@ -231,7 +229,6 @@
           opt.value = s.id; opt.textContent = s.nome;
           sel.appendChild(opt);
         });
-        // Se só houver um, já seleciona e busca
         if((data.simulados||[]).length === 1){
           sel.value = data.simulados[0].id;
           onChangeSimulado();
@@ -239,7 +236,7 @@
         sel.addEventListener('change', onChangeSimulado);
       }catch(err){ console.error('Falha ao carregar simulados', err); }
     }
-
+    
     async function onChangeSimulado(){
       const simId = document.getElementById('simuladoSelect').value;
       if(!simId){ setKPIs({}); return; }
@@ -249,16 +246,16 @@
     // ===== KPIs =====
     async function carregarKPIs(simuladoId){
       try{
-        const url = BASE_URL + '?action=dashboard_kpis&simulado=' + encodeURIComponent(simuladoId);
+        const url = `${API}/dashboard/${encodeURIComponent(simuladoId)}`;
         const res = await fetch(url, { cache:'no-store' });
         const data = await res.json();
-        // esperado: { ok:true, inscritos:120, enviadas:30, corretores:6, unidade:"Alpha", usuario:"Fulano" }
+        // esperado: { ok:true, inscritos:120, enviadas:30, corretores:6, unidade:\"Alpha\", usuario:\"Fulano\" }
         setKPIs(data);
         if(data.unidade) document.getElementById('unitName').textContent = data.unidade;
         if(data.usuario) document.getElementById('userName').textContent = data.usuario;
       }catch(err){ console.error('Falha KPIs', err); }
     }
-
+    
     function setKPIs({ inscritos='—', enviadas='—', corretores='—' }={}){
       document.getElementById('kpiInscritos').textContent = inscritos;
       document.getElementById('kpiEnviadas').textContent = enviadas;
