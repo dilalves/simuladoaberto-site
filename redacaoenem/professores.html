@@ -241,7 +241,7 @@ function limparForm(){
 /* CRUD */
 async function carregarLista(){
   const q = document.getElementById('busca').value.trim();
-  let url = '/corretores_list';
+  let url = '/corretores_list.php';
   if (q) url += `?q=${encodeURIComponent(q)}`;
   const data = await apiFetch(url);
 
@@ -318,6 +318,19 @@ async function convidar(id){
   // Para teste/admin, você pode abrir o link retornado:
   // if (ret.link) window.open(ret.link, '_blank');
 }
+
+/* Fetch helper com fallback .php 
+async function apiFetch(pathNoPhp, { method='GET', headers={}, body, 
+ cache='no-store' } = {}){ 
+  const baseHeaders = { 'Accept': 'application/json', 'Content-Type':'application/json', 
+                       ...authHeaders(), 
+                       ...headers }; const opts = { method, cache, headers: baseHeaders, body }; let res; try { res = await fetch(${API}${pathNoPhp}, opts); } catch(e){ res = null; } if (!res || res.status === 404) { const withPhp = pathNoPhp.endsWith('.php') ? pathNoPhp : pathNoPhp + '.php'; try { res = await fetch(${API}${withPhp}, opts); } catch(e){ /* ignore */ } } if (!res) throw new Error('NETWORK_FAIL'); if (res.status === 401 || res.status === 403) throw new Error('UNAUTHORIZED'); if (!res.ok) { const txt = await res.text().catch(()=> ''); throw new Error(API_${res.status}: ${txt || res.statusText}); } return res.json(); }
+*/ 
+  
 </script>
 </body>
 </html>
+
+
+
+
