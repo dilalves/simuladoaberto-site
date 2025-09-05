@@ -208,128 +208,213 @@
     </section>
   </div>
 
-  <script>
+<script>
+/* ===== CONFIG ===== */
+const API = 'https://api.secauxiliar.com.br';
+const LOGIN_URL = '/redacaoeenem/login.html'; // ajuste se necessário
+const SESS_KEY = 'sessao_redacao';
 
-    function authHeaders() {
-      const token = localStorage.getItem('token') || '';
-      return token ? { 'Authorization': `Bearer ${token}` } : {};
+/* ===== Utils de sessão ===== */
+function getSession(){
+  try { return JSON.parse(localStorage.getItem(SESS_KEY) || '{}'); }
+  catch(e){ return {}; }
+}
+function setSession(sess){
+  localStorage.setItem(SESS_KEY, JSON.stringify(sess || {}));
+}
+function getToken(){
+  const sess = getSession();
+  // compat: aceita token direto no localStorage também
+  return (sess && sess.token) || localStorage.getItem('token') || '';
+}
+function authHeaders(){
+  const t = getToken();
+  return t ? { 'Authorization': `Bearer ${t}` } : {};
+}
+function redirectToLogin(){
+  const next = encodeURIComponent(location.pathname + location.search + location.hash);
+  location.replace(`${LOGIN_URL}?next=${next}`);
+}
+
+/* ===== Helpers de API (com fallback .php) ===== */
+async function apiFetch(pathNoPhp, { method='GET', headers={}, body, cache='no-store' } = {}){
+  const baseHeaders = { 'Accept': 'application/json', ...authHeaders(), ...headers };
+  const opts = { method, cache, headers: baseHeaders, body };
+
+  // 1ª tentativa: rota sem .php
+  let res;
+  try { res = await fetch(`${API}${pathNoPhp}`, opts); }
+  catch(e){ res = null; }
+
+  // se a 1ª falhar por 404/erro de rede, tenta com .php (ex.: /me -> /me.php)
+  if (!res || res.status === 404) {
+    const phpPath = pathNoPhp.replace(/\/?$/, '').endsWith('.php')
+      ? pathNoPhp
+      : pathNoPhp.replace(/\/([^\/?#]+)$/, '/$1.php'); // /me -> /me.php ; /dashboard/123 -> /dashboard.php?simulado=123 (tratamos abaixo)
+  }
+
+  // Tratamento especial para dashboard com id no path
+  if (pathNoPhp.startsWith('/dashboard/')) {
+    const simId = decodeURIComponent(pathNoPhp.split('/').pop() || '');
+    return apiFetch(`/dashboard.php?simulado=${encodeURIComponent(simId)}`, { method, headers, body, cache });
+  }
+
+  if (!res || res.status === 404) {
+    const withPhp = pathNoPhp.endsWith('.php') ? pathNoPhp : pathNoPhp + '.php';
+    try { res = await fetch(`${API}${withPhp}`, opts); }
+    catch(e){ /* fica como null */ }
+  }
+
+  if (!res) throw new Error('NETWORK_FAIL');
+
+  if (res.status === 401 || res.status === 403) throw new Error('UNAUTHORIZED');
+
+  if (!res.ok) {
+    const txt = await res.text().catch(()=> '');
+    throw new Error(`API_${res.status}: ${txt || res.statusText}`);
+  }
+
+  return res.json();
+}
+
+/* ===== UI helpers ===== */
+function setUnitHeader({ codigo, nome } = {}){
+  const el = document.getElementById('unitIdName');
+  if(!el) return;
+  if(codigo && nome) el.textContent = `${codigo} - ${nome}`;
+  else if(nome)      el.textContent = nome;
+  else               el.textContent = '—';
+}
+function setUserName(nome){
+  const el = document.getElementById('userName');
+  if (el && nome) el.textContent = nome;
+}
+
+/* ===== Boot ===== */
+document.addEventListener('DOMContentLoaded', initPainel);
+
+async function initPainel(){
+  try{
+    // guarda dura: sem token não entra
+    if (!getToken()) return redirectToLogin();
+
+    // tenta usar sessão do login; se faltar, consulta /me(.php)
+    const sess = getSession();
+    if (sess?.unidade?.codigo && sess?.unidade?.nome) {
+      setUnitHeader(sess.unidade);
+      setUserName(sess?.usuario?.nome);
+    } else {
+      await carregarContextoDaAPI();
     }
-    
-    async function carregarSimulados(){
-      const res = await fetch(`${API}/simulados.php`, {
-        cache: 'no-store',
-        headers: { 'Accept': 'application/json', ...authHeaders() }
-      });
-      const data = await res.json();
-      // ...
-    }
-    
-    async function carregarKPIs(simuladoId){
-      const res = await fetch(`${API}/dashboard.php?simulado=${encodeURIComponent(simuladoId)}`, {
-        cache: 'no-store',
-        headers: { 'Accept': 'application/json', ...authHeaders() }
-      });
-      const data = await res.json();
-      // ...
-    }
 
-    // ===== CONFIG =====
-    // Endpoint da API (ajuste para seu subdomínio real)
-    const API = 'https://api.secauxiliar.com.br';
+    await carregarSimulados();
+    document.body.classList.add('ready'); // libere os botões quando estiver pronto
+  } catch(err){
+    console.error('Falha na inicialização:', err);
+    if (String(err.message).includes('UNAUTHORIZED')) return redirectToLogin();
+    const statusEl = document.getElementById('statusPainel');
+    if (statusEl) statusEl.textContent = 'Não foi possível carregar seus dados. Tente novamente.';
+  }
+}
 
-    // ===== Sessão (token/unidade/usuário) =====
-    function getSession(){
-      try { return JSON.parse(localStorage.getItem('sessao_redacao') || '{}'); }
-      catch(e){ return {}; }
-    }
-    function setUnitHeader({ codigo, nome } = {}){
-      const el = document.getElementById('unitIdName');
-      if(!el) return;
-      if(codigo && nome) el.textContent = `${codigo} - ${nome}`;
-      else if(nome)      el.textContent = nome;
-      else               el.textContent = '—';
-    }
+/* ===== Contexto (/me) ===== */
+async function carregarContextoDaAPI(){
+  try{
+    const data = await apiFetch('/me'); // tenta /me e /me.php
+    // esperado: { usuario:{nome}, unidade:{codigo,nome}, token? }
+    if (data?.usuario?.nome) setUserName(data.usuario.nome);
+    if (data?.unidade) setUnitHeader(data.unidade);
 
-    // ===== Boot =====
-    document.addEventListener('DOMContentLoaded', async () => {
-      const sess = getSession();
+    // persiste unindo com sessão existente
+    const merged = { ...getSession(), ...data };
+    setSession(merged);
+  }catch(e){
+    console.warn('Falha ao carregar contexto da API', e);
+    if (String(e.message).includes('UNAUTHORIZED')) redirectToLogin();
+  }
+}
 
-      // Usa dados do login (recomendado)
-      if (sess?.unidade?.codigo && sess?.unidade?.nome) {
-        setUnitHeader(sess.unidade);
-        if (sess?.usuario?.nome) document.getElementById('userName').textContent = sess.usuario.nome;
-      } else {
-        // Ou carrega da API (ex.: /me)
-        await carregarContextoDaAPI();
-      }
+/* ===== Simulados ===== */
+async function carregarSimulados(){
+  try{
+    // tenta /simulados e depois /simulados.php
+    const data = await apiFetch('/simulados');
+    const lista = data?.simulados || data || [];
+    const sel = document.getElementById('simuladoSelect');
+    if (!sel) return;
 
-      carregarSimulados();
+    // limpa e preenche
+    sel.innerHTML = '<option value="" disabled selected>Selecione...</option>';
+    (lista || []).forEach(s => {
+      const opt = document.createElement('option');
+      opt.value = s.id || s.codigo;
+      opt.textContent = s.nome || s.titulo;
+      sel.appendChild(opt);
     });
 
-    // ===== Contexto da API =====
-    async function carregarContextoDaAPI(){
-      try{
-        const sess = getSession();
-        const headers = {};
-        if (sess?.token) headers['Authorization'] = `Bearer ${sess.token}`;
-        const res = await fetch(`${API}/me`, { headers, cache: 'no-store' });
-        if (!res.ok) return;
-        const data = await res.json();
-        // esperado: { usuario:{nome}, unidade:{codigo,nome} }
-        if (data?.usuario?.nome) document.getElementById('userName').textContent = data.usuario.nome;
-        if (data?.unidade) {
-          setUnitHeader(data.unidade);
-          const novaSessao = Object.assign({}, getSession(), data);
-          localStorage.setItem('sessao_redacao', JSON.stringify(novaSessao));
-        }
-      } catch(e){ console.warn('Falha ao carregar contexto da API', e); }
+    if ((lista || []).length === 1){
+      sel.value = (lista[0].id || lista[0].codigo);
+      onChangeSimulado();
     }
+    // reinit Materialize
+    if (window.M && M.FormSelect) M.FormSelect.init(sel);
+    sel.addEventListener('change', onChangeSimulado);
+  }catch(err){
+    console.error('Falha ao carregar simulados', err);
+    if (String(err.message).includes('UNAUTHORIZED')) redirectToLogin();
+  }
+}
 
-    // ===== Carrega seletor de simulados =====
-    async function carregarSimulados(){
-      try{
-        const res = await fetch(`${API}/simulados`, { cache:'no-store' });
-        const data = await res.json();
-        const sel = document.getElementById('simuladoSelect');
-        (data.simulados||[]).forEach(s => {
-          const opt = document.createElement('option');
-          opt.value = s.id; opt.textContent = s.nome;
-          sel.appendChild(opt);
-        });
-        if((data.simulados||[]).length === 1){
-          sel.value = data.simulados[0].id;
-          onChangeSimulado();
-        }
-        sel.addEventListener('change', onChangeSimulado);
-      }catch(err){ console.error('Falha ao carregar simulados', err); }
+async function onChangeSimulado(){
+  const simId = document.getElementById('simuladoSelect')?.value;
+  if(!simId){ setKPIs({}); return; }
+  await carregarKPIs(simId);
+}
+
+/* ===== KPIs ===== */
+async function carregarKPIs(simuladoId){
+  try{
+    // 1ª tentativa: /dashboard/{id}
+    let data;
+    try {
+      data = await apiFetch(`/dashboard/${encodeURIComponent(simuladoId)}`);
+    } catch (e) {
+      // fallback: /dashboard.php?simulado=...
+      data = await apiFetch(`/dashboard.php?simulado=${encodeURIComponent(simuladoId)}`);
     }
+    // esperado: { ok:true, inscritos, enviadas, corretores, unidade:{...}, usuario:{...} }
+    setKPIs(data);
+  }catch(err){
+    console.error('Falha KPIs', err);
+    if (String(err.message).includes('UNAUTHORIZED')) redirectToLogin();
+  }
+}
 
-    async function onChangeSimulado(){
-      const simId = document.getElementById('simuladoSelect').value;
-      if(!simId){ setKPIs({}); return; }
-      await carregarKPIs(simId);
+function setKPIs({ inscritos='—', enviadas='—', corretores='—', unidade, usuario } = {}){
+  const elIns = document.getElementById('kpiInscritos');
+  const elEnv = document.getElementById('kpiEnviadas');
+  const elCor = document.getElementById('kpiCorretores');
+  if (elIns) elIns.textContent = inscritos;
+  if (elEnv) elEnv.textContent = enviadas;
+  if (elCor) elCor.textContent = corretores;
+
+  if (unidade?.codigo && unidade?.nome) setUnitHeader(unidade);
+  if (usuario?.nome) setUserName(usuario.nome);
+}
+
+/* ===== Opcional: bloquear cliques até ready ===== */
+document.addEventListener('click', (ev) => {
+  if (!document.body.classList.contains('ready')) {
+    const target = ev.target.closest('a,button');
+    if (target) {
+      ev.preventDefault();
+      ev.stopPropagation();
     }
-
-    // ===== KPIs =====
-    async function carregarKPIs(simuladoId){
-      try{
-        const res = await fetch(`${API}/dashboard/${encodeURIComponent(simuladoId)}`, { cache:'no-store' });
-        const data = await res.json();
-        // esperado: { ok:true, inscritos, enviadas, corretores, unidade:{codigo,nome}, usuario:{nome} }
-        setKPIs(data);
-      }catch(err){ console.error('Falha KPIs', err); }
-    }
-
-    function setKPIs({ inscritos='—', enviadas='—', corretores='—', unidade, usuario }={}){
-      document.getElementById('kpiInscritos').textContent  = inscritos;
-      document.getElementById('kpiEnviadas').textContent   = enviadas;
-      document.getElementById('kpiCorretores').textContent = corretores;
-      if (unidade?.codigo && unidade?.nome) setUnitHeader(unidade);
-      if (usuario?.nome) document.getElementById('userName').textContent = usuario.nome;
-    }
+  }
+});
+</script>
+  
 
 
-    
-  </script>
 </body>
 </html>
