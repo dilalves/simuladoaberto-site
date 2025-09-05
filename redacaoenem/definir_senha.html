@@ -1,0 +1,30 @@
+<!DOCTYPE html><html lang="pt-BR"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Definir senha</title>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
+</head><body class="container" style="max-width:520px;margin-top:40px">
+  <h5>Definir senha</h5>
+  <div class="input-field">
+    <input id="senha" type="password" minlength="6" required>
+    <label for="senha">Nova senha</label>
+  </div>
+  <a class="btn blue" onclick="setSenha()">Salvar</a>
+  <p id="msg" class="grey-text" style="margin-top:12px"></p>
+
+<script>
+const API = 'https://api.secauxiliar.com.br';
+function getParam(n){ return new URL(location.href).searchParams.get(n) || '' }
+
+async function setSenha(){
+  const token = getParam('tok');
+  const senha = document.getElementById('senha').value.trim();
+  if (!token || !senha) { document.getElementById('msg').textContent='Dados incompletos.'; return; }
+  const res = await fetch(API+'/corretores_set_password.php', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ token, senha })
+  });
+  const data = await res.json();
+  document.getElementById('msg').textContent = data.ok ? 'Senha definida com sucesso. Você já pode acessar o painel.' : (data.error||'Falha');
+}
+</script>
+</body></html>
