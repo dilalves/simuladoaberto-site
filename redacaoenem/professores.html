@@ -163,30 +163,17 @@ function redirectToLogin(){ const next=encodeURIComponent(location.pathname+loca
   
 /* Fetch helper com fallback .php */
 async function apiFetch(pathNoPhp, { method='GET', headers={}, body, cache='no-store' } = {}){
-  const baseHeaders = { 
-    'Accept': 'application/json', 
-    'Content-Type': 'application/json', 
-    ...authHeaders(), 
-    ...headers 
-  };
+  const baseHeaders = { Accept: 'application/json', ...authHeaders(), ...headers };
+  if (body) baseHeaders['Content-Type'] = 'application/json'; // só quando precisa
+
   const opts = { method, cache, headers: baseHeaders, body };
 
   let res;
-  try { 
-    res = await fetch(`${API}${pathNoPhp}`, opts);   // 1ª tentativa (sem .php)
-  } catch(e){ 
-    res = null; 
-  }
-
+  try { res = await fetch(`${API}${pathNoPhp}`, opts); } catch(e){ res = null; }
   if (!res || res.status === 404) {
     const withPhp = pathNoPhp.endsWith('.php') ? pathNoPhp : pathNoPhp + '.php';
-    try { 
-      res = await fetch(`${API}${withPhp}`, opts);   // 2ª tentativa (com .php)
-    } catch(e){ 
-      /* ignore */ 
-    }
+    try { res = await fetch(`${API}${withPhp}`, opts); } catch(e){}
   }
-
   if (!res) throw new Error('NETWORK_FAIL');
   if (res.status === 401 || res.status === 403) throw new Error('UNAUTHORIZED');
   if (!res.ok) {
@@ -195,6 +182,7 @@ async function apiFetch(pathNoPhp, { method='GET', headers={}, body, cache='no-s
   }
   return res.json();
 }
+
 
 
 
