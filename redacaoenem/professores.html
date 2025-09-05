@@ -160,18 +160,26 @@ function getToken(){ const s=getSession(); return (s&&s.token) || localStorage.g
 function authHeaders(){ const t=getToken(); return t?{'Authorization':'Bearer '+t}:{ }; }
 function redirectToLogin(){ const next=encodeURIComponent(location.pathname+location.search+location.hash); location.replace(`${LOGIN_URL}?next=${next}`); }
 
-/* Fetch helper com fallback .php */
-async function apiFetch(pathNoPhp, { method='GET', headers={}, body, cache='no-store' } = {}){
-  const baseHeaders = { 'Accept': 'application/json', 'Content-Type':'application/json', ...authHeaders(), ...headers };
+/* Fetch helper direto com .php */
+async function apiFetch(path, { method='GET', headers={}, body, cache='no-store' } = {}){
+  const baseHeaders = { 
+    'Accept': 'application/json', 
+    'Content-Type': 'application/json', 
+    ...authHeaders(), 
+    ...headers 
+  };
   const opts = { method, cache, headers: baseHeaders, body };
 
+  // garante que sempre termina com .php
+  const finalPath = path.endsWith('.php') ? path : path + '.php';
+
   let res;
-  try { res = await fetch(`${API}${pathNoPhp}`, opts); } catch(e){ res = null; }
-  if (!res || res.status === 404) {
-    const withPhp = pathNoPhp.endsWith('.php') ? pathNoPhp : pathNoPhp + '.php';
-    try { res = await fetch(`${API}${withPhp}`, opts); } catch(e){ /* ignore */ }
+  try { 
+    res = await fetch(`${API}${finalPath}`, opts); 
+  } catch(e){ 
+    throw new Error('NETWORK_FAIL');
   }
-  if (!res) throw new Error('NETWORK_FAIL');
+
   if (res.status === 401 || res.status === 403) throw new Error('UNAUTHORIZED');
   if (!res.ok) {
     const txt = await res.text().catch(()=> '');
@@ -179,6 +187,7 @@ async function apiFetch(pathNoPhp, { method='GET', headers={}, body, cache='no-s
   }
   return res.json();
 }
+
 
 /* UI helpers */
 function setUnitHeader({ codigo, nome } = {}){
