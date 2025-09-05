@@ -20,7 +20,7 @@
   </div>
 
 <script>
-const API = 'https://api.secauxiliar.com.br/api'; // ou seu subdomínio da API
+const API = 'https://api.secauxiliar.com.br/api/'; // ou seu subdomínio da API
 
 document.getElementById('btn').onclick = async () => {
   const login = document.getElementById('login').value.trim();
@@ -29,7 +29,7 @@ document.getElementById('btn').onclick = async () => {
   msg.textContent = '';
 
   try {
-    const r = await fetch(`${API}/auth_login.php`, {
+    const r = await fetch(`${API}auth_login.php`, {
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body: JSON.stringify({login, senha})
