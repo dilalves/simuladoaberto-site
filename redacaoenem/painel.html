@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Painel • Redação Online</title>
+  <title>Painel • Simulado ENEM - Redação</title>
 
   <!-- Materialize -->
   <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
@@ -84,7 +84,7 @@
           <div class="row valign-wrapper" style="margin-bottom:0">
             <div class="col s12 m6 left-align">
               <span class="brand">Redação Online</span>
-              <span class="unit">• Unidade <span id="unitName">Alpha</span></span>
+              <span class="unit">• <span id="unitIdName">—</span></span>
             </div>
             <div class="col s12 m6 right-align">
               <span class="user-chip"><i class="material-icons left">account_circle</i><span id="userName">Usuário</span></span>
@@ -167,7 +167,7 @@
               <div class="card-content">
                 <i class="material-icons">search</i>
                 <div class="title">Conferir envio</div>
-                <p class="grey-text">Validar Folhas</p>
+                <p class="grey-text">Validar inscrição manualmente (falhas de OMR)</p>
               </div>
               <div class="card-action center">
                 <a href="conferir-envio.html" class="btn-flat">Abrir</a>
@@ -209,19 +209,62 @@
   </div>
 
   <script>
-    // ===== CONFIG =====   
-    const API = 'https://api.secauxiliar.com.br'; // ou seu subdomínio da API
+    // ===== CONFIG =====
+    // Endpoint da API (ajuste para seu subdomínio real)
+    const API = 'https://api.secauxiliar.com.br';
+
+    // ===== Sessão (token/unidade/usuário) =====
+    function getSession(){
+      try { return JSON.parse(localStorage.getItem('sessao_redacao') || '{}'); }
+      catch(e){ return {}; }
+    }
+    function setUnitHeader({ codigo, nome } = {}){
+      const el = document.getElementById('unitIdName');
+      if(!el) return;
+      if(codigo && nome) el.textContent = `${codigo} - ${nome}`;
+      else if(nome)      el.textContent = nome;
+      else               el.textContent = '—';
+    }
 
     // ===== Boot =====
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
+      const sess = getSession();
+
+      // Usa dados do login (recomendado)
+      if (sess?.unidade?.codigo && sess?.unidade?.nome) {
+        setUnitHeader(sess.unidade);
+        if (sess?.usuario?.nome) document.getElementById('userName').textContent = sess.usuario.nome;
+      } else {
+        // Ou carrega da API (ex.: /me)
+        await carregarContextoDaAPI();
+      }
+
       carregarSimulados();
     });
+
+    // ===== Contexto da API =====
+    async function carregarContextoDaAPI(){
+      try{
+        const sess = getSession();
+        const headers = {};
+        if (sess?.token) headers['Authorization'] = `Bearer ${sess.token}`;
+        const res = await fetch(`${API}/me`, { headers, cache: 'no-store' });
+        if (!res.ok) return;
+        const data = await res.json();
+        // esperado: { usuario:{nome}, unidade:{codigo,nome} }
+        if (data?.usuario?.nome) document.getElementById('userName').textContent = data.usuario.nome;
+        if (data?.unidade) {
+          setUnitHeader(data.unidade);
+          const novaSessao = Object.assign({}, getSession(), data);
+          localStorage.setItem('sessao_redacao', JSON.stringify(novaSessao));
+        }
+      } catch(e){ console.warn('Falha ao carregar contexto da API', e); }
+    }
 
     // ===== Carrega seletor de simulados =====
     async function carregarSimulados(){
       try{
-        const url = `${API}/simulados`; // 👉 endpoint GET simulados
-        const res = await fetch(url, { cache:'no-store' });
+        const res = await fetch(`${API}/simulados`, { cache:'no-store' });
         const data = await res.json();
         const sel = document.getElementById('simuladoSelect');
         (data.simulados||[]).forEach(s => {
@@ -236,7 +279,7 @@
         sel.addEventListener('change', onChangeSimulado);
       }catch(err){ console.error('Falha ao carregar simulados', err); }
     }
-    
+
     async function onChangeSimulado(){
       const simId = document.getElementById('simuladoSelect').value;
       if(!simId){ setKPIs({}); return; }
@@ -246,20 +289,19 @@
     // ===== KPIs =====
     async function carregarKPIs(simuladoId){
       try{
-        const url = `${API}/dashboard/${encodeURIComponent(simuladoId)}`;
-        const res = await fetch(url, { cache:'no-store' });
+        const res = await fetch(`${API}/dashboard/${encodeURIComponent(simuladoId)}`, { cache:'no-store' });
         const data = await res.json();
-        // esperado: { ok:true, inscritos:120, enviadas:30, corretores:6, unidade:\"Alpha\", usuario:\"Fulano\" }
+        // esperado: { ok:true, inscritos, enviadas, corretores, unidade:{codigo,nome}, usuario:{nome} }
         setKPIs(data);
-        if(data.unidade) document.getElementById('unitName').textContent = data.unidade;
-        if(data.usuario) document.getElementById('userName').textContent = data.usuario;
       }catch(err){ console.error('Falha KPIs', err); }
     }
-    
-    function setKPIs({ inscritos='—', enviadas='—', corretores='—' }={}){
-      document.getElementById('kpiInscritos').textContent = inscritos;
-      document.getElementById('kpiEnviadas').textContent = enviadas;
+
+    function setKPIs({ inscritos='—', enviadas='—', corretores='—', unidade, usuario }={}){
+      document.getElementById('kpiInscritos').textContent  = inscritos;
+      document.getElementById('kpiEnviadas').textContent   = enviadas;
       document.getElementById('kpiCorretores').textContent = corretores;
+      if (unidade?.codigo && unidade?.nome) setUnitHeader(unidade);
+      if (usuario?.nome) document.getElementById('userName').textContent = usuario.nome;
     }
   </script>
 </body>
