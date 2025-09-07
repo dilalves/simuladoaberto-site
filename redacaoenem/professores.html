@@ -310,7 +310,7 @@ async function excluir(id){
 }
 
 async function convidar(id){
-  const ret = await apiFetch('/corretores_convite', { method:'POST', body: JSON.stringify({id}) });
+  const ret = await apiFetch('/corretores_convite.php', { method:'POST', body: JSON.stringify({id}) });
   toast(ret.sent ? 'Convite enviado por e-mail' : 'Convite gerado');
 }
   
