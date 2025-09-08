@@ -13,45 +13,51 @@
 
   <style>
     :root {
-    --primary: #002776;   /* Azul Objetivo */
-    --primary-light: #1565c0;
-    --bg: #f7f8fb;
-    --card: #ffffff;
-    --line: #e9edf3;
-    --ink: #0f172a;
-    --muted: #6b7280;
+      --primary: #002776;   /* Azul Objetivo */
+      --primary-light: #1565c0;
+      --bg: #f7f8fb;
+      --card: #ffffff;
+      --line: #e9edf3;
+      --ink: #0f172a;
+      --muted: #6b7280;
     }
+    
+    /* Base */
+    html, body { height: 100%; }
     body {
       background: var(--bg);
       color: var(--ink);
       font-family: 'Roboto', sans-serif;
     }
-
-    html,body{height:100%}
-    body{background:var(--bg); color:var(--ink)}
-
+    
     /* ===== Layout ===== */
-    .app{display:grid; grid-template-columns:260px 1fr; min-height:100vh}
-    .aside{background:#fff; border-right:1px solid var(--line)}
-    .main{display:flex; flex-direction:column}
-
+    .app { display: grid; grid-template-columns: 260px 1fr; min-height: 100vh; }
+    .aside { background: #fff; border-right: 1px solid var(--line); }
+    .main { display: flex; flex-direction: column; }
+    
     /* Header */
-    .topbar{background:#fff; border-bottom:1px solid var(--line)}
-    .topbar .wrap{max-width:1300px; margin:0 auto; padding:12px 18px}
-    .brand{font-weight:800; font-size:1.2rem; margin-right:16px}
-    .unit{color:var(--muted); font-weight:600}
-    .user-chip{background:#eef2ff; border-radius:12px; padding:8px 12px; color:#1e293b}
-
-    /* Aside */
-    .aside .logo{display:flex; align-items:center; gap:10px; padding:18px}
-    .aside .logo .tick{background:#e0ebff; color:#1d4ed8; width:26px; height:26px; border-radius:6px; display:flex; align-items:center; justify-content:center}
-    .menu a{display:flex; align-items:center; gap:12px; padding:12px 18px; color:#111827; border-radius:10px; margin:6px 12px; font-weight:600}
-    .menu a:hover{background:#eef2ff}
-    .menu a.active{background:#e7efff; color:#1d4ed8}
-
+    .topbar { background: #fff; border-bottom: 1px solid var(--line); }
+    .topbar .wrap { max-width: 1300px; margin: 0 auto; padding: 12px 18px; }
+    .brand { font-weight: 800; font-size: 1.2rem; margin-right: 16px; }
+    .unit { color: var(--muted); font-weight: 600; }
+    .user-chip { background: #eef2ff; border-radius: 12px; padding: 8px 12px; color: #1e293b; }
+    
+    /* Aside / Menu */
+    .aside .logo { display:flex; align-items:center; gap:10px; padding:18px; }
+    .aside .logo .tick {
+      background:#e0ebff; color:#1d4ed8; width:26px; height:26px;
+      border-radius:6px; display:flex; align-items:center; justify-content:center;
+    }
+    .menu a {
+      display:flex; align-items:center; gap:12px; padding:12px 18px;
+      color:#111827; border-radius:10px; margin:6px 12px; font-weight:600;
+    }
+    .menu a:hover { background: var(--primary-light); color:#fff; }
+    .menu a.active { background: var(--primary); color:#fff; }
+    
     /* Content */
-    .content{max-width:1200px; margin:0 auto; padding:20px}
-
+    .content { max-width: 1200px; margin: 0 auto; padding: 20px; }
+    
     /* Cards */
     .card {
       background: var(--card);
@@ -59,62 +65,29 @@
       border-radius: 8px;
       padding: 20px;
     }
+    .card h2, .card h3 { color: var(--primary); }
+    .card.edge { border-radius:14px; border:1px solid var(--line); }
+    .kpi .card-content { padding:22px; }
+    .kpi .value { font-size:2.1rem; font-weight:800; }
+    .kpi .label { color: var(--muted); margin-top:4px; }
+    .action .card-content { padding:26px; text-align:center; }
+    .action .material-icons { font-size:50px; color: var(--primary); opacity:.95; }
+    .action .title { margin-top:10px; font-weight:800; font-size:1.5rem; }
+    .small-actions .card .card-content { padding:16px; text-align:center; }
     
-    .card h2, .card h3 {
-      color: var(--primary);
-    }
-    .card.edge{border-radius:14px; border:1px solid var(--line)}
-    .kpi .card-content{padding:22px}
-    .kpi .value{font-size:2.1rem; font-weight:800}
-    .kpi .label{color:var(--muted); margin-top:4px}
-
-    .action .card-content{padding:26px; text-align:center}
-    .action .material-icons{font-size:50px; color:var(--primary); opacity:.95}
-    .action .title{margin-top:10px; font-weight:800; font-size:1.5rem}
-
-    .small-actions .card .card-content{padding:16px; text-align:center}
-
-    @media(max-width:992px){
-      .app{grid-template-columns:1fr}
-      .aside{display:none}
-    }
-
-      /* ===== MENU LATERAL ===== */
-      .sidebar {
-        background: #fff;
-      }
-      .sidebar a {
-        color: var(--ink);
-      }
-      .sidebar a.active {
-        background: var(--primary);
-        color: #fff;
-      }
-      .sidebar a:hover {
-        background: var(--primary-light);
-        color: #fff;
-      }
-
     /* ===== BOTÕES ===== */
-    button.btn-primary {
-      background: var(--primary);
-      color: #fff;
-    }
-    button.btn-primary:hover {
-      background: var(--primary-light);
-    }
+    /* Se usar Materialize, isso atinge .btn padrão */
+    .btn, .btn-primary { background: var(--primary) !important; color: #fff !important; }
+    .btn:hover, .btn-primary:hover { background: var(--primary-light) !important; }
     
-    button.btn-secondary {
-      background: #e0e0e0;
-      color: var(--ink);
-    }
+    .btn-secondary { background: #e0e0e0; color: var(--ink); }
+    .btn-danger { background: transparent; color: #d32f2f; }
     
-    button.btn-danger {
-      background: transparent;
-      color: #d32f2f;
-    }
-
-    
+    /* Responsivo */
+    @media (max-width: 992px) {
+      .app { grid-template-columns: 1fr; }
+      .aside { display: none; }
+    }  
     
   </style>
 </head>
