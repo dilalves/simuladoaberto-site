@@ -88,7 +88,36 @@
       .app { grid-template-columns: 1fr; }
       .aside { display: none; }
     }  
+
+    /* ===== TOPBAR ===== */
+    .topbar {
+      background: var(--primary); /* Azul Objetivo */
+      border-bottom: none;        /* tira linha cinza */
+      color: #fff;
+    }
+    .topbar .wrap {
+      max-width: 1300px;
+      margin: 0 auto;
+      padding: 12px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .topbar .unit {
+      color: #fff; /* texto branco */
+      font-weight: 700;
+      font-size: 1rem;
+    }
     
+    /* ===== MENU LATERAL (sem vermelho) ===== */
+    .menu a.active {
+      background: #e7efff;  /* azul clarinho */
+      color: var(--primary); /* azul escuro no texto */
+    }
+    .menu a:hover {
+      background: var(--primary-light);
+      color: #fff;
+    }    
   </style>
 </head>
 <body>
