@@ -35,15 +35,16 @@
   .aside{background:#fff; border-right:1px solid var(--line)}
   .main{display:flex; flex-direction:column}
 
-  /* ===== TOPBAR (azul, ocupa de ponta a ponta) ===== */
+  /* ===== TOPBAR (azul, full-bleed) ===== */
   .topbar{
     background:var(--primary);
     color:#fff;
     border-bottom:none;
   }
   .topbar .wrap{
-    max-width:none;          /* full-bleed */
+    max-width:none;         /* full width */
     width:100%;
+    margin:0;               /* remove centralização */
     padding:14px 24px;
     display:flex;
     align-items:center;
@@ -75,7 +76,6 @@
     box-shadow:none !important;
     border-left:0 !important;
   }
-
   .menu a:hover{
     background:var(--primary-light);
     color:#fff;
@@ -84,6 +84,8 @@
   .menu a.active:hover{
     background:#e7efff !important;   /* azul clarinho */
     color:var(--primary) !important;  /* texto azul escuro */
+    border-left:0 !important;         /* mata tarja vermelha */
+    box-shadow:none !important;       /* mata sombra vermelha */
   }
 
   /* ===== Content ===== */
@@ -118,6 +120,7 @@
     .aside{display:none}
   }
 </style>
+
 
 </head>
 <body>
