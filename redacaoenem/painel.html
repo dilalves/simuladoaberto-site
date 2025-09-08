@@ -12,9 +12,21 @@
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 
   <style>
-    :root{
-      --bg:#f7f8fb; --card:#ffffff; --line:#e9edf3; --ink:#0f172a; --muted:#6b7280; --primary:#2563eb;
+    :root {
+    --primary: #002776;   /* Azul Objetivo */
+    --primary-light: #1565c0;
+    --bg: #f7f8fb;
+    --card: #ffffff;
+    --line: #e9edf3;
+    --ink: #0f172a;
+    --muted: #6b7280;
     }
+    body {
+      background: var(--bg);
+      color: var(--ink);
+      font-family: 'Roboto', sans-serif;
+    }
+
     html,body{height:100%}
     body{background:var(--bg); color:var(--ink)}
 
@@ -41,6 +53,16 @@
     .content{max-width:1200px; margin:0 auto; padding:20px}
 
     /* Cards */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 20px;
+    }
+    
+    .card h2, .card h3 {
+      color: var(--primary);
+    }
     .card.edge{border-radius:14px; border:1px solid var(--line)}
     .kpi .card-content{padding:22px}
     .kpi .value{font-size:2.1rem; font-weight:800}
@@ -56,6 +78,44 @@
       .app{grid-template-columns:1fr}
       .aside{display:none}
     }
+
+      /* ===== MENU LATERAL ===== */
+      .sidebar {
+        background: #fff;
+      }
+      .sidebar a {
+        color: var(--ink);
+      }
+      .sidebar a.active {
+        background: var(--primary);
+        color: #fff;
+      }
+      .sidebar a:hover {
+        background: var(--primary-light);
+        color: #fff;
+      }
+
+    /* ===== BOTÕES ===== */
+    button.btn-primary {
+      background: var(--primary);
+      color: #fff;
+    }
+    button.btn-primary:hover {
+      background: var(--primary-light);
+    }
+    
+    button.btn-secondary {
+      background: #e0e0e0;
+      color: var(--ink);
+    }
+    
+    button.btn-danger {
+      background: transparent;
+      color: #d32f2f;
+    }
+
+    
+    
   </style>
 </head>
 <body>
