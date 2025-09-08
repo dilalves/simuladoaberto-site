@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Enviar Redação • Redação Online</title>
+
+  <!-- Materialize -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+  <!-- Google Icons -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg:#f7f8fb; --card:#ffffff; --line:#e9edf3; --ink:#0f172a; --muted:#6b7280; --primary:#0b3b78; --accent:#2563eb;
+    }
+    html,body{height:100%}
+    body{background:var(--bg); color:var(--ink)}
+    /* ===== Layout ===== */
+    .app{display:grid; grid-template-columns:260px 1fr; min-height:100vh}
+    aside{background:#fff; border-right:1px solid var(--line)}
+    main{display:flex; flex-direction:column}
+    header.topbar{
+      background:var(--primary); color:#fff; padding:14px 20px; display:flex; align-items:center; justify-content:space-between
+    }
+    header .title{font-size:18px; font-weight:600}
+    .page{padding:24px}
+    .muted{color:var(--muted)}
+    .chip-blue{background:#e8f1ff; color:#0b3b78; font-weight:600}
+    .card{border-radius:14px; box-shadow:0 6px 18px rgba(16,24,40,.06)}
+    .card-title{font-weight:600}
+    /* ===== Sidebar ===== */
+    .menu{list-style:none; margin:0; padding:0}
+    .menu li a{
+      display:flex; align-items:center; gap:12px; padding:14px 18px; color:#1f2937; text-decoration:none;
+      border-left:4px solid transparent;
+    }
+    .menu li a:hover{background:#f5f7fb}
+    .menu li.active a{background:#eef2ff; border-left-color:#3b82f6; color:#0b3b78}
+    .menu .icon{width:20px; text-align:center}
+    /* ===== Upload ===== */
+    #drop{
+      border:2px dashed var(--line); border-radius:12px; text-align:center; padding:28px; background:#fff
+    }
+    #drop.drag{border-color:#3b82f6; background:#f8fbff}
+    .collection{border:none}
+    .collection-item{border-bottom:1px solid var(--line)}
+    .progress{background:#f1f5f9}
+    .determinate{background:#3b82f6}
+    .right{float:right}
+    .hidden{display:none !important}
+    @media (max-width: 992px){ .app{grid-template-columns:1fr} aside{position:sticky; top:0; z-index:5} }
+  </style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== Sidebar ===== -->
+  <aside>
+    <div class="center" style="padding:18px 0 8px">
+      <span class="title" style="font-weight:700;color:#0b3b78">Redação Online</span>
+    </div>
+    <ul class="menu">
+      <li><a href="/redacaoenem/painel.html"><span class="icon material-icons">dashboard</span>Dashboard</a></li>
+      <li class="active"><a href="/redacaoenem/envio.html"><span class="icon material-icons">cloud_upload</span>Envio de Redações</a></li>
+      <li><a href="/redacaoenem/professores.html"><span class="icon material-icons">group</span>Professores</a></li>
+      <li><a href="/redacaoenem/relatorios.html"><span class="icon material-icons">bar_chart</span>Relatórios</a></li>
+      <li><a href="/redacaoenem/config.html"><span class="icon material-icons">settings</span>Configurações</a></li>
+    </ul>
+  </aside>
+
+  <!-- ===== Main ===== -->
+  <main>
+    <header class="topbar">
+      <div class="title">Enviar Redação</div>
+      <div>
+        <span class="chip chip-blue" id="chipUnd">UNIDADE — <b id="lblUnd">—</b></span>
+      </div>
+    </header>
+
+    <section class="page">
+      <!-- Breadcrumb -->
+      <div class="row" style="margin-bottom:0">
+        <div class="col s12">
+          <a href="/redacaoenem/painel.html" class="breadcrumb">Dashboard</a>
+          <a href="#!" class="breadcrumb">Envio de Redações</a>
+        </div>
+      </div>
+
+      <!-- Card principal -->
+      <div class="card">
+        <div class="card-content">
+          <span class="card-title">Envio de arquivos</span>
+          <p class="muted" style="margin-top:6px">
+            Selecione imagens (JPG/PNG/TIFF/HEIC) ou PDF. Cada arquivo será validado na API de resolução.
+            Aprovados são enviados ao Drive e salvos no LOG; o OMR roda em paralelo.
+          </p>
+
+          <!-- Unidade (oculto se vier do login/sessão) -->
+          <div class="row" style="margin-top:14px">
+            <div class="input-field col s12 m4">
+              <input id="codUnd" type="text" placeholder="Ex.: 1501">
+              <label for="codUnd" class="active">Código da Unidade</label>
+              <span class="helper-text muted">Se já estiver logado por unidade, este campo pode vir preenchido/oculto.</span>
+            </div>
+          </div>
+
+          <!-- Área de seleção -->
+          <div id="drop" class="card-panel">
+            <i class="material-icons" style="font-size:40px">cloud_upload</i>
+            <p class="muted" style="margin:6px 0 16px">Arraste e solte aqui, ou</p>
+            <input id="files" type="file" multiple
+                   accept=".jpg,.jpeg,.png,.pdf,.tif,.tiff,.heic"
+                   class="hidden">
+            <button id="btnPick" class="btn waves-effect">Selecionar arquivos</button>
+          </div>
+
+          <!-- Lista de uploads -->
+          <ul id="list" class="collection" style="max-height:360px; overflow:auto"></ul>
+
+          <div class="right-align" style="margin-top:6px">
+            <button id="btnSend" class="btn blue darken-2 waves-effect">
+              <i class="material-icons left">send</i> Enviar
+            </button>
+            <a href="/redacaoenem/painel.html" class="btn-flat">Voltar</a>
+            <span id="status" class="muted" style="margin-left:12px"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dicas -->
+      <div class="card" style="margin-top:14px">
+        <div class="card-content">
+          <span class="card-title">Como funciona</span>
+          <ul class="browser-default">
+            <li>O sistema valida resolução (ex.: ≥300 dpi). Se reprovado, o arquivo não é enviado.</li>
+            <li>Se aprovado, o arquivo é salvo no Google Drive e registrado na tabela LOG.</li>
+            <li>O processamento OMR é iniciado em paralelo; resultados atualizam o banco (OK/Revisar).</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  M.AutoInit();
+
+  // ====== CONFIG ======
+  const API_UPLOAD = 'https://api.secauxiliar.com.br/api/upload.php'; // seu endpoint PHP
+  const ACCEPT_EXT = ['jpg','jpeg'];   // validação extra no front
+
+  // ====== ELEMENTOS ======
+  const btnPick  = document.getElementById('btnPick');
+  const input    = document.getElementById('files');
+  const drop     = document.getElementById('drop');
+  const list     = document.getElementById('list');
+  const btnSend  = document.getElementById('btnSend');
+  const statusEl = document.getElementById('status');
+  const codUndEl = document.getElementById('codUnd');
+  const lblUnd   = document.getElementById('lblUnd');
+
+  // Se o painel gravou a unidade no storage, pré-carrega (e pode ocultar o input se quiser)
+  try {
+    const und = sessionStorage.getItem('CODUND') || localStorage.getItem('CODUND');
+    if (und) {
+      codUndEl.value = und;
+      lblUnd.textContent = und;
+    } else {
+      lblUnd.textContent = '—';
+    }
+  } catch(e){}
+
+  // ====== UPLOAD QUEUE ======
+  let queue = []; // items: {file, li, bar, msg}
+
+  btnPick.addEventListener('click', () => input.click());
+  input.addEventListener('change', () => addFiles(input.files));
+
+  ['dragenter','dragover','dragleave','drop'].forEach(ev => {
+    drop.addEventListener(ev, (e) => { e.preventDefault(); e.stopPropagation(); });
+  });
+  drop.addEventListener('dragenter',() => drop.classList.add('drag'));
+  drop.addEventListener('dragleave',() => drop.classList.remove('drag'));
+  drop.addEventListener('drop', (e) => { drop.classList.remove('drag'); addFiles(e.dataTransfer.files); });
+
+  function addFiles(fileList){
+    [...fileList].forEach(file => {
+      const ext = (file.name.split('.').pop() || '').toLowerCase();
+      if (!ACCEPT_EXT.includes(ext)) {
+        M.toast({html:`Tipo não permitido: ${ext}`}); return;
+      }
+      const li = document.createElement('li');
+      li.className = 'collection-item';
+      li.innerHTML = `
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="flex:1">
+            <div><strong>${file.name}</strong>
+              <span class="grey-text" style="font-size:12px">(${(file.size/1024/1024).toFixed(2)} MB)</span>
+            </div>
+            <div class="progress" style="margin:8px 0 0">
+              <div class="determinate" style="width:0%"></div>
+            </div>
+            <div class="grey-text" style="font-size:12px" data-msg>aguardando…</div>
+          </div>
+          <a class="secondary-content" href="#!" data-remove><i class="material-icons">close</i></a>
+        </div>`;
+      list.appendChild(li);
+      const bar = li.querySelector('.determinate');
+      const msg = li.querySelector('[data-msg]');
+      li.querySelector('[data-remove]').onclick = () => {
+        queue = queue.filter(q => q.li !== li);
+        li.remove();
+      };
+      queue.push({file, li, bar, msg});
+    });
+  }
+
+  btnSend.addEventListener('click', async (e) => {
+    e.preventDefault();
+    const codUnd = (codUndEl.value || '').trim();
+    if (!codUnd) { M.toast({html:'Informe o código da unidade'}); return; }
+    if (!queue.length){ M.toast({html:'Selecione ao menos 1 arquivo'}); return; }
+
+    btnSend.disabled = true; statusEl.textContent = 'Enviando…';
+
+    for (const item of queue) {
+      await sendOne(item, codUnd).catch(err => console.error(err));
+    }
+
+    btnSend.disabled = false; statusEl.textContent = 'Envio concluído.';
+  });
+
+  function sendOne(item, codUnd){
+    return new Promise((resolve) => {
+      const xhr = new XMLHttpRequest();
+      const form = new FormData();
+      form.append('file', item.file);
+      form.append('codUnd', codUnd);
+
+      xhr.open('POST', API_UPLOAD, true);
+
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) {
+          const p = (e.loaded/e.total)*100;
+          item.bar.style.width = p.toFixed(0)+'%';
+        }
+      };
+
+      xhr.onreadystatechange = () => {
+        if (xhr.readyState !== 4) return;
+
+        let resp = {};
+        try { resp = JSON.parse(xhr.responseText || '{}'); } catch {}
+        if (xhr.status >= 200 && xhr.status < 300 && resp.ok) {
+          item.msg.textContent = 'OK: ' + (resp.data?.nome_final || 'enviado');
+          item.bar.style.width = '100%';
+          item.li.classList.add('teal-text');
+        } else if (xhr.status === 422) {
+          // reprovação de resolução (gate)
+          const det = resp.details ? ` (${resp.details})` : '';
+          item.msg.textContent = 'Resolução reprovada' + det;
+          item.li.classList.add('red-text');
+        } else {
+          item.msg.textContent = 'Erro: ' + (resp.message || ('HTTP '+xhr.status));
+          item.li.classList.add('red-text');
+        }
+        resolve();
+      };
+
+      xhr.send(form);
+    });
+  }
+});
+</script>
+</body>
+</html>
