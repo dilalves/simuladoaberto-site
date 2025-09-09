@@ -72,9 +72,12 @@
   <!-- ===== Main ===== -->
   <main>
     <header class="topbar">
-      <div class="title">Enviar Redação</div>
-      <div>
-        <span class="chip chip-blue" id="chipUnd">UNIDADE — <b id="lblUnd">—</b></span>
+      <div class="topbar blue darken-3 white-text">
+        <div class="container">
+          <h5 class="m-0">
+            Redação Online – <span id="unitLabel">—</span>
+          </h5>
+        </div>
       </div>
     </header>
 
@@ -92,8 +95,8 @@
         <div class="card-content">
           <span class="card-title">Envio de arquivos</span>
           <p class="muted" style="margin-top:6px">
-            Selecione imagens (JPG/PNG/TIFF/HEIC) ou PDF. Cada arquivo será validado na API de resolução.
-            Aprovados são enviados ao Drive e salvos no LOG; o OMR roda em paralelo.
+            Selecione imagens (JPG ou JPEG). Cada arquivo será validado na API de resolução.
+            Aprovados são enviados ao Drive e salvos no LOG.
           </p>
 
           <!-- Unidade (oculto se vier do login/sessão) -->
@@ -273,6 +276,40 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 });
+
+  (function hydrateEnvio() {
+  // Ajuste estas chaves se no seu login você gravou com outros nomes
+  const unidade = JSON.parse(localStorage.getItem('unidade') || 'null');
+  const auth    = JSON.parse(localStorage.getItem('auth') || 'null'); // se você guarda token aqui
+
+  // Se a sessão sumiu, volta pro login
+  if (!unidade || !unidade.codUnd || !unidade.nome) {
+    // opcional: mostre um toast antes
+    window.location.href = 'index.html';
+    return;
+  }
+
+  // 1) Topbar: "CODUND - Nome da Unidade"
+  const topSpan = document.querySelector('#unitLabel, #topbar-unidade, .js-unit-label');
+  if (topSpan) {
+    topSpan.textContent = `${unidade.codUnd} - ${unidade.nome}`;
+  }
+
+  // 2) Prefill do campo "Código da Unidade"
+  const codInput = document.querySelector('#codUnd, input[name="codUnd"]');
+  if (codInput) {
+    codInput.value = unidade.codUnd;
+    codInput.readOnly = true;            // evita digitação acidental
+    codInput.classList.add('grey-text'); // só um charme visual; opcional
+    codInput.title = 'Preenchido automaticamente pela unidade logada';
+  }
+
+  // 3) (Opcional) Deixe o token fácil para os fetch/axios desta página
+  if (auth && auth.token) {
+    window.AUTH_TOKEN = auth.token; // seu upload.js pode ler daqui e mandar no Authorization
+  }
+})();
+   
 </script>
 </body>
 </html>
