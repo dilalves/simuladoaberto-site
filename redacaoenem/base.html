@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title><!-- TÍTULO DA PÁGINA --></title>
+
+  <!-- Materialize + Ícones -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+
+  <style>
+    :root{
+      --bg:#f7f8fb; --card:#ffffff; --line:#e9edf3; --ink:#0f172a; --muted:#6b7280;
+      --primary:#002776; --primary-ink:#ffffff;
+    }
+    html,body{height:100%}
+    body{background:var(--bg); color:var(--ink); font-family:Roboto,system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif}
+
+    /* ===== Layout ===== */
+    .app{display:grid; grid-template-columns:260px 1fr; min-height:100vh}
+    .aside{background:#fff; border-right:1px solid var(--line)}
+    .brand{display:flex; align-items:center; gap:10px; padding:18px 16px; border-bottom:1px solid var(--line)}
+    .brand i{color:var(--primary)}
+    .unit-chip{font-size:.85rem; color:var(--muted)}
+    .sidenav-like a{display:flex; align-items:center; gap:12px; padding:12px 16px; color:#334155; border-left:4px solid transparent}
+    .sidenav-like a:hover{background:#f3f6fb}
+    .sidenav-like a.active{background:#eef4ff; border-left-color:var(--primary); color:#0b1e4a}
+
+    .main{display:grid; grid-template-rows:56px 1fr}
+    .topbar{display:flex; align-items:center; justify-content:space-between; padding:0 16px; border-bottom:1px solid var(--line); background:#fff}
+    .topbar .page-title{font-size:1.05rem; font-weight:600}
+    .topbar .actions .btn{margin-left:8px}
+
+    .content{padding:20px}
+    .card{border:1px solid var(--line); box-shadow:none}
+    .muted{color:var(--muted)}
+
+    /* ===== Responsivo ===== */
+    @media (max-width: 992px){
+      .app{grid-template-columns:1fr}
+      .aside{position:fixed; z-index:1000; width:260px; height:100%; transform:translateX(-100%); transition:transform .2s}
+      .aside.open{transform:translateX(0)}
+      .main{grid-template-rows:56px 1fr}
+      .menu-btn{display:inline-flex !important}
+    }
+    .menu-btn{display:none}
+  </style>
+</head>
+<body>
+
+<div class="app">
+  <!-- ===== LATERAL ===== -->
+  <aside class="aside" id="aside">
+    <div class="brand">
+      <i class="material-icons">rate_review</i>
+      <div>
+        <div style="font-weight:700; line-height:1">Redação • ENEM</div>
+        <div class="unit-chip" id="unitLabel">Unidade: <!-- login --> - <!-- unidade --></div>
+      </div>
+    </div>
+
+    <nav class="sidenav-like">
+      <!-- Ajuste hrefs conforme seus arquivos -->
+      <a href="painel.html" data-route="painel" class="active"><i class="material-icons">dashboard</i> Painel</a>
+      <a href="professores.html" data-route="professores"><i class="material-icons">people</i> Professores</a>
+      <a href="envio.html" data-route="envio"><i class="material-icons">upload_file</i> Enviar Redações</a>
+      <a href="conferencia.html" data-route="conferencia"><i class="material-icons">fact_check</i> Conferência</a>
+      <a href="relatorios.html" data-route="relatorios"><i class="material-icons">bar_chart</i> Relatórios</a>
+      <a href="config.html" data-route="config"><i class="material-icons">settings</i> Configurações</a>
+    </nav>
+  </aside>
+
+  <!-- ===== PRINCIPAL ===== -->
+  <section class="main">
+    <!-- Topbar -->
+    <div class="topbar">
+      <div style="display:flex; align-items:center; gap:10px">
+        <button class="btn-flat menu-btn" id="menuBtn"><i class="material-icons">menu</i></button>
+        <div class="page-title" id="pageTitle"><!-- título dinâmico da página --></div>
+      </div>
+      <div class="actions">
+        <!-- Exemplos de ações globais -->
+        <a class="btn waves-effect" id="refreshBtn"><i class="material-icons left">refresh</i>Atualizar</a>
+        <a class="btn red darken-1 waves-effect" id="logoutBtn"><i class="material-icons left">exit_to_app</i>Sair</a>
+      </div>
+    </div>
+
+    <!-- Conteúdo -->
+    <main class="content">
+      <!-- ======= INÍCIO DO SLOT DE CONTEÚDO ======= -->
+      <div class="row">
+        <div class="col s12">
+          <div class="card">
+            <div class="card-content">
+              <span class="card-title">Modelo Base</span>
+              <p class="muted">Substitua este bloco pelo conteúdo específico de cada página. 
+                Mantenha cabeçalho/topbar e menu lateral iguais para todas as páginas.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- ======= FIM DO SLOT DE CONTEÚDO ======= -->
+    </main>
+  </section>
+</div>
+
+<script>
+  // ===== Helpers de UI =====
+  const aside = document.getElementById('aside');
+  const menuBtn = document.getElementById('menuBtn');
+  if (menuBtn) menuBtn.addEventListener('click', ()=> aside.classList.toggle('open'));
+
+  // Marcar item ativo no menu conforme URL
+  (() => {
+    const path = location.pathname.split('/').pop() || 'painel.html';
+    const links = document.querySelectorAll('.sidenav-like a');
+    links.forEach(a => {
+      const isActive = a.getAttribute('href') === path;
+      a.classList.toggle('active', isActive);
+      if (isActive) {
+        const label = a.textContent.trim();
+        document.getElementById('pageTitle').textContent = label;
+      }
+    });
+  })();
+
+  // Preencher chip de unidade (se você tiver esses dados via localStorage ou querystring)
+  (() => {
+    const login = localStorage.getItem('login') || 'LOGIN';
+    const unidade = localStorage.getItem('unidade') || 'UNIDADE';
+    const el = document.getElementById('unitLabel');
+    if (el) el.textContent = `Unidade: ${login} - ${unidade}`;
+  })();
+
+  // Ações topbar
+  document.getElementById('refreshBtn')?.addEventListener('click', () => location.reload());
+  document.getElementById('logoutBtn')?.addEventListener('click', () => {
+    // Zera sessão local e volta ao login
+    localStorage.removeItem('token');
+    localStorage.removeItem('login');
+    localStorage.removeItem('unidade');
+    window.location.href = 'login.html';
+  });
+
+  // ===== Helper de fetch com CORS e JSON padrão =====
+  async function apiFetch(url, options = {}){
+    const opt = Object.assign({
+      method: 'GET',
+      headers: { 'Accept':'application/json' },
+      cache: 'no-store',
+      credentials: 'omit',
+      mode: 'cors'
+    }, options);
+
+    const r = await fetch(url, opt);
+    const txt = await r.text();
+    let j;
+    try { j = JSON.parse(txt); }
+    catch(e){ throw new Error('Resposta inválida da API'); }
+
+    if (!r.ok || j.ok === false){
+      throw new Error(j.error || j.message || 'Falha na requisição');
+    }
+    return j;
+  }
+
+  // Exponha no global se quiser usar nas páginas
+  window.apiFetch = apiFetch;
+</script>
+
+</body>
+</html>
