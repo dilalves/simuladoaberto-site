@@ -578,11 +578,16 @@ function getFeedbackCompetencias(R){
     // mensagens (somente das áreas)
     const msgs = getMessages(A, R);
     _pdf_ctx.y = y;
-    drawBullet(msgs.linguagens, 12, 'justify');
-    drawBullet(msgs.humanas,    12, 'justify');
-    drawBullet(msgs.natureza,   12, 'justify');
-    drawBullet(msgs.matematica, 12, 'justify');
-  
+    //drawBullet(msgs.linguagens, 12, 'justify');
+    //drawBullet(msgs.humanas,    12, 'justify');
+    //drawBullet(msgs.natureza,   12, 'justify');
+    //drawBullet(msgs.matematica, 12, 'justify');
+
+    drawBullet(`Linguagens: ${msgs.linguagens}`, 12, 'justify');
+    drawBullet(`Humanas: ${msgs.humanas}`, 12, 'justify');
+    drawBullet(`Natureza: ${msgs.natureza}`, 12, 'justify');
+    drawBullet(`Matemática: ${msgs.matematica}`, 12, 'justify');
+      
     // ======== PÁGINA 2 (Redação) ========
     let page2;
     if (tplPdf){
