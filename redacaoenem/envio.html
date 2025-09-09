@@ -147,14 +147,90 @@
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', () => {
-  M.AutoInit();
+/* ===================== SESSÃO / CONTEXTO (igual ao professores.html) ===================== */
+const API_BASE   = 'https://api.secauxiliar.com.br/';
+const LOGIN_URL  = '/redacaoeenem/login.html';
+const SESS_KEY   = 'sessao_redacao';
 
-  // ====== CONFIG ======
-  const API_UPLOAD = 'https://api.secauxiliar.com.br/upload.php'; // seu endpoint PHP
-  const ACCEPT_EXT = ['jpg','jpeg'];   // validação extra no front
+function getSession(){ try{ return JSON.parse(localStorage.getItem(SESS_KEY) || '{}'); }catch(_){ return {}; } }
+function setSession(s){ localStorage.setItem(SESS_KEY, JSON.stringify(s||{})); }
+function getToken(){ const s=getSession(); return (s && s.token) || localStorage.getItem('token') || ''; }
+function authHeaders(){ const t=getToken(); return t ? { 'Authorization':'Bearer '+t } : {}; }
+function redirectToLogin(){
+  const next = encodeURIComponent(location.pathname+location.search+location.hash);
+  location.replace(`${LOGIN_URL}?next=${next}`);
+}
 
-  // ====== ELEMENTOS ======
+/** fetch com fallback (.php), headers de auth e tratamento de erro */
+async function apiFetch(pathNoPhp, { method='GET', headers={}, body, cache='no-store' } = {}){
+  const baseHeaders = { Accept:'application/json', ...authHeaders(), ...headers };
+  // Só seta Content-Type quando for JSON body
+  const opts = { method, cache, headers: baseHeaders, body };
+  if (body && typeof body === 'string' && !baseHeaders['Content-Type']) {
+    baseHeaders['Content-Type'] = 'application/json';
+  }
+
+  let res;
+  try { res = await fetch(`${API_BASE}${pathNoPhp}`, opts); } catch(_){ res = null; }
+  if (!res || res.status === 404) {
+    const withPhp = pathNoPhp.endsWith('.php') ? pathNoPhp : pathNoPhp + '.php';
+    try { res = await fetch(`${API_BASE}${withPhp}`, opts); } catch(_){}
+  }
+  if (!res) throw new Error('NETWORK_FAIL');
+  if (res.status === 401 || res.status === 403) throw new Error('UNAUTHORIZED');
+  if (!res.ok) {
+    const txt = await res.text().catch(()=> '');
+    throw new Error(`API_${res.status}: ${txt || res.statusText}`);
+  }
+  return res.json();
+}
+
+function setUnitHeader(unit){
+  const el = document.getElementById('unitLabel') || document.getElementById('unitIdName');
+  if (!el) return;
+  if (unit?.codigo && unit?.nome) el.textContent = `${unit.codigo} - ${unit.nome}`;
+  else if (unit?.codigo) el.textContent = unit.codigo;
+  else if (unit?.nome) el.textContent = unit.nome;
+  else el.textContent = '—';
+}
+
+/** Carrega contexto do usuário/unidade via /auth_me.php (mesma lógica do professores) */
+async function carregarContexto(){
+  const data = await apiFetch('/auth_me.php');
+  // Fallback caso o backend retorne {user:{...}} em vez de {usuario, unidade}
+  if (data?.user && !data?.usuario && !data?.unidade) {
+    const u = data.user;
+    data.usuario = { nome: u.nome || u.login || 'Usuário' };
+    data.unidade = { codigo: u.login || '', nome: u.unidade || '' };
+  }
+  setSession({ ...getSession(), ...data });
+  setUnitHeader(data.unidade);
+
+  // Preenche e oculta o input de unidade se veio do login
+  const codInput = document.getElementById('codUnd');
+  if (codInput && data?.unidade?.codigo) {
+    codInput.value = data.unidade.codigo;
+    codInput.setAttribute('readonly', 'readonly');
+    codInput.closest('.row')?.classList.add('hide'); // opcional: esconder
+  }
+  return data;
+}
+
+/* ===================== UPLOAD (fila, barra e respostas) ===================== */
+document.addEventListener('DOMContentLoaded', async () => {
+  // Materialize
+  window.M && M.AutoInit();
+
+  // exige login
+  if (!getToken()) return redirectToLogin();
+
+  // carrega contexto (topo + codUnd)
+  try { await carregarContexto(); }
+  catch(e){ if (String(e.message).includes('UNAUTHORIZED')) return redirectToLogin(); }
+
+  const API_UPLOAD = 'https://api.secauxiliar.com.br/upload.php'; // endpoint PHP
+  const ACCEPT_EXT = ['jpg','jpeg']; // validação extra no front (se quiser permitir mais, ajuste)
+
   const btnPick  = document.getElementById('btnPick');
   const input    = document.getElementById('files');
   const drop     = document.getElementById('drop');
@@ -162,21 +238,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnSend  = document.getElementById('btnSend');
   const statusEl = document.getElementById('status');
   const codUndEl = document.getElementById('codUnd');
-  const lblUnd   = document.getElementById('lblUnd');
 
-  // Se o painel gravou a unidade no storage, pré-carrega (e pode ocultar o input se quiser)
-  try {
-    const und = sessionStorage.getItem('CODUND') || localStorage.getItem('CODUND');
-    if (und) {
-      codUndEl.value = und;
-      lblUnd.textContent = und;
-    } else {
-      lblUnd.textContent = '—';
-    }
-  } catch(e){}
-
-  // ====== UPLOAD QUEUE ======
-  let queue = []; // items: {file, li, bar, msg}
+  let queue = []; // {file, li, bar, msg}
 
   btnPick.addEventListener('click', () => input.click());
   input.addEventListener('change', () => addFiles(input.files));
@@ -186,13 +249,14 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   drop.addEventListener('dragenter',() => drop.classList.add('drag'));
   drop.addEventListener('dragleave',() => drop.classList.remove('drag'));
-  drop.addEventListener('drop', (e) => { drop.classList.remove('drag'); addFiles(e.dataTransfer.files); });
+  drop.addEventListener('drop',(e)=>{ drop.classList.remove('drag'); addFiles(e.dataTransfer.files); });
 
   function addFiles(fileList){
     [...fileList].forEach(file => {
       const ext = (file.name.split('.').pop() || '').toLowerCase();
       if (!ACCEPT_EXT.includes(ext)) {
-        M.toast({html:`Tipo não permitido: ${ext}`}); return;
+        window.M && M.toast ? M.toast({html:`Tipo não permitido: ${ext}`}) : alert(`Tipo não permitido: ${ext}`);
+        return;
       }
       const li = document.createElement('li');
       li.className = 'collection-item';
@@ -223,16 +287,18 @@ document.addEventListener('DOMContentLoaded', () => {
   btnSend.addEventListener('click', async (e) => {
     e.preventDefault();
     const codUnd = (codUndEl.value || '').trim();
-    if (!codUnd) { M.toast({html:'Informe o código da unidade'}); return; }
-    if (!queue.length){ M.toast({html:'Selecione ao menos 1 arquivo'}); return; }
+    if (!codUnd) { window.M && M.toast ? M.toast({html:'Informe o código da unidade'}) : alert('Informe o código da unidade'); return; }
+    if (!queue.length){ window.M && M.toast ? M.toast({html:'Selecione ao menos 1 arquivo'}) : alert('Selecione ao menos 1 arquivo'); return; }
 
-    btnSend.disabled = true; statusEl.textContent = 'Enviando…';
+    btnSend.disabled = true;
+    statusEl.textContent = 'Enviando…';
 
     for (const item of queue) {
-      await sendOne(item, codUnd).catch(err => console.error(err));
+      try { await sendOne(item, codUnd); } catch(e){ console.error(e); }
     }
 
-    btnSend.disabled = false; statusEl.textContent = 'Envio concluído.';
+    btnSend.disabled = false;
+    statusEl.textContent = 'Envio concluído.';
   });
 
   function sendOne(item, codUnd){
@@ -246,8 +312,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       xhr.upload.onprogress = (e) => {
         if (e.lengthComputable) {
-          const p = (e.loaded/e.total)*100;
-          item.bar.style.width = p.toFixed(0)+'%';
+          item.bar.style.width = ((e.loaded/e.total)*100).toFixed(0) + '%';
         }
       };
 
@@ -255,13 +320,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (xhr.readyState !== 4) return;
 
         let resp = {};
-        try { resp = JSON.parse(xhr.responseText || '{}'); } catch {}
+        try { resp = JSON.parse(xhr.responseText || '{}'); } catch(_){}
+
         if (xhr.status >= 200 && xhr.status < 300 && resp.ok) {
           item.msg.textContent = 'OK: ' + (resp.data?.nome_final || 'enviado');
           item.bar.style.width = '100%';
           item.li.classList.add('teal-text');
         } else if (xhr.status === 422) {
-          // reprovação de resolução (gate)
           const det = resp.details ? ` (${resp.details})` : '';
           item.msg.textContent = 'Resolução reprovada' + det;
           item.li.classList.add('red-text');
@@ -276,64 +341,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 });
-
-  // tenta recuperar a unidade do mesmo jeito que a professores.html faz
-function getUnitFromStorage() {
-  // tente usar a mesma chave que você usa na professores.html
-  // (se lá for outra, substitua aqui pela mesma)
-  const candidates = [
-    'UNIT_INFO',          // tente manter o mesmo nome da professores.html
-    'SESSION_UNIDADE',
-    'unitInfo',
-    'auth_unit',
-    'unit'                // fallback genérico
-  ];
-  for (const key of candidates) {
-    try {
-      const raw = localStorage.getItem(key) || sessionStorage.getItem(key);
-      if (!raw) continue;
-      const obj = typeof raw === 'string' ? JSON.parse(raw) : raw;
-      if (obj && (obj.codUnd || obj.codigo || obj.code)) return obj;
-    } catch (e) {}
-  }
-  return null;
-}
-
-function resolveCodUnd(u) {
-  return u.codUnd ?? u.codigo ?? u.code ?? '';
-}
-function resolveNomeUnd(u) {
-  return u.nome ?? u.nomeUnidade ?? u.name ?? '';
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-  const unit = getUnitFromStorage();
-  const unitLabel = document.getElementById('unitLabel');   // do seu header
-  const codInput  = document.getElementById('codUnd');       // input do formulário
-
-  if (unit) {
-    const cod  = resolveCodUnd(unit);
-    const nome = resolveNomeUnd(unit);
-
-    // Topo
-    if (unitLabel) {
-      unitLabel.textContent = cod && nome ? `${cod} - ${nome}` : (cod || nome || '—');
-    }
-
-    // Formulário (preenche e desativa/oculta se quiser)
-    if (codInput && cod) {
-      codInput.value = cod;
-      // se quiser ocultar o campo quando a unidade já está logada:
-      codInput.setAttribute('readonly', 'readonly');
-      codInput.closest('.row')?.classList.add('hide'); // com Materialize, .hide funciona
-    }
-  } else {
-    // sem sessão: mostra “—” no topo e mantém o input editável
-    const unitLabel = document.getElementById('unitLabel');
-    if (unitLabel) unitLabel.textContent = '—';
-  }
-});
-   
 </script>
 </body>
 </html>
