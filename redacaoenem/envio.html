@@ -313,6 +313,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       const form = new FormData();
       form.append('file', item.file);
       form.append('codUnd', codUnd);
+      
+      // ✅ pegue o HHMMSS fixo do lote e envie junto
+      const ts = document.getElementById('ts').value;   // já foi setado no onload
+      form.append('ts', ts);
 
       xhr.open('POST', API_UPLOAD, true);
 
