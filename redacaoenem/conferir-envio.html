@@ -173,7 +173,7 @@
 <script>
 /* ===================== SESSÃO / CONTEXTO ===================== */
 const API_BASE   = 'https://api.secauxiliar.com.br/';
-const LOGIN_URL  = '/redacaoenem/login.html';
+const LOGIN_URL  = '/redacaoenem/index.html';
 const SESS_KEY   = 'sessao_redacao';
 function getSession(){ try{ return JSON.parse(localStorage.getItem(SESS_KEY) || '{}'); }catch(_){ return {}; } }
 function setSession(s){ localStorage.setItem(SESS_KEY, JSON.stringify(s||{})); }
