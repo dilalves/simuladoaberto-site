@@ -173,6 +173,8 @@
 <script>
 /* ===================== SESSÃO / CONTEXTO ===================== */
 const API_BASE   = 'https://api.secauxiliar.com.br/';
+const API_UPLOAD   = 'https://api.secauxiliar.com.br/upload.php';
+const API_CONFERIR = 'https://api.secauxiliar.com.br/logs_list.php'; 
 const LOGIN_URL  = '/redacaoenem/index.html';
 const SESS_KEY   = 'sessao_redacao';
 function getSession(){ try{ return JSON.parse(localStorage.getItem(SESS_KEY) || '{}'); }catch(_){ return {}; } }
@@ -180,19 +182,29 @@ function setSession(s){ localStorage.setItem(SESS_KEY, JSON.stringify(s||{})); }
 function getToken(){ const s=getSession(); return (s && s.token) || localStorage.getItem('token') || ''; }
 function authHeaders(){ const t=getToken(); return t ? { 'Authorization':'Bearer '+t } : {}; }
 function redirectToLogin(){ const next = encodeURIComponent(location.pathname+location.search+location.hash); location.replace(`${LOGIN_URL}?next=${next}`); }
-async function apiFetch(pathNoPhp, { method='GET', headers={}, body, cache='no-store' } = {}){
+async function apiFetch(pathOrUrl, { method='GET', headers={}, body, cache='no-store' } = {}) {
   const baseHeaders = { Accept:'application/json', ...authHeaders(), ...headers };
   const opts = { method, cache, headers: baseHeaders, body };
   if (body && typeof body === 'string' && !baseHeaders['Content-Type']) baseHeaders['Content-Type'] = 'application/json';
-  let res;
-  try { res = await fetch(`${API_BASE}${pathNoPhp}`, opts); } catch(_){ res = null; }
-  if (!res || res.status === 404) {
-    const withPhp = pathNoPhp.endsWith('.php') ? pathNoPhp : pathNoPhp + '.php';
-    try { res = await fetch(`${API_BASE}${withPhp}`, opts); } catch(_){}
+
+  const isAbsolute = /^https?:\/\//i.test(pathOrUrl);
+  const primaryUrl = isAbsolute ? pathOrUrl : `${API_BASE}${pathOrUrl}`;
+
+  let res = null;
+  try { res = await fetch(primaryUrl, opts); } catch (_) {}
+
+  // apenas tenta fallback .php quando NÃO for URL absoluta
+  if ((!res || res.status === 404) && !isAbsolute) {
+    const withPhp = pathOrUrl.endsWith('.php') ? pathOrUrl : pathOrUrl + '.php';
+    try { res = await fetch(`${API_BASE}${withPhp}`, opts); } catch(_) {}
   }
+
   if (!res) throw new Error('NETWORK_FAIL');
   if (res.status === 401 || res.status === 403) throw new Error('UNAUTHORIZED');
-  if (!res.ok) { const txt = await res.text().catch(()=> ''); throw new Error(`API_${res.status}: ${txt || res.statusText}`); }
+  if (!res.ok) {
+    const txt = await res.text().catch(()=> '');
+    throw new Error(`API_${res.status}: ${txt || res.statusText}`);
+  }
   return res.json();
 }
 function setUnitHeader(unit){
@@ -252,7 +264,7 @@ async function load(){
 
   // Back-end esperado: POST /logs_list com {codUnd, q, status, page, pageSize}
   const payload = { codUnd, q, status, page: PAGE, pageSize: PAGE_SIZE };
-  const data = await apiFetch('/logs_list', { method:'POST', body: JSON.stringify(payload) });
+  const data = await apiFetch(API_CONFERIR, { method:'POST', body: JSON.stringify(payload) });
 
   // Aceita formatos: {ok, data:{items,total}} ou {items,total} ou array simples
   let items = [];
