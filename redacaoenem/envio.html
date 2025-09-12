@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-
+<!-- Sistema de envio de arquivos - redação - simulado enem - Adilson Alves -->
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8"/>
@@ -175,6 +175,15 @@ function novoTimestamp(){
 }
 document.getElementById('ts').value = novoTimestamp(); // inicial
 
+// 🔹 Controle do lote atual
+let currentBatchId = null;
+function startNewBatch(){
+  document.getElementById('ts').value = novoTimestamp(); // renova HHMMSS
+  currentBatchId = `L${Date.now()}_${Math.random().toString(36).slice(2,8)}`;
+}
+
+
+
 
 function getSession(){ try{ return JSON.parse(localStorage.getItem(SESS_KEY) || '{}'); }catch(_){ return {}; } }
 function setSession(s){ localStorage.setItem(SESS_KEY, JSON.stringify(s||{})); }
@@ -267,9 +276,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // ===== BOTÃO "Selecionar arquivos":
   btnPick.addEventListener('click', () => {
-    purgeEnviadosDaTela();                            // [+] novo: limpa enviados ao abrir seletor
-    document.getElementById('ts').value = novoTimestamp();  // 🔄 gera novo lote
+    purgeEnviadosDaTela();
+    startNewBatch();          // 🔄 novo lote
     input.click();
+  });
+
+  drop.addEventListener('drop',(e)=>{
+    drop.classList.remove('drag');
+    startNewBatch();          // 🔄 novo lote
+    addFiles(e.dataTransfer.files);
   });
 
   input.addEventListener('change', () => addFiles(input.files));
@@ -279,12 +294,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
   drop.addEventListener('dragenter',() => drop.classList.add('drag'));
   drop.addEventListener('dragleave',() => drop.classList.remove('drag'));
-  drop.addEventListener('drop',(e)=>{
-  drop.classList.remove('drag');
-  document.getElementById('ts').value = novoTimestamp();  // 🔄 novo lote no arrastar-soltar
-  addFiles(e.dataTransfer.files);
-  });
-
+  
   function addFiles(fileList){
     purgeEnviadosDaTela();                            // [+] novo: também limpa ao trocar seleção
     [...fileList].forEach(file => {
@@ -356,23 +366,22 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
 
-  function sendOne(item, codUnd){
+  function sendOne(item, codUnd, batchId){
     return new Promise((resolve) => {
       const xhr = new XMLHttpRequest();
       const form = new FormData();
-      form.append('file', item.file);
+      form.append('file',   item.file);
       form.append('codUnd', codUnd);
-      
-      // ✅ pegue o HHMMSS fixo do lote e envie junto
-      const ts = document.getElementById('ts').value;   // já foi setado no onload
-      form.append('ts', ts);
+
+      const ts = document.getElementById('ts').value;   // vem do lote atual
+      form.append('ts',      ts);
+      form.append('batchId', batchId);                  // 🔹 novo
+      form.append('seq',     String(item._seq));        // 🔹 novo (_1, _2, ...)
 
       xhr.open('POST', API_UPLOAD, true);
 
       xhr.upload.onprogress = (e) => {
-        if (e.lengthComputable) {
-          item.bar.style.width = ((e.loaded/e.total)*100).toFixed(0) + '%';
-        }
+        if (e.lengthComputable) item.bar.style.width = ((e.loaded/e.total)*100).toFixed(0) + '%';
       };
 
       xhr.onreadystatechange = () => {
@@ -385,9 +394,9 @@ document.addEventListener('DOMContentLoaded', async () => {
           item.msg.textContent = 'OK: ' + (resp.data?.nome_final || 'enviado');
           item.bar.style.width = '100%';
           item.li.classList.add('teal-text');
-          item.status = 'enviado';                           
-          enviados.add(item.key);     
-          updateSendButton();                          
+          item.status = 'enviado';
+          enviados.add(item.key);
+          updateSendButton();
         } else if (xhr.status === 422) {
           const det = resp.details ? ` (${resp.details})` : '';
           item.msg.textContent = 'Resolução reprovada' + det;
@@ -402,6 +411,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       xhr.send(form);
     });
   }
+  updateSendButton();
 });
 
 function updateSendButton(){
