@@ -143,6 +143,43 @@
     /* (se preferir manter o menu no mobile, remova a linha acima) */
   }
 
+  /* ===== Topbar universal (cobre telas que usam DIV.topbar, ex.: painel.html) ===== */
+  body > .topbar,
+  .app > .topbar,
+  .main > .topbar {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: var(--topbar-h);
+    background: var(--primary) !important;   /* azul igual da tela de envio */
+    color: #fff !important;
+    z-index: 20;
+    display: flex; align-items: center;
+    padding: 12px 24px;
+    padding-left: calc(var(--aside-w) + 24px);  /* alinha com o menu lateral */
+    box-shadow: 0 2px 10px rgba(16,24,40,.12);
+  }
+
+  /* faz a .topbar ocupar a largura toda (sem limitar por .container) */
+  body > .topbar .container,
+  .app > .topbar .container,
+  .main > .topbar .container {
+    max-width: none !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* quando existe <header class="topbar"> (tela de envios), mantém só o header visível */
+  header.topbar > .topbar{
+    position: static !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  /* garante que o conteúdo não fique escondido atrás do topo fixo */
+  main, .main { padding-top: calc(var(--topbar-h) + 8px) !important; }
+
+
 </style>
 
 
