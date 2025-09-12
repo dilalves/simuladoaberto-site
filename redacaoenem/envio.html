@@ -318,29 +318,43 @@ document.addEventListener('DOMContentLoaded', async () => {
       li.querySelector('[data-remove]').onclick = () => {
         queue = queue.filter(q => q.li !== li);
         li.remove();
+        updateSendButton();  
       };
       queue.push({file, li, bar, msg, key, status:'pendente'});  // [+] status + key
     });
     // permite reescolher o mesmo arquivo depois
     input.value = '';                                  // [+] novo
+    updateSendButton();
   }
 
   btnSend.addEventListener('click', async (e) => {
     e.preventDefault();
     const codUnd = (codUndEl.value || '').trim();
-    if (!codUnd) { window.M && M.toast ? M.toast({html:'Informe o código da unidade'}) : alert('Informe o código da unidade'); return; }
-    if (!queue.length){ window.M && M.toast ? M.toast({html:'Selecione ao menos 1 arquivo'}) : alert('Selecione ao menos 1 arquivo'); return; }
+    if (!codUnd) { M?.toast ? M.toast({html:'Informe o código da unidade'}) : alert('Informe o código da unidade'); return; }
+
+    const pendentes = queue.filter(it => it.status === 'pendente');
+    if (!pendentes.length){
+      M?.toast ? M.toast({html:'Nada a enviar: todos os itens desta lista já foram enviados.'}) : alert('Nada a enviar.');
+      updateSendButton();
+      return;
+    }
 
     btnSend.disabled = true;
     statusEl.textContent = 'Enviando…';
 
-    for (const item of queue) {
-      try { await sendOne(item, codUnd); } catch(e){ console.error(e); }
+    // (se você já tem batchId, mantenha)
+    const batchId = currentBatchId || (currentBatchId = `L${Date.now()}_${Math.random().toString(36).slice(2,8)}`);
+    let seq = 1;
+    for (const it of pendentes) it._seq = seq++;
+
+    for (const item of pendentes) {
+      try { await sendOne(item, codUnd, batchId); } catch(e){ console.error(e); }
     }
 
-    btnSend.disabled = false;
     statusEl.textContent = 'Envio concluído.';
+    updateSendButton(); // vai ficar desabilitado se não sobrar pendente
   });
+
 
   function sendOne(item, codUnd){
     return new Promise((resolve) => {
@@ -372,7 +386,8 @@ document.addEventListener('DOMContentLoaded', async () => {
           item.bar.style.width = '100%';
           item.li.classList.add('teal-text');
           item.status = 'enviado';                           
-          enviados.add(item.key);                            
+          enviados.add(item.key);     
+          updateSendButton();                          
         } else if (xhr.status === 422) {
           const det = resp.details ? ` (${resp.details})` : '';
           item.msg.textContent = 'Resolução reprovada' + det;
@@ -388,6 +403,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 });
+
+function updateSendButton(){
+  const pendentes = queue.filter(it => it.status === 'pendente').length;
+  const btn = document.getElementById('btnSend');
+  btn.disabled = pendentes === 0;
+  // opcional: mostrar quantidade no rótulo
+  // btn.innerHTML = `<i class="material-icons left">send</i> Enviar${pendentes ? ` (${pendentes})` : ''}`;
+}
+
+
 </script>
 </body>
 </html>
