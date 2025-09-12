@@ -15,40 +15,50 @@
   <style>
     :root{
       --bg:#f7f8fb; --card:#ffffff; --line:#e9edf3; --ink:#0f172a; --muted:#6b7280; --primary:#0b3b78; --accent:#2563eb;
+      --aside-w: 260px;
+      --topbar-h: 64px;   /* ajuste aqui a altura do topo */
     }
+
     html,body{height:100%}
+
     body{background:var(--bg); color:var(--ink)}
+
     /* ===== Layout ===== */
     .app{
       display:grid;
-      grid-template-columns:260px 1fr;
+      grid-template-columns: var(--aside-w) 1fr;
       min-height:100vh;
     }
-    /* 🔒 Sidebar fixa */
+
+    /* 🔒 Sidebar fixa/rolável abaixo do topo */
     aside{
       background:#fff;
       border-right:1px solid var(--line);
-      position: sticky;       /* fixa na viewport */
-      top: 0;
-      height: 100vh;          /* ocupa a altura toda */
-      overflow:auto;          /* rola só o menu se passar do tamanho */
-      align-self:start;       /* necessário em grid para sticky funcionar */
+      position: sticky;
+      top: var(--topbar-h);                /* começa abaixo do topo */
+      height: calc(100vh - var(--topbar-h));
+      overflow: auto;
+      align-self: start;
       z-index: 6;
     }
 
     /* Conteúdo principal */
-    main{display:flex; flex-direction:column}
+    main{
+      display:flex; flex-direction:column;
+      padding-top: calc(var(--topbar-h) + 8px);
+    }
 
-    /* 🔒 Topbar fixa */
+    /* 🔒 Topbar fixo e de fora a fora */
     header.topbar{
-      position: sticky;       /* fixa na viewport */
-      top: 0;
-      z-index: 10;            /* acima do conteúdo */
-      background:var(--primary);
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: var(--topbar-h);
+      z-index: 20;
+      background: var(--primary);
       color:#fff;
-      padding:14px 20px;
       display:flex; align-items:center; justify-content:space-between;
-      box-shadow:0 2px 8px rgba(16,24,40,.08); /* leve sombra ao grudar */
+      padding: 12px 20px;
+      box-shadow:0 2px 10px rgba(16,24,40,.12);
     }
 
     /* Estilos auxiliares existentes */
@@ -74,7 +84,7 @@
     @media (max-width: 992px){
       .app{grid-template-columns:1fr}
     }                           
-    
+
   </style>
 
 </head>
