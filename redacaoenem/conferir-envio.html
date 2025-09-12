@@ -258,23 +258,29 @@ function linkCell(url){
 function render(rows){
   LAST_ITEMS = rows || [];
   tbody.innerHTML = rows.map(r => {
-    const link = r.LINK_ARQUIVO || r.link_arquivo;
+    const link   = r.LINK_ARQUIVO || r.link_arquivo;
+    const imgUrl = guessImageUrl(r);
     const status = (r.OMR_STATUS || r.status_omr || r.status || '').toString().toUpperCase();
     const statusCell = status.includes('TRATAMENTO MANUAL')
-      ? `<a href="#!" class="manual-link" data-id="${r.id||''}" data-link="${link||''}" data-nome="${r.nome_arquivo_recebido||r.nome_arquivo_final||''}" data-inscricao="${r.inscricao||''}">TRATAMENTO MANUAL</a>`
-      : badgeStatus(status || r.OMR_STATUS || r.status_omr || r.status);
+      ? `<a href="#!" class="manual-link"
+             data-id="${r.id||''}"
+             data-img="${imgUrl||''}"
+             data-nome="${r.nome_arquivo_recebido||r.nome_arquivo_final||''}"
+             data-inscricao="${r.inscricao||''}">TRATAMENTO MANUAL</a>`
+      : badgeStatus(status);
 
     return `
       <tr data-id="${r.id||''}">
-        <td>${r.inscricao || r.matricula || ''}</td>
+        <td>${r.inscricao || ''}</td>
         <td title="${r.nome_arquivo_recebido||''}">${r.nome_arquivo_recebido || ''}</td>
         <td title="${r.nome_arquivo_final||''}">${r.nome_arquivo_final || ''}</td>
         <td>${linkCell(link)}</td>
-        <td>${r.RES_DPI ?? r.RES_DEPI ?? r.DPI ?? ''}</td>
+        <td>${r.RES_DPI ?? ''}</td>
         <td>${statusCell}</td>
       </tr>`;
   }).join('');
 }
+
 
 
 async function load(){
@@ -337,89 +343,95 @@ document.addEventListener('DOMContentLoaded', async ()=>{
 
 let modalManual, cropper, currentRecord = null;
 
-document.addEventListener('DOMContentLoaded', async ()=> {
-  // ... o que você já tem ...
-  modalManual = M.Modal.init(document.getElementById('modalManual'), {dismissible:true});
+document.addEventListener('DOMContentLoaded', () => {
+  modalManual = M.Modal.init(document.getElementById('modalManual'), { dismissible:true });
 
-  // abre modal ao clicar no status "TRATAMENTO MANUAL"
+  // Abre modal ao clicar no "TRATAMENTO MANUAL"
   tbody.addEventListener('click', (ev) => {
     const a = ev.target.closest('.manual-link');
     if (!a) return;
-    ev.preventDefault();
 
+    // 1) capturar os dados do registro clicado
     currentRecord = {
-      id: a.dataset.id,
-      link: a.dataset.link,
-      nome: a.dataset.nome || '',
+      id:        a.dataset.id || '',
+      img:       a.dataset.img || '',           // URL direta da imagem
+      nome:      a.dataset.nome || '',
       inscricao: a.dataset.inscricao || ''
     };
 
-    // Preenche cabeçalho e campo
+    // 2) preencher campos do modal
     document.getElementById('mm-arquivo').textContent = currentRecord.nome || '(sem nome)';
     const input = document.getElementById('mm-inscricao');
     input.value = currentRecord.inscricao || '';
     M.updateTextFields();
 
-    // carrega imagem no modal
+    // 3) carregar imagem e iniciar cropper
     const img = document.getElementById('cropImg');
-    img.src = currentRecord.link || '';
+    img.src = currentRecord.img;
     img.onload = () => {
-      if (cropper) { cropper.destroy(); cropper = null; }
+      try { cropper && cropper.destroy(); } catch(_) {}
       cropper = new Cropper(img, {
         viewMode: 1, responsive: true, autoCropArea: 0.5,
         background: false, movable: true, zoomable: true, rotatable: false,
       });
     };
     img.onerror = () => {
-      if (cropper) { cropper.destroy(); cropper = null; }
+      try { cropper && cropper.destroy(); } catch(_) {}
+      cropper = null;
+      M.toast({ html: 'Não foi possível carregar a imagem.' });
     };
 
     modalManual.open();
   });
 
-
-  // salvar inscrição no banco a partir do modal
-  
+  // 4) salvar
   document.getElementById('mm-salvar').addEventListener('click', async () => {
     if (!currentRecord) return;
-    const btn = document.getElementById('mm-salvar');
+    const btn   = document.getElementById('mm-salvar');
     const inscr = (document.getElementById('mm-inscricao').value || '').trim();
-
     if (!inscr) { M.toast({html:'Informe a inscrição'}); return; }
 
-    // pega o retângulo do crop (só para referência; o backend pode ignorar)
     let crop = null;
     try {
       if (cropper) {
-        const data = cropper.getData(true); // números arredondados
-        crop = { x:Math.round(data.x), y:Math.round(data.y), width:Math.round(data.width), height:Math.round(data.height), rotate:data.rotate||0, scaleX:data.scaleX||1, scaleY:data.scaleY||1 };
+        const d = cropper.getData(true);
+        crop = { x:Math.round(d.x), y:Math.round(d.y), width:Math.round(d.width), height:Math.round(d.height) };
       }
-    } catch(_) {}
+    } catch (_) {}
 
     btn.classList.add('disabled');
-
     try {
-      const payload = { id: currentRecord.id, inscricao: inscr, crop };
-      const res = await apiFetch(API_ATUALIZA, { method:'POST', body: JSON.stringify(payload) });
+      const res = await apiFetch(API_ATUALIZA, { method:'POST', body: JSON.stringify({ id: currentRecord.id, inscricao: inscr, crop }) });
       if (!res.ok) throw new Error(res.message || 'Falha ao atualizar');
 
-      // Atualiza a UI localmente
+      // reflete na UI
       const row = LAST_ITEMS.find(x => String(x.id||'') === String(currentRecord.id||''));
-      if (row) {
-        row.inscricao  = inscr;
-        row.OMR_STATUS = 'AGUARDANDO CORREÇÃO';
-      }
+      if (row) { row.inscricao = inscr; row.OMR_STATUS = 'AGUARDANDO CORREÇÃO'; }
       render(LAST_ITEMS);
       modalManual.close();
-      M.toast({html:'Inscrição atualizada!'});
-    } catch(e){
+      M.toast({ html: 'Inscrição atualizada!' });
+    } catch (e) {
       console.error(e);
-      M.toast({html:'Erro ao salvar: ' + (e.message||'')});
+      M.toast({ html: 'Erro ao salvar: ' + (e.message || '') });
     } finally {
       btn.classList.remove('disabled');
     }
   });
 });
+
+
+
+//MOSTRAR IMAGEM NO MODAL PARA CONFERÊNCIA DE INSCRIÇÃO
+function guessImageUrl(row){
+  const id   = row.FILE_ID || row.file_id || '';
+  const link = row.LINK_ARQUIVO || row.link_arquivo || '';
+  if (id) return `https://drive.google.com/thumbnail?id=${id}&sz=w1600`; // rápido no modal
+  try{
+    const m = link.match(/\/file\/d\/([^/]+)/); if (m) return `https://drive.google.com/thumbnail?id=${m[1]}&sz=w1600`;
+    const u = new URL(link); const q = u.searchParams.get('id'); if (q) return `https://drive.google.com/thumbnail?id=${q}&sz=w1600`;
+  }catch(_){}
+  return link;
+}
 
 
 </script>
