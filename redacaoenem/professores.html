@@ -81,37 +81,32 @@
 </head>
 <body>
   <div class="app">
-    <!-- Aside -->
-    <aside class="aside">
-      <div class="logo">
-        <div class="tick"><i class="material-icons" style="font-size:18px">check</i></div>
-        <div style="font-weight:800">Redação Online</div>
-      </div>
-      <nav class="menu">
-        <a href="painel.html"><i class="material-icons">dashboard</i>Dashboard</a>
-        <a href="envio.html"><i class="material-icons">description</i>Envio de Redações</a>
-        <a class="active" href="professores.html"><i class="material-icons">group</i>Professores</a>
-        <a href="relatorios.html"><i class="material-icons">insert_chart_outlined</i>Relatórios</a>
-        <a href="config.html"><i class="material-icons">settings</i>Configurações</a>
-      </nav>
-    </aside>
+    <!-- ===== Sidebar ===== -->
+  <aside>
+    <div class="center" style="padding:18px 0 8px">
+      <span class="title" style="font-weight:700;color:#0b3b78">Redação Online</span>
+    </div>
+    <ul class="menu">
+      <li><a href="/redacaoenem/painel.html"><span class="icon material-icons">dashboard</span>Dashboard</a></li>
+      <li class="active"><a href="/redacaoenem/envio.html"><span class="icon material-icons">cloud_upload</span>Envio de Redações</a></li>
+      <li><a href="/redacaoenem/professores.html"><span class="icon material-icons">group</span>Professores</a></li>
+      <li><a href="/redacaoenem/relatorios.html"><span class="icon material-icons">bar_chart</span>Relatórios</a></li>
+      <li><a href="/redacaoenem/config.html"><span class="icon material-icons">settings</span>Configurações</a></li>
+    </ul>
+  </aside>
 
     <!-- Main -->
     <section class="main">
       <!-- Header -->
-      <div class="topbar">
-        <div class="wrap">
-          <div class="row valign-wrapper" style="margin-bottom:0">
-            <div class="col s12 m6 left-align">
-              <span class="brand">Professores</span>
-              <span class="unit">• <span id="unitIdName">—</span></span>
-            </div>
-            <div class="col s12 m6 right-align">
-              <span class="user-chip"><i class="material-icons left">account_circle</i><span id="userName">Usuário</span></span>
-            </div>
-          </div>
+      <header class="topbar">
+      <div class="topbar blue darken-3 white-text">
+        <div class="container">
+          <h5 class="m-0">
+            Redação Online – <span id="unitLabel">—</span>
+          </h5>
         </div>
       </div>
+    </header>
 
       <!-- Content -->
       <div class="content">
