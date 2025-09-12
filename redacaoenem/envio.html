@@ -169,9 +169,12 @@ function purgeEnviadosDaTela(){                     // [+] novo
 const API_BASE   = 'https://api.secauxiliar.com.br/';
 const LOGIN_URL  = '/redacaoenem/login.html';
 const SESS_KEY   = 'sessao_redacao';
-const d = new Date();
-  document.getElementById('ts').value =
-  d.toTimeString().slice(0,8).replace(/:/g,''); // HHMMSS
+function novoTimestamp(){
+  const d = new Date();
+  return d.toTimeString().slice(0,8).replace(/:/g,''); // HHMMSS
+}
+document.getElementById('ts').value = novoTimestamp(); // inicial
+
 
 function getSession(){ try{ return JSON.parse(localStorage.getItem(SESS_KEY) || '{}'); }catch(_){ return {}; } }
 function setSession(s){ localStorage.setItem(SESS_KEY, JSON.stringify(s||{})); }
@@ -265,6 +268,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // ===== BOTÃO "Selecionar arquivos":
   btnPick.addEventListener('click', () => {
     purgeEnviadosDaTela();                            // [+] novo: limpa enviados ao abrir seletor
+    document.getElementById('ts').value = novoTimestamp();  // 🔄 gera novo lote
     input.click();
   });
 
@@ -275,7 +279,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
   drop.addEventListener('dragenter',() => drop.classList.add('drag'));
   drop.addEventListener('dragleave',() => drop.classList.remove('drag'));
-  drop.addEventListener('drop',(e)=>{ drop.classList.remove('drag'); addFiles(e.dataTransfer.files); });
+  drop.addEventListener('drop',(e)=>{
+  drop.classList.remove('drag');
+  document.getElementById('ts').value = novoTimestamp();  // 🔄 novo lote no arrastar-soltar
+  addFiles(e.dataTransfer.files);
+  });
 
   function addFiles(fileList){
     purgeEnviadosDaTela();                            // [+] novo: também limpa ao trocar seleção
