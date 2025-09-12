@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<!-- Conferir Envio • Redação Online -->
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Conferir Envio • Redação Online</title>
+
+  <!-- Materialize -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+  <!-- Google Icons -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg:#f7f8fb; --card:#ffffff; --line:#e9edf3; --ink:#0f172a; --muted:#6b7280; --primary:#0b3b78; --accent:#2563eb;
+      --aside-w: 260px;       /* largura do menu lateral */
+      --topbar-h: 64px;       /* altura do topo */
+    }
+
+    html,body{height:100%}
+    body{background:var(--bg); color:var(--ink)}
+
+    /* ===== Layout ===== */
+    .app{ display:grid; grid-template-columns: var(--aside-w) 1fr; min-height:100vh; }
+
+    /* 🔒 Topo azul: full-width, fixo e alinhado ao lado do menu */
+    header.topbar{
+      position: fixed; top: 0; left: 0; right: 0; height: var(--topbar-h); z-index: 20;
+      background: var(--primary); color:#fff; display:flex; align-items:center;
+      padding: 12px 24px; padding-left: calc(var(--aside-w) + 24px); box-shadow:0 2px 10px rgba(16,24,40,.12);
+    }
+    header.topbar > .topbar{ background: transparent !important; box-shadow: none !important; }
+    header.topbar .container{ max-width: none; width: 100%; margin: 0; padding: 0; }
+    header.topbar h5{ margin: 0; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    /* 🔒 Sidebar fixa/rolável abaixo do topo */
+    aside{
+      background:#fff; border-right:1px solid var(--line); position: sticky; top: var(--topbar-h);
+      height: calc(100vh - var(--topbar-h)); overflow: auto; align-self: start; z-index: 6;
+    }
+
+    /* Conteúdo principal (empurrado abaixo do topo fixo) */
+    main{ display:flex; flex-direction:column; padding-top: calc(var(--topbar-h) + 8px); }
+
+    /* utilitários/estilo */
+    .page{padding:24px}
+    .muted{color:var(--muted)}
+    .card{border-radius:14px; box-shadow:0 6px 18px rgba(16,24,40,.06)}
+    .card-title{font-weight:600}
+    .table-wrapper{overflow:auto; border:1px solid var(--line); border-radius:10px; background:#fff}
+    table.striped>tbody>tr:nth-child(odd){background:#fafbff}
+    th{white-space:nowrap}
+    td{vertical-align:middle}
+
+    .chip-status{border-radius:999px; padding:2px 10px; font-weight:600; font-size:12px; display:inline-block}
+    .ok{background:#e7f8ef; color:#127c46}
+    .err{background:#fdecec; color:#b42318}
+    .pend{background:#fff7e6; color:#b54708}
+
+    .search-row{display:grid; grid-template-columns: 1fr 160px 140px; gap:12px}
+
+    @media (max-width: 992px){
+      .app{ grid-template-columns: 1fr; }
+      header.topbar{ padding-left: 16px; }
+      .search-row{ grid-template-columns: 1fr; }
+    }
+
+    /* menu lateral */
+    .menu{list-style:none; padding:0; margin:0}
+    .menu a{display:block; padding:12px 16px; color:#111827}
+    .menu a:hover{background:#f4f6fb}
+    .menu .active>a{background:#eef3ff; font-weight:600}
+    .menu .icon{font-size:20px; vertical-align:middle; margin-right:8px; color:#64748b}
+  </style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== Sidebar ===== -->
+  <aside>
+    <div class="center" style="padding:18px 0 8px">
+      <span class="title" style="font-weight:700;color:#0b3b78">Redação Online</span>
+    </div>
+    <ul class="menu">
+      <li><a href="/redacaoenem/painel.html"><span class="icon material-icons">dashboard</span>Dashboard</a></li>
+      <li><a href="/redacaoenem/envio.html"><span class="icon material-icons">cloud_upload</span>Envio de Redações</a></li>
+      <li class="active"><a href="/redacaoenem/conferir-envio.html"><span class="icon material-icons">assignment_turned_in</span>Conferir Envios</a></li>
+      <li><a href="/redacaoenem/professores.html"><span class="icon material-icons">group</span>Professores</a></li>
+      <li><a href="/redacaoenem/relatorios.html"><span class="icon material-icons">bar_chart</span>Relatórios</a></li>
+      <li><a href="/redacaoenem/config.html"><span class="icon material-icons">settings</span>Configurações</a></li>
+    </ul>
+  </aside>
+
+  <!-- ===== Main ===== -->
+  <main>
+    <header class="topbar">
+      <div class="topbar blue darken-3 white-text">
+        <div class="container">
+          <h5 class="m-0">Redação Online – <span id="unitLabel">—</span></h5>
+        </div>
+      </div>
+    </header>
+
+    <section class="page">
+      <!-- Breadcrumb -->
+      <div class="row" style="margin-bottom:0">
+        <div class="col s12">
+          <a href="/redacaoenem/painel.html" class="breadcrumb">Dashboard</a>
+          <a href="#" class="breadcrumb">Conferir Envios</a>
+        </div>
+      </div>
+
+      <!-- Filtros / ações -->
+      <div class="card" style="margin-top:8px">
+        <div class="card-content">
+          <span class="card-title">Conferir envios da unidade</span>
+          <div class="row" style="margin-top:10px">
+            <div class="col s12">
+              <div class="search-row">
+                <div class="input-field" style="margin-top:0">
+                  <i class="material-icons prefix">search</i>
+                  <input id="q" type="text" placeholder="Buscar por inscrição ou nome do arquivo…">
+                </div>
+                <div class="input-field" style="margin-top:0">
+                  <select id="statusFilter">
+                    <option value="">Todos os status</option>
+                    <option value="OK">Aprovado OMR</option>
+                    <option value="REPROVADO">Reprovado OMR</option>
+                    <option value="PENDENTE">Pendente</option>
+                  </select>
+                  <label>Status</label>
+                </div>
+                <div class="right-align" style="align-self:center">
+                  <a id="btnRefresh" class="btn waves-effect"><i class="material-icons left">refresh</i>Atualizar</a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tabela -->
+          <div class="table-wrapper">
+            <table class="striped highlight responsive-table">
+              <thead>
+                <tr>
+                  <th style="min-width:120px">Inscrição</th>
+                  <th>Nome recebido</th>
+                  <th>Nome final</th>
+                  <th style="min-width:120px">Link</th>
+                  <th style="min-width:90px">RES_DPI</th>
+                  <th style="min-width:120px">OMR_STATUS</th>
+                </tr>
+              </thead>
+              <tbody id="tbody"></tbody>
+            </table>
+          </div>
+
+          <!-- paginação / total -->
+          <div class="row" style="margin-top:8px">
+            <div class="col s12 m6"><span id="totalInfo" class="muted"></span></div>
+            <div class="col s12 m6 right-align">
+              <a id="prev" class="btn-flat"><i class="material-icons left">chevron_left</i>Anterior</a>
+              <a id="next" class="btn-flat">Próxima<i class="material-icons right">chevron_right</i></a>
+              <a id="btnCsv" class="btn blue darken-2 waves-effect"><i class="material-icons left">file_download</i>CSV</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+/* ===================== SESSÃO / CONTEXTO ===================== */
+const API_BASE   = 'https://api.secauxiliar.com.br/';
+const LOGIN_URL  = '/redacaoenem/login.html';
+const SESS_KEY   = 'sessao_redacao';
+function getSession(){ try{ return JSON.parse(localStorage.getItem(SESS_KEY) || '{}'); }catch(_){ return {}; } }
+function setSession(s){ localStorage.setItem(SESS_KEY, JSON.stringify(s||{})); }
+function getToken(){ const s=getSession(); return (s && s.token) || localStorage.getItem('token') || ''; }
+function authHeaders(){ const t=getToken(); return t ? { 'Authorization':'Bearer '+t } : {}; }
+function redirectToLogin(){ const next = encodeURIComponent(location.pathname+location.search+location.hash); location.replace(`${LOGIN_URL}?next=${next}`); }
+async function apiFetch(pathNoPhp, { method='GET', headers={}, body, cache='no-store' } = {}){
+  const baseHeaders = { Accept:'application/json', ...authHeaders(), ...headers };
+  const opts = { method, cache, headers: baseHeaders, body };
+  if (body && typeof body === 'string' && !baseHeaders['Content-Type']) baseHeaders['Content-Type'] = 'application/json';
+  let res;
+  try { res = await fetch(`${API_BASE}${pathNoPhp}`, opts); } catch(_){ res = null; }
+  if (!res || res.status === 404) {
+    const withPhp = pathNoPhp.endsWith('.php') ? pathNoPhp : pathNoPhp + '.php';
+    try { res = await fetch(`${API_BASE}${withPhp}`, opts); } catch(_){}
+  }
+  if (!res) throw new Error('NETWORK_FAIL');
+  if (res.status === 401 || res.status === 403) throw new Error('UNAUTHORIZED');
+  if (!res.ok) { const txt = await res.text().catch(()=> ''); throw new Error(`API_${res.status}: ${txt || res.statusText}`); }
+  return res.json();
+}
+function setUnitHeader(unit){
+  const el = document.getElementById('unitLabel');
+  if (!el) return;
+  if (unit?.codigo && unit?.nome) el.textContent = `${unit.codigo} - ${unit.nome}`;
+  else if (unit?.codigo) el.textContent = unit.codigo;
+  else if (unit?.nome) el.textContent = unit.nome; else el.textContent = '—';
+}
+async function carregarContexto(){
+  const data = await apiFetch('/auth_me.php');
+  if (data?.user && !data?.usuario && !data?.unidade) {
+    const u = data.user; data.usuario = { nome: u.nome || u.login || 'Usuário' }; data.unidade = { codigo: u.login || '', nome: u.unidade || '' };
+  }
+  setSession({ ...getSession(), ...data });
+  setUnitHeader(data.unidade);
+  return data;
+}
+
+/* ===================== LISTAGEM ===================== */
+let PAGE = 1, PAGE_SIZE = 25, TOTAL = 0, LAST_ITEMS = [];
+const tbody = document.getElementById('tbody');
+const info  = document.getElementById('totalInfo');
+
+function badgeStatus(v){
+  const val = (v||'').toString().toUpperCase();
+  if (['OK','APROVADO','APROVADA'].includes(val)) return `<span class="chip-status ok">OK</span>`;
+  if (['REPROVADO','ERRO','FALHA'].includes(val))   return `<span class="chip-status err">${v}</span>`;
+  if (!val || val==='PENDENTE')                      return `<span class="chip-status pend">Pendente</span>`;
+  return `<span class="chip-status">${v}</span>`;
+}
+
+function linkCell(url){
+  if (!url) return '<span class="muted">—</span>';
+  const safe = String(url).replace(/"/g,'&quot;');
+  return `<a href="${safe}" target="_blank" rel="noopener">Abrir</a>`;
+}
+
+function render(rows){
+  LAST_ITEMS = rows || [];
+  tbody.innerHTML = rows.map(r => `
+    <tr>
+      <td>${r.inscricao || r.matricula || ''}</td>
+      <td title="${r.nome_arquivo_recebido||''}">${r.nome_arquivo_recebido || ''}</td>
+      <td title="${r.nome_arquivo_final||''}">${r.nome_arquivo_final || ''}</td>
+      <td>${linkCell(r.LINK_ARQUIVO || r.link_arquivo)}</td>
+      <td>${r.RES_DPI ?? r.RES_DEPI ?? r.DPI ?? ''}</td>
+      <td>${badgeStatus(r.OMR_STATUS || r.status_omr || r.status)}</td>
+    </tr>`).join('');
+}
+
+async function load(){
+  const sess = getSession();
+  const codUnd = sess?.unidade?.codigo || '';
+  const q      = (document.getElementById('q').value||'').trim();
+  const status = document.getElementById('statusFilter').value;
+
+  // Back-end esperado: POST /logs_list com {codUnd, q, status, page, pageSize}
+  const payload = { codUnd, q, status, page: PAGE, pageSize: PAGE_SIZE };
+  const data = await apiFetch('/logs_list', { method:'POST', body: JSON.stringify(payload) });
+
+  // Aceita formatos: {ok, data:{items,total}} ou {items,total} ou array simples
+  let items = [];
+  if (Array.isArray(data)) { items = data; TOTAL = data.length; }
+  else if (Array.isArray(data?.data?.items)) { items = data.data.items; TOTAL = Number(data.data.total||items.length)||items.length; }
+  else if (Array.isArray(data?.items)) { items = data.items; TOTAL = Number(data.total||items.length)||items.length; }
+  else if (Array.isArray(data?.data)) { items = data.data; TOTAL = items.length; }
+  else { items = []; TOTAL = 0; }
+
+  render(items);
+  info.textContent = TOTAL ? `Mostrando página ${PAGE} • ${items.length} itens • Total: ${TOTAL}` : 'Nenhum registro.';
+}
+
+function debounce(fn, ms){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), ms); }; }
+
+/* ===================== CSV ===================== */
+function toCsvValue(v){ if (v==null) return ''; const s = String(v).replace(/"/g,'""'); return /[";,\n]/.test(s) ? '"'+s+'"' : s; }
+function exportCsv(){
+  const hdr = ['inscricao','nome_arquivo_recebido','nome_arquivo_final','LINK_ARQUIVO','RES_DPI','OMR_STATUS'];
+  const lines = [hdr.join(';')];
+  LAST_ITEMS.forEach(r=>{
+    const row = [r.inscricao||r.matricula||'', r.nome_arquivo_recebido||'', r.nome_arquivo_final||'', r.LINK_ARQUIVO||r.link_arquivo||'', (r.RES_DPI ?? r.RES_DEPI ?? r.DPI ?? ''), (r.OMR_STATUS||r.status_omr||r.status||'')];
+    lines.push(row.map(toCsvValue).join(';'));
+  });
+  const blob = new Blob(["\uFEFF"+lines.join('\n')], {type:'text/csv;charset=utf-8;'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'conferencia_envios.csv';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+/* ===================== BOOT ===================== */
+document.addEventListener('DOMContentLoaded', async ()=>{
+  window.M && M.AutoInit();
+  if (!getToken()) return redirectToLogin();
+  try { await carregarContexto(); } catch(e){ if (String(e.message).includes('UNAUTHORIZED')) return redirectToLogin(); }
+
+  document.getElementById('btnRefresh').addEventListener('click', ()=> load());
+  document.getElementById('q').addEventListener('input', debounce(()=>{ PAGE=1; load(); }, 300));
+  document.getElementById('statusFilter').addEventListener('change', ()=>{ PAGE=1; load(); });
+  document.getElementById('btnCsv').addEventListener('click', exportCsv);
+  document.getElementById('prev').addEventListener('click', ()=>{ if (PAGE>1){ PAGE--; load(); }});
+  document.getElementById('next').addEventListener('click', ()=>{ PAGE++; load(); });
+
+  load();
+});
+</script>
+</body>
+</html>
