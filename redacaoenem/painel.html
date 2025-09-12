@@ -13,14 +13,11 @@
 
  <style>
   :root{
-    --primary:#002776;      /* Azul Objetivo */
-    --primary-light:#1565c0;
-    --bg:#f7f8fb;
-    --card:#ffffff;
-    --line:#e9edf3;
-    --ink:#0f172a;
-    --muted:#6b7280;
-  }
+      --bg:#f7f8fb; --card:#ffffff; --line:#e9edf3; --ink:#0f172a; --muted:#6b7280; --primary:#0b3b78; --accent:#2563eb;
+      --aside-w: 260px;       /* largura do menu lateral */
+      --topbar-h: 64px;       /* altura do topo */
+      --primary-light:#1e4b9a;
+    }
 
   /* Base */
   html,body{height:100%}
@@ -31,45 +28,68 @@
   }
 
   /* ===== Layout ===== */
-  .app{display:grid; grid-template-columns:260px 1fr; min-height:100vh}
+  .app{
+    display:grid;
+    grid-template-columns: var(--aside-w) 1fr;
+    min-height:100vh;
+  }
   .aside{background:#fff; border-right:1px solid var(--line)}
   .main{display:flex; flex-direction:column}
 
-  /* ===== TOPBAR (azul, full-bleed) ===== */
-  .topbar{
-    background:var(--primary);
+  /* topo full-width fixo, sem quebra de linha no título */
+  header.topbar{
+    position: fixed;
+    top:0; left:0; right:0;
+    height: var(--topbar-h);
+    z-index: 20;
+    background: var(--primary);
     color:#fff;
-    border-bottom:none;
+    display:flex; align-items:center;
+    padding: 12px 24px;
+    padding-left: calc(var(--aside-w) + 24px);  /* “afasta” do menu */
+    box-shadow:0 2px 10px rgba(16,24,40,.12);
   }
-  .topbar .wrap{
-    max-width:none;         /* full width */
-    width:100%;
-    margin:0;               /* remove centralização */
-    padding:14px 24px;
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:12px;
+  header.topbar > .topbar{ background:transparent !important; box-shadow:none !important; }
+  header.topbar .container{ max-width:none; width:100%; margin:0; padding:0; }
+
+  /* o painel às vezes usa h4/h5: protege todos */
+  header.topbar h1,header.topbar h2,header.topbar h3,
+  header.topbar h4,header.topbar h5,header.topbar h6{
+    margin:0; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
   }
+
+  /* se tiver “pílula”/badge da unidade no topo, isso empurra para a direita */
+  header.topbar .top-actions, header.topbar .right, header.topbar .badge, header.topbar .chip{
+    margin-left:auto;
+  }
+
   .brand{font-weight:800; font-size:1.1rem}
   .unit{color:#fff; font-weight:700; font-size:1rem}
   .user-chip{background:#eef2ff; border-radius:12px; padding:8px 12px; color:#1e293b}
 
-  /* ===== Aside / Menu (sem vermelho) ===== */
-  .aside .logo{display:flex; align-items:center; gap:10px; padding:18px}
-  .aside .logo .tick{
-    background:#e0ebff; color:#1d4ed8; width:26px; height:26px;
-    border-radius:6px; display:flex; align-items:center; justify-content:center;
+  /* menu lateral fixo abaixo do topo */
+  aside{
+    background:#fff;
+    border-right:1px solid var(--line);
+    position: sticky;
+    top: var(--topbar-h);
+    height: calc(100vh - var(--topbar-h));
+    overflow:auto;
+    align-self:start;
+    z-index:6;
   }
 
+  /* conteúdo desce para não ficar sob o topo */
+  main{ padding-top: calc(var(--topbar-h) + 8px); }
+
+  /*Menu*/
   .menu a{
-    position:relative;
-    display:flex; align-items:center; gap:12px;
-    padding:12px 18px; margin:6px 12px;
-    color:#111827; border-radius:10px; font-weight:600;
-    background:transparent; box-shadow:none; border-left:0;
+  position:relative;
+  display:flex; align-items:center; gap:12px;
+  padding:12px 18px; margin:6px 12px;
+  color:#111827; border-radius:10px; font-weight:600;
+  background:transparent; box-shadow:none; border-left:0;
   }
-  /* remove qualquer faixa/efeito herdado (ex.: vermelho) */
   .menu a::before, .menu a::after{content:none !important;}
   .menu a, .menu a:focus, .menu a:active{
     background:transparent !important;
@@ -80,12 +100,13 @@
     background:var(--primary-light);
     color:#fff;
   }
-  .menu a.active,
-  .menu a.active:hover{
-    background:#e7efff !important;   /* azul clarinho */
-    color:var(--primary) !important;  /* texto azul escuro */
-    border-left:0 !important;         /* mata tarja vermelha */
-    box-shadow:none !important;       /* mata sombra vermelha */
+  /* ✅ cobre os dois jeitos de marcar ativo */
+  .menu li.active a,
+  .menu a.active{
+    background:#e7efff !important;
+    color:var(--primary) !important;
+    border-left:0 !important;
+    box-shadow:none !important;
   }
 
   /* ===== Content ===== */
@@ -114,11 +135,14 @@
   .btn-secondary{background:#e0e0e0; color:var(--ink)}
   .btn-danger{background:transparent; color:#d32f2f}
 
-  /* ===== Responsivo ===== */
+  /* Responsivo */
   @media (max-width:992px){
-    .app{grid-template-columns:1fr}
-    .aside{display:none}
+    .app{ grid-template-columns:1fr; }
+    header.topbar{ padding-left:16px; }
+    aside{ display:none; }       /* ✅ se quiser ocultar o menu no mobile */
+    /* (se preferir manter o menu no mobile, remova a linha acima) */
   }
+
 </style>
 
 
