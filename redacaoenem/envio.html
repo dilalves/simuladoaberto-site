@@ -13,7 +13,6 @@
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 
   <style>
-
     :root{
       --bg:#f7f8fb; --card:#ffffff; --line:#e9edf3; --ink:#0f172a; --muted:#6b7280; --primary:#0b3b78; --accent:#2563eb;
       --aside-w: 260px;       /* largura do menu lateral */
@@ -24,91 +23,60 @@
     body{background:var(--bg); color:var(--ink)}
 
     /* ===== Layout ===== */
-    .app{
-      display:grid;
-      grid-template-columns: var(--aside-w) 1fr;
-      min-height:100vh;
-    }
+    .app{ display:grid; grid-template-columns: var(--aside-w) 1fr; min-height:100vh; }
 
     /* 🔒 Topo azul: full-width, fixo e alinhado ao lado do menu */
     header.topbar{
-      position: fixed;
-      top: 0; left: 0; right: 0;
-      height: var(--topbar-h);
-      z-index: 20;
-      background: var(--primary);
-      color:#fff;
-      display:flex; align-items:center;
-      padding: 12px 24px;
-      padding-left: calc(var(--aside-w) + 24px); /* espaço do menu */
-      box-shadow:0 2px 10px rgba(16,24,40,.12);
+      position: fixed; top: 0; left: 0; right: 0; height: var(--topbar-h); z-index: 20;
+      background: var(--primary); color:#fff; display:flex; align-items:center;
+      padding: 12px 24px; padding-left: calc(var(--aside-w) + 24px); box-shadow:0 2px 10px rgba(16,24,40,.12);
     }
-
-    /* remove o “quadro azul pequeno” interno (Materialize) */
-    header.topbar > .topbar{
-      background: transparent !important;
-      box-shadow: none !important;
-    }
-
-    /* evita que .container limite a largura */
-    header.topbar .container{
-      max-width: none;
-      width: 100%;
-      margin: 0;
-      padding: 0;
-    }
-    
-    /* título em uma linha só */
-    header.topbar h5{
-      margin: 0;
-      font-weight: 600;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
+    header.topbar > .topbar{ background: transparent !important; box-shadow: none !important; }
+    header.topbar .container{ max-width: none; width: 100%; margin: 0; padding: 0; }
+    header.topbar h5{ margin: 0; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
     /* 🔒 Sidebar fixa/rolável abaixo do topo */
     aside{
-      background:#fff;
-      border-right:1px solid var(--line);
-      position: sticky;
-      top: var(--topbar-h);
-      height: calc(100vh - var(--topbar-h));
-      overflow: auto;
-      align-self: start;
-      z-index: 6;
+      background:#fff; border-right:1px solid var(--line); position: sticky; top: var(--topbar-h);
+      height: calc(100vh - var(--topbar-h)); overflow: auto; align-self: start; z-index: 6;
     }
 
     /* Conteúdo principal (empurrado abaixo do topo fixo) */
-    main{
-      display:flex; flex-direction:column;
-      padding-top: calc(var(--topbar-h) + 8px);
-    }
-
-    /* ===== Upload ===== */
-    #drop{border:2px dashed var(--line); border-radius:12px; text-align:center; padding:28px; background:#fff}
-    #drop.drag{border-color:#3b82f6; background:#f8fbff}
-    .collection{border:none}
-    .collection-item{border-bottom:1px solid var(--line)}
-    .progress{background:#f1f5f9}
-    .determinate{background:#3b82f6}
-    .right{float:right}
-    .hidden{display:none !important}
+    main{ display:flex; flex-direction:column; padding-top: calc(var(--topbar-h) + 8px); }
 
     /* utilitários/estilo */
-    header .title{font-size:18px; font-weight:600}
     .page{padding:24px}
     .muted{color:var(--muted)}
-    .chip-blue{background:#e8f1ff; color:#0b3b78; font-weight:600}
     .card{border-radius:14px; box-shadow:0 6px 18px rgba(16,24,40,.06)}
     .card-title{font-weight:600}
+    .table-wrapper{overflow:auto; border:1px solid var(--line); border-radius:10px; background:#fff}
+    table.striped>tbody>tr:nth-child(odd){background:#fafbff}
+    th{white-space:nowrap}
+    td{vertical-align:middle}
 
-    /* 📱 Responsivo */
+    .chip-status{border-radius:999px; padding:2px 10px; font-weight:600; font-size:12px; display:inline-block}
+    .ok{background:#e7f8ef; color:#127c46}
+    .err{background:#fdecec; color:#b42318}
+    .pend{background:#fff7e6; color:#b54708}
+
+    .search-row{display:grid; grid-template-columns: 1fr 160px 140px; gap:12px}
+
     @media (max-width: 992px){
       .app{ grid-template-columns: 1fr; }
-      header.topbar{ padding-left: 16px; } /* sem recuo do menu no mobile */
+      header.topbar{ padding-left: 16px; }
+      .search-row{ grid-template-columns: 1fr; }
     }
 
+    /* menu lateral */
+    .menu{list-style:none; padding:0; margin:0}
+    .menu a{display:block; padding:12px 16px; color:#111827}
+    .menu a:hover{background:#f4f6fb}
+    .menu .active>a{background:#eef3ff; font-weight:600}
+    .menu .icon{font-size:20px; vertical-align:middle; margin-right:8px; color:#64748b}
+
+    .manual-link{ color:#b54708; font-weight:600; cursor:pointer; text-decoration:underline; }
+    .crop-wrap{ width:100%; max-height:60vh; overflow:auto; background:#f8fafc; border:1px solid #e5e7eb; border-radius:10px }
+    #cropImg{ max-width:100%; display:block; }
 
   </style>
 
