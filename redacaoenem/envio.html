@@ -19,31 +19,48 @@
     html,body{height:100%}
     body{background:var(--bg); color:var(--ink)}
     /* ===== Layout ===== */
-    .app{display:grid; grid-template-columns:260px 1fr; min-height:100vh}
-    aside{background:#fff; border-right:1px solid var(--line)}
-    main{display:flex; flex-direction:column}
-    header.topbar{
-      background:var(--primary); color:#fff; padding:14px 20px; display:flex; align-items:center; justify-content:space-between
+    .app{
+      display:grid;
+      grid-template-columns:260px 1fr;
+      min-height:100vh;
     }
+    /* 🔒 Sidebar fixa */
+    aside{
+      background:#fff;
+      border-right:1px solid var(--line);
+      position: sticky;       /* fixa na viewport */
+      top: 0;
+      height: 100vh;          /* ocupa a altura toda */
+      overflow:auto;          /* rola só o menu se passar do tamanho */
+      align-self:start;       /* necessário em grid para sticky funcionar */
+      z-index: 6;
+    }
+
+    /* Conteúdo principal */
+    main{display:flex; flex-direction:column}
+
+    /* 🔒 Topbar fixa */
+    header.topbar{
+      position: sticky;       /* fixa na viewport */
+      top: 0;
+      z-index: 10;            /* acima do conteúdo */
+      background:var(--primary);
+      color:#fff;
+      padding:14px 20px;
+      display:flex; align-items:center; justify-content:space-between;
+      box-shadow:0 2px 8px rgba(16,24,40,.08); /* leve sombra ao grudar */
+    }
+
+    /* Estilos auxiliares existentes */
     header .title{font-size:18px; font-weight:600}
     .page{padding:24px}
     .muted{color:var(--muted)}
     .chip-blue{background:#e8f1ff; color:#0b3b78; font-weight:600}
     .card{border-radius:14px; box-shadow:0 6px 18px rgba(16,24,40,.06)}
     .card-title{font-weight:600}
-    /* ===== Sidebar ===== */
-    .menu{list-style:none; margin:0; padding:0}
-    .menu li a{
-      display:flex; align-items:center; gap:12px; padding:14px 18px; color:#1f2937; text-decoration:none;
-      border-left:4px solid transparent;
-    }
-    .menu li a:hover{background:#f5f7fb}
-    .menu li.active a{background:#eef2ff; border-left-color:#3b82f6; color:#0b3b78}
-    .menu .icon{width:20px; text-align:center}
+
     /* ===== Upload ===== */
-    #drop{
-      border:2px dashed var(--line); border-radius:12px; text-align:center; padding:28px; background:#fff
-    }
+    #drop{border:2px dashed var(--line); border-radius:12px; text-align:center; padding:28px; background:#fff}
     #drop.drag{border-color:#3b82f6; background:#f8fbff}
     .collection{border:none}
     .collection-item{border-bottom:1px solid var(--line)}
@@ -51,9 +68,17 @@
     .determinate{background:#3b82f6}
     .right{float:right}
     .hidden{display:none !important}
-    @media (max-width: 992px){ .app{grid-template-columns:1fr} aside{position:sticky; top:0; z-index:5} }
+
+    /* 📱 Responsivo: mantém 1 coluna no mobile,
+      o aside continua sticky e rolável independentemente */
+    @media (max-width: 992px){
+      .app{grid-template-columns:1fr}
+    }                           
+    
   </style>
+
 </head>
+
 <body>
 <div class="app">
   <!-- ===== Sidebar ===== -->
