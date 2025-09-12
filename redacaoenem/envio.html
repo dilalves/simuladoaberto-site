@@ -13,14 +13,14 @@
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 
   <style>
+
     :root{
       --bg:#f7f8fb; --card:#ffffff; --line:#e9edf3; --ink:#0f172a; --muted:#6b7280; --primary:#0b3b78; --accent:#2563eb;
-      --aside-w: 260px;
-      --topbar-h: 64px;   /* ajuste aqui a altura do topo */
+      --aside-w: 260px;       /* largura do menu lateral */
+      --topbar-h: 64px;       /* altura do topo */
     }
 
     html,body{height:100%}
-
     body{background:var(--bg); color:var(--ink)}
 
     /* ===== Layout ===== */
@@ -30,25 +30,7 @@
       min-height:100vh;
     }
 
-    /* 🔒 Sidebar fixa/rolável abaixo do topo */
-    aside{
-      background:#fff;
-      border-right:1px solid var(--line);
-      position: sticky;
-      top: var(--topbar-h);                /* começa abaixo do topo */
-      height: calc(100vh - var(--topbar-h));
-      overflow: auto;
-      align-self: start;
-      z-index: 6;
-    }
-
-    /* Conteúdo principal */
-    main{
-      display:flex; flex-direction:column;
-      padding-top: calc(var(--topbar-h) + 8px);
-    }
-
-    /* 🔒 Topbar fixo e de fora a fora */
+    /* 🔒 Topo azul: full-width, fixo e alinhado ao lado do menu */
     header.topbar{
       position: fixed;
       top: 0; left: 0; right: 0;
@@ -56,18 +38,52 @@
       z-index: 20;
       background: var(--primary);
       color:#fff;
-      display:flex; align-items:center; justify-content:space-between;
-      padding: 12px 20px;
+      display:flex; align-items:center;
+      padding: 12px 24px;
+      padding-left: calc(var(--aside-w) + 24px); /* espaço do menu */
       box-shadow:0 2px 10px rgba(16,24,40,.12);
     }
 
-    /* Estilos auxiliares existentes */
-    header .title{font-size:18px; font-weight:600}
-    .page{padding:24px}
-    .muted{color:var(--muted)}
-    .chip-blue{background:#e8f1ff; color:#0b3b78; font-weight:600}
-    .card{border-radius:14px; box-shadow:0 6px 18px rgba(16,24,40,.06)}
-    .card-title{font-weight:600}
+    /* remove o “quadro azul pequeno” interno (Materialize) */
+    header.topbar > .topbar{
+      background: transparent !important;
+      box-shadow: none !important;
+    }
+
+    /* evita que .container limite a largura */
+    header.topbar .container{
+      max-width: none;
+      width: 100%;
+      margin: 0;
+      padding: 0;
+    }
+    
+    /* título em uma linha só */
+    header.topbar h5{
+      margin: 0;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* 🔒 Sidebar fixa/rolável abaixo do topo */
+    aside{
+      background:#fff;
+      border-right:1px solid var(--line);
+      position: sticky;
+      top: var(--topbar-h);
+      height: calc(100vh - var(--topbar-h));
+      overflow: auto;
+      align-self: start;
+      z-index: 6;
+    }
+
+    /* Conteúdo principal (empurrado abaixo do topo fixo) */
+    main{
+      display:flex; flex-direction:column;
+      padding-top: calc(var(--topbar-h) + 8px);
+    }
 
     /* ===== Upload ===== */
     #drop{border:2px dashed var(--line); border-radius:12px; text-align:center; padding:28px; background:#fff}
@@ -79,11 +95,20 @@
     .right{float:right}
     .hidden{display:none !important}
 
-    /* 📱 Responsivo: mantém 1 coluna no mobile,
-      o aside continua sticky e rolável independentemente */
+    /* utilitários/estilo */
+    header .title{font-size:18px; font-weight:600}
+    .page{padding:24px}
+    .muted{color:var(--muted)}
+    .chip-blue{background:#e8f1ff; color:#0b3b78; font-weight:600}
+    .card{border-radius:14px; box-shadow:0 6px 18px rgba(16,24,40,.06)}
+    .card-title{font-weight:600}
+
+    /* 📱 Responsivo */
     @media (max-width: 992px){
-      .app{grid-template-columns:1fr}
-    }                           
+      .app{ grid-template-columns: 1fr; }
+      header.topbar{ padding-left: 16px; } /* sem recuo do menu no mobile */
+    }
+
 
   </style>
 
