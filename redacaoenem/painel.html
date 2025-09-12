@@ -13,173 +13,108 @@
 
  <style>
   :root{
-      --bg:#f7f8fb; --card:#ffffff; --line:#e9edf3; --ink:#0f172a; --muted:#6b7280; --primary:#0b3b78; --accent:#2563eb;
-      --aside-w: 260px;       /* largura do menu lateral */
-      --topbar-h: 64px;       /* altura do topo */
-      --primary-light:#1e4b9a;
-    }
+  --bg:#f7f8fb; --card:#ffffff; --line:#e9edf3; --ink:#0f172a; --muted:#6b7280;
+  --primary:#0b3b78; --primary-light:#1e4b9a; --accent:#2563eb;
+  --aside-w:260px; --topbar-h:64px;
+}
 
-  /* Base */
-  html,body{height:100%}
-  body{
-    background:var(--bg);
-    color:var(--ink);
-    font-family:'Roboto',sans-serif;
-  }
+/* Base */
+html,body{height:100%}
+body{background:var(--bg); color:var(--ink); font-family:'Roboto',sans-serif}
 
-  /* ===== Layout ===== */
-  .app{
-    display:grid;
-    grid-template-columns: var(--aside-w) 1fr;
-    min-height:100vh;
-  }
-  .aside{background:#fff; border-right:1px solid var(--line)}
-  .main{display:flex; flex-direction:column}
+/* ===== Layout ===== */
+.app{display:grid; grid-template-columns:var(--aside-w) 1fr; min-height:100vh}
+.aside{background:#fff; border-right:1px solid var(--line)}
+.main{display:flex; flex-direction:column}
 
-  /* topo full-width fixo, sem quebra de linha no título */
-  header.topbar{
-    position: fixed;
-    top:0; left:0; right:0;
-    height: var(--topbar-h);
-    z-index: 20;
-    background: var(--primary);
-    color:#fff;
-    display:flex; align-items:center;
-    padding: 12px 24px;
-    padding-left: calc(var(--aside-w) + 24px);  /* “afasta” do menu */
-    box-shadow:0 2px 10px rgba(16,24,40,.12);
-  }
-  header.topbar > .topbar{ background:transparent !important; box-shadow:none !important; }
-  header.topbar .container{ max-width:none; width:100%; margin:0; padding:0; }
-
-  /* o painel às vezes usa h4/h5: protege todos */
-  header.topbar h1,header.topbar h2,header.topbar h3,
-  header.topbar h4,header.topbar h5,header.topbar h6{
-    margin:0; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-  }
-
-  /* se tiver “pílula”/badge da unidade no topo, isso empurra para a direita */
-  header.topbar .top-actions, header.topbar .right, header.topbar .badge, header.topbar .chip{
-    margin-left:auto;
-  }
-
-  .brand{font-weight:800; font-size:1.1rem}
-  .unit{color:#fff; font-weight:700; font-size:1rem}
-  .user-chip{background:#eef2ff; border-radius:12px; padding:8px 12px; color:#1e293b}
-
-  /* menu lateral fixo abaixo do topo */
-  aside{
-    background:#fff;
-    border-right:1px solid var(--line);
-    position: sticky;
-    top: var(--topbar-h);
-    height: calc(100vh - var(--topbar-h));
-    overflow:auto;
-    align-self:start;
-    z-index:6;
-  }
-
-  /* conteúdo desce para não ficar sob o topo */
-  main{ padding-top: calc(var(--topbar-h) + 8px); }
-
-  /*Menu*/
-  .menu a{
-  position:relative;
+/* ===== TOPBAR (universal: funciona no painel e no envio) ===== */
+header.topbar,
+.topbar.blue.darken-3.white-text,
+body > .topbar, .app > .topbar, .main > .topbar{
+  position:fixed; top:0; left:0; right:0; height:var(--topbar-h); z-index:20;
+  background:var(--primary) !important; color:#fff !important;
+  display:flex; align-items:center;
+  padding:12px 24px; padding-left:calc(var(--aside-w) + 24px);
+  box-shadow:0 2px 10px rgba(16,24,40,.12);
+}
+/* neutraliza o “quadro azul interno” do Materialize quando há header */
+header.topbar > .topbar{background:transparent !important; box-shadow:none !important}
+/* container do topo: largura total + flex */
+header.topbar .container,
+.topbar.blue.darken-3.white-text .container,
+body > .topbar .container, .app > .topbar .container, .main > .topbar .container{
+  max-width:none !important; width:100% !important; margin:0 !important; padding:0 !important;
   display:flex; align-items:center; gap:12px;
-  padding:12px 18px; margin:6px 12px;
-  color:#111827; border-radius:10px; font-weight:600;
+}
+/* título: 1 linha, com reticências */
+header.topbar :is(h1,h2,h3,h4,h5,h6,.title,.m-0),
+.topbar.blue.darken-3.white-text :is(h1,h2,h3,h4,h5,h6,.title,.m-0),
+body > .topbar :is(h1,h2,h3,h4,h5,h6,.title,.m-0),
+.app > .topbar :is(h1,h2,h3,h4,h5,h6,.title,.m-0),
+.main > .topbar :is(h1,h2,h3,h4,h5,h6,.title,.m-0){
+  margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  flex:1 1 auto; min-width:0;
+}
+/* área da direita (chips/badges) */
+header.topbar .top-actions, header.topbar .right,
+.topbar.blue.darken-3.white-text .top-actions, .topbar.blue.darken-3.white-text .right,
+body > .topbar .top-actions, .app > .topbar .top-actions, .main > .topbar .top-actions{
+  margin-left:auto;
+}
+/* conteúdo desce para não ficar sob o topo */
+main, .main{padding-top:calc(var(--topbar-h) + 8px)}
+
+/* ===== Sidebar fixa/rolável abaixo do topo ===== */
+aside{
+  position:sticky; top:var(--topbar-h);
+  height:calc(100vh - var(--topbar-h));
+  overflow:auto; align-self:start; z-index:6;
+  background:#fff; border-right:1px solid var(--line);
+}
+
+/* ===== Menu ===== */
+.menu a{
+  position:relative; display:flex; align-items:center; gap:12px;
+  padding:12px 18px; margin:6px 12px; color:#111827; border-radius:10px; font-weight:600;
   background:transparent; box-shadow:none; border-left:0;
+}
+.menu a::before, .menu a::after{content:none !important}
+.menu a, .menu a:focus, .menu a:active{background:transparent !important; box-shadow:none !important; border-left:0 !important}
+.menu a:hover{background:var(--primary-light); color:#fff}
+.menu li.active a, .menu a.active{background:#e7efff !important; color:var(--primary) !important}
+
+/* ===== Content ===== */
+.content{max-width:1200px; margin:0 auto; padding:20px}
+
+/* ===== Cards ===== */
+.card{background:var(--card); border:1px solid var(--line); border-radius:8px; padding:20px}
+.card h2,.card h3{color:var(--primary)}
+.card.edge{border-radius:14px; border:1px solid var(--line)}
+.kpi .card-content{padding:22px}
+.kpi .value{font-size:2.1rem; font-weight:800}
+.kpi .label{color:var(--muted); margin-top:4px}
+.action .card-content{text-align:center; padding:26px}
+.action .material-icons{font-size:50px; color:var(--primary); opacity:.95}
+.action .title{margin-top:10px; font-weight:800; font-size:1.5rem}
+.small-actions .card .card-content{padding:16px; text-align:center}
+
+/* ===== Botões ===== */
+.btn,.btn-primary{background:var(--primary) !important; color:#fff !important}
+.btn:hover,.btn-primary:hover{background:var(--primary-light) !important}
+.btn-secondary{background:#e0e0e0; color:var(--ink)}
+.btn-danger{background:transparent; color:#d32f2f}
+
+/* ===== Responsivo ===== */
+@media (max-width:992px){
+  .app{grid-template-columns:1fr}
+  /* no mobile, o topo não precisa “reservar” o espaço do aside */
+  header.topbar,
+  .topbar.blue.darken-3.white-text,
+  body > .topbar, .app > .topbar, .main > .topbar{
+    padding-left:16px;
   }
-  .menu a::before, .menu a::after{content:none !important;}
-  .menu a, .menu a:focus, .menu a:active{
-    background:transparent !important;
-    box-shadow:none !important;
-    border-left:0 !important;
-  }
-  .menu a:hover{
-    background:var(--primary-light);
-    color:#fff;
-  }
-  /* ✅ cobre os dois jeitos de marcar ativo */
-  .menu li.active a,
-  .menu a.active{
-    background:#e7efff !important;
-    color:var(--primary) !important;
-    border-left:0 !important;
-    box-shadow:none !important;
-  }
-
-  /* ===== Content ===== */
-  .content{max-width:1200px; margin:0 auto; padding:20px}
-
-  /* ===== Cards ===== */
-  .card{
-    background:var(--card);
-    border:1px solid var(--line);
-    border-radius:8px;
-    padding:20px;
-  }
-  .card h2,.card h3{color:var(--primary)}
-  .card.edge{border-radius:14px; border:1px solid var(--line)}
-  .kpi .card-content{padding:22px}
-  .kpi .value{font-size:2.1rem; font-weight:800}
-  .kpi .label{color:var(--muted); margin-top:4px}
-  .action .card-content{text-align:center; padding:26px}
-  .action .material-icons{font-size:50px; color:var(--primary); opacity:.95}
-  .action .title{margin-top:10px; font-weight:800; font-size:1.5rem}
-  .small-actions .card .card-content{padding:16px; text-align:center}
-
-  /* ===== Botões ===== */
-  .btn,.btn-primary{background:var(--primary) !important; color:#fff !important}
-  .btn:hover,.btn-primary:hover{background:var(--primary-light) !important}
-  .btn-secondary{background:#e0e0e0; color:var(--ink)}
-  .btn-danger{background:transparent; color:#d32f2f}
-
-  /* Responsivo */
-  @media (max-width:992px){
-    .app{ grid-template-columns:1fr; }
-    header.topbar{ padding-left:16px; }
-    aside{ display:none; }       /* ✅ se quiser ocultar o menu no mobile */
-    /* (se preferir manter o menu no mobile, remova a linha acima) */
-  }
-
-  /* ===== Topbar universal (cobre telas que usam DIV.topbar, ex.: painel.html) ===== */
-  body > .topbar,
-  .app > .topbar,
-  .main > .topbar {
-    position: fixed;
-    top: 0; left: 0; right: 0;
-    height: var(--topbar-h);
-    background: var(--primary) !important;   /* azul igual da tela de envio */
-    color: #fff !important;
-    z-index: 20;
-    display: flex; align-items: center;
-    padding: 12px 24px;
-    padding-left: calc(var(--aside-w) + 24px);  /* alinha com o menu lateral */
-    box-shadow: 0 2px 10px rgba(16,24,40,.12);
-  }
-
-  /* faz a .topbar ocupar a largura toda (sem limitar por .container) */
-  body > .topbar .container,
-  .app > .topbar .container,
-  .main > .topbar .container {
-    max-width: none !important;
-    width: 100% !important;
-    margin: 0 !important;
-    padding: 0 !important;
-  }
-
-  /* quando existe <header class="topbar"> (tela de envios), mantém só o header visível */
-  header.topbar > .topbar{
-    position: static !important;
-    background: transparent !important;
-    box-shadow: none !important;
-  }
-
-  /* garante que o conteúdo não fique escondido atrás do topo fixo */
-  main, .main { padding-top: calc(var(--topbar-h) + 8px) !important; }
-
-
+  aside{display:none} /* remova se quiser manter o menu no mobile */
+}
 </style>
 
 
