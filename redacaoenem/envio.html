@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8"/>
@@ -150,9 +151,23 @@
   
 
 <script>
+
+let queue = []; // {file, li, bar, msg, key, status}
+const enviados = new Set();                         // [+] novo
+function keyOf(f){ return `${f.name}|${f.size}|${f.lastModified}`; } // [+] novo
+
+function purgeEnviadosDaTela(){                     // [+] novo
+  // remove da UI e da fila tudo que já está com status 'enviado'
+  for (const it of queue.filter(x => x.status === 'enviado')){
+    it.li?.remove();
+  }
+  queue = queue.filter(x => x.status !== 'enviado');
+}
+
+
 /* ===================== SESSÃO / CONTEXTO (igual ao professores.html) ===================== */
 const API_BASE   = 'https://api.secauxiliar.com.br/';
-const LOGIN_URL  = '/redacaoeenem/login.html';
+const LOGIN_URL  = '/redacaoenem/login.html';
 const SESS_KEY   = 'sessao_redacao';
 const d = new Date();
   document.getElementById('ts').value =
@@ -245,9 +260,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   const statusEl = document.getElementById('status');
   const codUndEl = document.getElementById('codUnd');
 
-  let queue = []; // {file, li, bar, msg}
+  //let queue = []; // {file, li, bar, msg}
 
-  btnPick.addEventListener('click', () => input.click());
+  // ===== BOTÃO "Selecionar arquivos":
+  btnPick.addEventListener('click', () => {
+    purgeEnviadosDaTela();                            // [+] novo: limpa enviados ao abrir seletor
+    input.click();
+  });
+
   input.addEventListener('change', () => addFiles(input.files));
 
   ['dragenter','dragover','dragleave','drop'].forEach(ev => {
@@ -258,12 +278,17 @@ document.addEventListener('DOMContentLoaded', async () => {
   drop.addEventListener('drop',(e)=>{ drop.classList.remove('drag'); addFiles(e.dataTransfer.files); });
 
   function addFiles(fileList){
+    purgeEnviadosDaTela();                            // [+] novo: também limpa ao trocar seleção
     [...fileList].forEach(file => {
       const ext = (file.name.split('.').pop() || '').toLowerCase();
       if (!ACCEPT_EXT.includes(ext)) {
         window.M && M.toast ? M.toast({html:`Tipo não permitido: ${ext}`}) : alert(`Tipo não permitido: ${ext}`);
         return;
       }
+      const key = keyOf(file);                        // [+] novo
+      if (enviados.has(key)) return;                  // [+] não reexibe o que já foi enviado
+      if (queue.some(q => q.key === key)) return;     // evita duplicado na fila
+
       const li = document.createElement('li');
       li.className = 'collection-item';
       li.innerHTML = `
@@ -286,8 +311,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         queue = queue.filter(q => q.li !== li);
         li.remove();
       };
-      queue.push({file, li, bar, msg});
+      queue.push({file, li, bar, msg, key, status:'pendente'});  // [+] status + key
     });
+    // permite reescolher o mesmo arquivo depois
+    input.value = '';                                  // [+] novo
   }
 
   btnSend.addEventListener('click', async (e) => {
@@ -336,6 +363,8 @@ document.addEventListener('DOMContentLoaded', async () => {
           item.msg.textContent = 'OK: ' + (resp.data?.nome_final || 'enviado');
           item.bar.style.width = '100%';
           item.li.classList.add('teal-text');
+          item.status = 'enviado';                           
+          enviados.add(item.key);                            
         } else if (xhr.status === 422) {
           const det = resp.details ? ` (${resp.details})` : '';
           item.msg.textContent = 'Resolução reprovada' + det;
