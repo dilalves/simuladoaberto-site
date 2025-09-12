@@ -422,17 +422,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 //MOSTRAR IMAGEM NO MODAL PARA CONFERÊNCIA DE INSCRIÇÃO
-function guessImageUrl(row){
-  const id   = row.FILE_ID || row.file_id || '';
-  const link = row.LINK_ARQUIVO || row.link_arquivo || '';
-  if (id) return `https://drive.google.com/thumbnail?id=${id}&sz=w1600`; // rápido no modal
-  try{
-    const m = link.match(/\/file\/d\/([^/]+)/); if (m) return `https://drive.google.com/thumbnail?id=${m[1]}&sz=w1600`;
-    const u = new URL(link); const q = u.searchParams.get('id'); if (q) return `https://drive.google.com/thumbnail?id=${q}&sz=w1600`;
-  }catch(_){}
-  return link;
+function driveImgFromId(id, opts = 'view') { // 'view' | 'thumb'
+  if (!id) return '';
+  return opts === 'thumb'
+    ? `https://drive.google.com/thumbnail?id=${id}&sz=w1600`
+    : `https://drive.google.com/uc?export=view&id=${id}`;
 }
 
+function guessImageUrl(row){
+  const id = row.FILE_ID || row.file_id;
+  if (id) return driveImgFromId(id, 'thumb'); // preferir quando vier do backend
+
+  const link = row.LINK_ARQUIVO || row.link_arquivo || '';
+  try {
+    const m = link.match(/\/file\/d\/([^/]+)/);
+    const found = (m && m[1]) || new URL(link).searchParams.get('id') || '';
+    return found ? driveImgFromId(found, 'thumb') : link; // fallback
+  } catch (_) {
+    return link;
+  }
+}
 
 </script>
 
