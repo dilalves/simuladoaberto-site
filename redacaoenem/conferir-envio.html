@@ -369,12 +369,29 @@ document.addEventListener('DOMContentLoaded', () => {
     const img = document.getElementById('cropImg');
     img.src = currentRecord.img;
     img.onload = () => {
-      try { cropper && cropper.destroy(); } catch(_) {}
-      cropper = new Cropper(img, {
-        viewMode: 1, responsive: true, autoCropArea: 0.5,
-        background: false, movable: true, zoomable: true, rotatable: false,
-      });
+    try { cropper && cropper.destroy(); } catch (_) {}
+
+    cropper = new Cropper(img, {
+        viewMode: 1,
+        responsive: true,
+        background: false,
+        autoCrop: true,
+        autoCropArea: 1,        // cria o crop imediatamente
+        movable: true,
+        zoomable: true,
+        rotatable: false,
+
+        // 🔥 assim que o cropper estiver pronto, jogamos a caixa pro rodapé
+        ready() {
+        const { naturalWidth: w, naturalHeight: h } = cropper.getImageData();
+        const frac = 0.24;                    // porcentagem de altura do recorte (24%)
+        const boxH = Math.max(120, Math.round(h * frac));  // altura mínima p/ não ficar mto pequeno
+        const boxY = Math.max(0, h - boxH);   // encosta no rodapé
+        cropper.setData({ x: 0, y: boxY, width: w, height: boxH });
+        }
+    });
     };
+
     img.onerror = () => {
       try { cropper && cropper.destroy(); } catch(_) {}
       cropper = null;
