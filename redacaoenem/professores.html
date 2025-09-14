@@ -41,7 +41,7 @@
     }
 
     /* Conteúdo principal (empurrado abaixo do topo fixo) */
-    main{ display:flex; flex-direction:column; padding-top: calc(var(--topbar-h) + 24px); }
+    main{ display:flex; flex-direction:column; padding-top: calc(var(--topbar-h) + 40px); }
 
     /* utilitários/estilo */
     .page{padding:24px}
@@ -77,36 +77,38 @@
     .crop-wrap{ width:100%; max-height:60vh; overflow:auto; background:#f8fafc; border:1px solid #e5e7eb; border-radius:10px }
     #cropImg{ max-width:100%; display:block; }
 
+    /* respiro visual extra para os cartões */
+    .content{ margin-top:16px; }
   </style>
 </head>
 <body>
   <div class="app">
     <!-- ===== Sidebar ===== -->
-  <aside>
-    <div class="center" style="padding:18px 0 8px">
-      <span class="title" style="font-weight:700;color:#0b3b78">Redação Online</span>
-    </div>
-    <ul class="menu">
-      <li><a href="/redacaoenem/painel.html"><span class="icon material-icons">dashboard</span>Dashboard</a></li>
-      <li class="active"><a href="/redacaoenem/envio.html"><span class="icon material-icons">cloud_upload</span>Envio de Redações</a></li>
-      <li><a href="/redacaoenem/professores.html"><span class="icon material-icons">group</span>Professores</a></li>
-      <li><a href="/redacaoenem/relatorios.html"><span class="icon material-icons">bar_chart</span>Relatórios</a></li>
-      <li><a href="/redacaoenem/config.html"><span class="icon material-icons">settings</span>Configurações</a></li>
-    </ul>
-  </aside>
+    <aside>
+      <div class="center" style="padding:18px 0 8px">
+        <span class="title" style="font-weight:700;color:#0b3b78">Redação Online</span>
+      </div>
+      <ul class="menu">
+        <li><a href="/redacaoenem/painel.html"><span class="icon material-icons">dashboard</span>Dashboard</a></li>
+        <li><a href="/redacaoenem/envio.html"><span class="icon material-icons">cloud_upload</span>Envio de Redações</a></li>
+        <li class="active"><a href="/redacaoenem/professores.html"><span class="icon material-icons">group</span>Professores</a></li>
+        <li><a href="/redacaoenem/relatorios.html"><span class="icon material-icons">bar_chart</span>Relatórios</a></li>
+        <li><a href="/redacaoenem/config.html"><span class="icon material-icons">settings</span>Configurações</a></li>
+      </ul>
+    </aside>
 
     <!-- Main -->
     <section class="main">
       <!-- Header -->
       <header class="topbar">
-      <div class="topbar blue darken-3 white-text">
-        <div class="container">
-          <h5 class="m-0">
-            Redação Online – <span id="unitLabel">—</span>
-          </h5>
+        <div class="topbar blue darken-3 white-text">
+          <div class="container">
+            <h5 class="m-0">
+              Redação Online – <span id="unitLabel">—</span>
+            </h5>
+          </div>
         </div>
-      </div>
-    </header>
+      </header>
 
       <!-- Content -->
       <div class="content">
@@ -183,9 +185,9 @@
   </div>
 
 <script>
-/* ===== CONFIG/API iguais ao painel ===== */
+/* ===== CONFIG/API ===== */
 const API = 'https://api.secauxiliar.com.br/';
-const LOGIN_URL = '/redacaoeenem/login.html';
+const LOGIN_URL = '/redacaoeenem/login.html'; // manter conforme sua estrutura atual
 const SESS_KEY = 'sessao_redacao';
 
 /* Sessão */
@@ -195,12 +197,10 @@ function getToken(){ const s=getSession(); return (s&&s.token) || localStorage.g
 function authHeaders(){ const t=getToken(); return t?{'Authorization':'Bearer '+t}:{ }; }
 function redirectToLogin(){ const next=encodeURIComponent(location.pathname+location.search+location.hash); location.replace(`${LOGIN_URL}?next=${next}`); }
 
-  
 /* Fetch helper com fallback .php */
 async function apiFetch(pathNoPhp, { method='GET', headers={}, body, cache='no-store' } = {}){
   const baseHeaders = { Accept: 'application/json', ...authHeaders(), ...headers };
   if (body) baseHeaders['Content-Type'] = 'application/json'; // só quando precisa
-
   const opts = { method, cache, headers: baseHeaders, body };
 
   let res;
@@ -218,18 +218,13 @@ async function apiFetch(pathNoPhp, { method='GET', headers={}, body, cache='no-s
   return res.json();
 }
 
-
-
-
 /* UI helpers */
-function setUnitHeader({ codigo, nome } = {}) {
-  const el = document.getElementById('unitLabel'); // <— aqui estava unitIdName
-  if (!el) return;
-  if (codigo && nome) el.textContent = `${codigo} - ${nome}`;
-  else if (nome)      el.textContent = nome;
-  else                el.textContent = '—';
+function setUnitHeader({ codigo, nome } = {}){
+  const el=document.getElementById('unitLabel');
+  if(!el) return;
+  if(codigo && nome) el.textContent = `${codigo} - ${nome}`;
+  else if(nome) el.textContent = nome; else el.textContent = '—';
 }
-
 function setUserName(n){ const el=document.getElementById('userName'); if(el&&n) el.textContent=n; }
 function toast(msg){ M && M.toast ? M.toast({html: msg}) : alert(msg); }
 
@@ -237,7 +232,7 @@ function toast(msg){ M && M.toast ? M.toast({html: msg}) : alert(msg); }
 document.addEventListener('DOMContentLoaded', async () => {
   try{
     if (!getToken()) return redirectToLogin();
-    await carregarContexto();   // preenche topo
+    await carregarContexto();   // preenche topo e guarda unidade
     limparForm();
     await carregarLista();
   }catch(e){
@@ -257,7 +252,14 @@ async function carregarContexto(){
   }
   if (data?.usuario?.nome) setUserName(data.usuario.nome);
   if (data?.unidade) setUnitHeader(data.unidade);
+
+  // guarda tudo e mantém uma cópia rápida da unidade
   setSession({ ...getSession(), ...data });
+  window.UNIT = data.unidade || {};
+}
+
+function unidadeAtual(){
+  return (window.UNIT && window.UNIT.codigo) || (getSession().unidade||{}).codigo || '';
 }
 
 /* Estado form/lista */
@@ -275,8 +277,13 @@ function limparForm(){
 /* CRUD */
 async function carregarLista(){
   const q = document.getElementById('busca').value.trim();
+  const u = unidadeAtual();
   let url = '/corretores_list';
-  if (q) url += `?q=${encodeURIComponent(q)}`;
+  const qp = [];
+  if (u) qp.push('unidade='+encodeURIComponent(u));
+  if (q) qp.push('q='+encodeURIComponent(q));
+  if (qp.length) url += '?' + qp.join('&');
+
   const data = await apiFetch(url);
 
   const tb = document.getElementById('tbCorretores');
@@ -323,7 +330,8 @@ async function salvarCorretor(){
     nome: document.getElementById('nome').value.trim(),
     email: document.getElementById('email').value.trim(),
     login: document.getElementById('login').value.trim(),
-    ativo: document.getElementById('ativo').checked ? 1 : 0
+    ativo: document.getElementById('ativo').checked ? 1 : 0,
+    unidade: unidadeAtual()
   };
   if (!payload.nome || !payload.email || !payload.login) {
     return toast('Preencha Nome, E-mail e Login');
@@ -335,26 +343,21 @@ async function salvarCorretor(){
 }
 
 async function toggleAtivo(id, ativo){
-  await apiFetch('/corretores_toggle', { method:'POST', body: JSON.stringify({id, ativo:ativo?1:0}) });
+  await apiFetch('/corretores_toggle', { method:'POST', body: JSON.stringify({id, ativo:ativo?1:0, unidade:unidadeAtual()}) });
   toast(ativo? 'Ativado' : 'Desativado');
 }
 
 async function excluir(id){
   if (!confirm('Excluir este professor?')) return;
-  await apiFetch('/corretores_delete', { method:'POST', body: JSON.stringify({id}) });
+  await apiFetch('/corretores_delete', { method:'POST', body: JSON.stringify({id, unidade:unidadeAtual()}) });
   toast('Professor excluído');
   carregarLista();
 }
 
 async function convidar(id){
-  const ret = await apiFetch('/corretores_convite', { method:'POST', body: JSON.stringify({id}) });
+  const ret = await apiFetch('/corretores_convite', { method:'POST', body: JSON.stringify({id, unidade:unidadeAtual()}) });
   toast(ret.sent ? 'Convite enviado por e-mail' : 'Convite gerado');
 }
-  
 </script>
 </body>
 </html>
-
-
-
-
