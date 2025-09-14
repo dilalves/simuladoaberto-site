@@ -41,7 +41,7 @@
     }
 
     /* Conteúdo principal (empurrado abaixo do topo fixo) */
-    main{ display:flex; flex-direction:column; padding-top: calc(var(--topbar-h) + 8px); }
+    main{ display:flex; flex-direction:column; padding-top: calc(var(--topbar-h) + 24px); }
 
     /* utilitários/estilo */
     .page{padding:24px}
@@ -222,12 +222,14 @@ async function apiFetch(pathNoPhp, { method='GET', headers={}, body, cache='no-s
 
 
 /* UI helpers */
-function setUnitHeader({ codigo, nome } = {}){
-  const el=document.getElementById('unitIdName');
-  if(!el) return;
-  if(codigo && nome) el.textContent = `${codigo} - ${nome}`;
-  else if(nome) el.textContent = nome; else el.textContent = '—';
+function setUnitHeader({ codigo, nome } = {}) {
+  const el = document.getElementById('unitLabel'); // <— aqui estava unitIdName
+  if (!el) return;
+  if (codigo && nome) el.textContent = `${codigo} - ${nome}`;
+  else if (nome)      el.textContent = nome;
+  else                el.textContent = '—';
 }
+
 function setUserName(n){ const el=document.getElementById('userName'); if(el&&n) el.textContent=n; }
 function toast(msg){ M && M.toast ? M.toast({html: msg}) : alert(msg); }
 
