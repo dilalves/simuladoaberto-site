@@ -93,6 +93,8 @@
   document.addEventListener('DOMContentLoaded', () => {
     const API = 'https://api.secauxiliar.com.br';
     const SESS_KEY = 'sessao_redacao';
+    const userLabel = document.getElementById('userLabel');
+    const btnSair   = document.getElementById('btnSair');
 
     // sessão/token
     function sess(){ try { return JSON.parse(localStorage.getItem(SESS_KEY)||'{}'); } catch(_){ return {}; } }
@@ -100,6 +102,7 @@
       const t = (sess().token) || localStorage.getItem('tok_corr') || '';
       return t ? {'Authorization':'Bearer '+t, 'Content-Type':'application/json'} : {'Content-Type':'application/json'};
     }
+
     function logout(){
       localStorage.removeItem(SESS_KEY);
       localStorage.removeItem('tok_corr');
@@ -114,7 +117,7 @@
     btnSair.onclick = logout;
 
     const params = new URLSearchParams(location.search);
-    const id = params.get('id');
+    const id = params.get('id') || params.get('rid');
     if (!id) { M.toast({html:'ID inválido'}); location.href='./pendentes.html'; return; }
 
     const idLabel = document.getElementById('idLabel');
@@ -178,6 +181,7 @@
         console.error(e);
         M.toast({html: e.message || 'Falha ao carregar item'});
       }
+
     })();
 
     // iniciar (lock)
