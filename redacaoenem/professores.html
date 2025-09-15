@@ -43,9 +43,11 @@
     /* Conteúdo principal (empurrado abaixo do topo fixo) 
     main{ display:flex; flex-direction:column; padding-top: calc(var(--topbar-h) + 110px); }  */
 
-    main, .main {
-      padding-top: calc(var(--topbar-h, 64px) + var(--subbar-h, 0px) + 48px) !important;
+    .content {
+      margin-top: calc(var(--topbar-h, 64px) + var(--subbar-h, 0px) + 48px) !important;
     }
+    /* respiro visual extra para os cartões 
+    .content{ margin-top:16px; } */
 
     /* utilitários/estilo */
     .page{padding:24px}
@@ -81,8 +83,7 @@
     .crop-wrap{ width:100%; max-height:60vh; overflow:auto; background:#f8fafc; border:1px solid #e5e7eb; border-radius:10px }
     #cropImg{ max-width:100%; display:block; }
 
-    /* respiro visual extra para os cartões */
-    .content{ margin-top:16px; }
+  
   </style>
 </head>
 <body>
