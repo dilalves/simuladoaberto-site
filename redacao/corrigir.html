@@ -166,26 +166,30 @@
 
         // Renderiza direto a imagem do Drive dentro do iframe (sem passar por arquivo_view.php)
         if (j.link) {
-            const imgUrl = toEmbeddableDriveUrl(j.link);
-            const esc = s => String(s)
-              .replace(/&/g,'&amp;').replace(/"/g,'&quot;')
-              .replace(/</g,'&lt;').replace(/>/g,'&gt;');
-            viewer.removeAttribute('src'); // garante recarregar pelo srcdoc
-            viewer.srcdoc = `
-          <!doctype html>
-          <meta charset="utf-8">
-          <meta name="viewport" content="width=device-width,initial-scale=1">
-          <style>
-            html,body{height:100%;margin:0;background:#fff}
-            .wrap{min-height:100%;display:flex;align-items:flex-start;justify-content:center}
-            img{max-width:100%;height:auto;display:block}
-          </style>
-          <div class="wrap">
-            <img src="${esc(imgUrl)}" alt="Redação">
-          </div>`;
-          } else {
-            viewer.src = `${API}/arquivo_view.php?id=${encodeURIComponent(j.id)}&v=${Date.now()}`;
-          }
+          const imgUrl = toEmbeddableDriveUrl(j.link);
+          const esc = s => String(s)
+            .replace(/&/g,'&amp;').replace(/"/g,'&quot;')
+            .replace(/</g,'&lt;').replace(/>/g,'&gt;');
+          viewer.removeAttribute('src'); // força recarregar
+          viewer.srcdoc = `
+        <!doctype html>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width,initial-scale=1">
+        <meta name="referrer" content="no-referrer">
+        <style>
+          html,body{height:100%;margin:0;background:#fff}
+          .wrap{min-height:100%;display:flex;align-items:flex-start;justify-content:center}
+          img{max-width:100%;height:auto;display:block}
+        </style>
+        <div class="wrap">
+          <img src="${esc(imgUrl)}" alt="Redação"
+              referrerpolicy="no-referrer"
+              decoding="async"
+              onerror="this.onerror=null; this.src='${API}/arquivo_view.php?id=${encodeURIComponent(j.id)}&v=${Date.now()}'">
+        </div>`;
+        } else {
+          viewer.src = `${API}/arquivo_view.php?id=${encodeURIComponent(j.id)}&v=${Date.now()}`;
+        }     
 
 
         // libera salvar se já estiver em tratamento
