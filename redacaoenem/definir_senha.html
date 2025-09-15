@@ -1,7 +1,12 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-   <!-- Materialize -->
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+
+  <title>Definir senha</title>
+
+  <!-- Materialize -->
   <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
   <!-- Google Icons -->
@@ -9,39 +14,77 @@
 
   <style>
     :root{
-      --bg:#f7f8fb; --card:#ffffff; --line:#e9edf3; --ink:#0f172a; --muted:#6b7280; --primary:#0b3b78; --accent:#2563eb;
-      --aside-w: 260px;       /* largura do menu lateral */
-      --topbar-h: 64px;       /* altura do topo */
+      --bg:#f7f8fb; --card:#ffffff; --line:#e9edf3;
+      --ink:#0f172a; --muted:#6b7280;
+      --primary:#0b3b78; --accent:#2563eb;
+      --topbar-h: 64px;
+    }
+
+    body{ background:var(--bg); color:var(--ink); margin:0 }
+
+    /* 🔹 Barra azul topo */
+    header.topbar{
+      position: fixed;
+      top:0; left:0; right:0;
+      height: var(--topbar-h);
+      background: var(--primary);
+      color:#fff;
+      display:flex;
+      align-items:center;
+      padding: 0 24px;
+      box-shadow:0 2px 8px rgba(16,24,40,.15);
+      z-index:10;
+    }
+    header.topbar h5{
+      margin:0;
+      font-weight:600;
+      font-size:18px;
+    }
+
+    .page{
+      max-width:520px;
+      margin: calc(var(--topbar-h) + 40px) auto 0 auto;
+      padding:0 16px;
     }
   </style>
+</head>
+<body>
+  <!-- Barra azul -->
+  <header class="topbar">
+    <h5>Redação Online</h5>
+  </header>
 
-<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-
-
-<title>Definir senha</title>
-<link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
-</head><body class="container" style="max-width:520px;margin-top:40px">
-  <h5>Defina sua senha para acesso ao sistema de correção</h5>
-  <div class="input-field">
-    <input id="senha" type="password" minlength="6" required>
+  <!-- Conteúdo -->
+  <div class="page">
+    <h5>Defina sua senha de acesso</h5>
+    <div class="input-field">
+      <input id="senha" type="password" minlength="6" required>
+      <label for="senha">Senha</label>
+    </div>
+    <a class="btn blue" onclick="setSenha()">Salvar</a>
+    <p id="msg" class="grey-text" style="margin-top:12px"></p>
   </div>
-  <a class="btn blue" onclick="setSenha()">Salvar</a>
-  <p id="msg" class="grey-text" style="margin-top:12px"></p>
 
-<script>
-const API = 'https://api.secauxiliar.com.br/';
-function getParam(n){ return new URL(location.href).searchParams.get(n) || '' }
+  <script>
+  const API = 'https://api.secauxiliar.com.br/';
+  function getParam(n){ return new URL(location.href).searchParams.get(n) || '' }
 
-async function setSenha(){
-  const token = getParam('tok');
-  const senha = document.getElementById('senha').value.trim();
-  if (!token || !senha) { document.getElementById('msg').textContent='Dados incompletos.'; return; }
-  const res = await fetch(API+'/corretores_set_password.php', {
-    method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({ token, senha })
-  });
-  const data = await res.json();
-  document.getElementById('msg').textContent = data.ok ? 'Senha definida com sucesso. Você já pode acessar o painel.' : (data.error||'Falha');
-}
-</script>
-</body></html>
+  async function setSenha(){
+    const token = getParam('tok');
+    const senha = document.getElementById('senha').value.trim();
+    if (!token || !senha) {
+      document.getElementById('msg').textContent='Dados incompletos.';
+      return;
+    }
+    const res = await fetch(API+'/corretores_set_password.php', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ token, senha })
+    });
+    const data = await res.json();
+    document.getElementById('msg').textContent = data.ok
+      ? 'Senha definida com sucesso. Você já pode acessar o painel.'
+      : (data.error||'Falha');
+  }
+  </script>
+</body>
+</html>
