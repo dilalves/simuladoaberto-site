@@ -13,72 +13,110 @@
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 
  <style>
-    :root{
-      --bg:#f7f8fb; --card:#ffffff; --line:#e9edf3; --ink:#0f172a; --muted:#6b7280; --primary:#0b3b78; --accent:#2563eb;
-      --aside-w: 260px;       /* largura do menu lateral */
-      --topbar-h: 64px;       /* altura do topo */
-    }
+  :root{
+  --bg:#f7f8fb; --card:#ffffff; --line:#e9edf3; --ink:#0f172a; --muted:#6b7280;
+  --primary:#0b3b78; --primary-light:#1e4b9a; --accent:#2563eb;
+  --aside-w:260px; --topbar-h:64px;
+}
 
-    html,body{height:100%}
-    body{background:var(--bg); color:var(--ink)}
+/* Base */
+html,body{height:100%}
+body{background:var(--bg); color:var(--ink); font-family:'Roboto',sans-serif}
 
-    /* ===== Layout ===== */
-    .app{ display:grid; grid-template-columns: var(--aside-w) 1fr; min-height:100vh; }
+/* ===== Layout ===== */
+.app{display:grid; grid-template-columns:var(--aside-w) 1fr; min-height:100vh}
+.aside{background:#fff; border-right:1px solid var(--line)}
+.main{display:flex; flex-direction:column}
 
-    /* 🔒 Topo azul: full-width, fixo e alinhado ao lado do menu */
-    header.topbar{
-      position: fixed; top: 0; left: 0; right: 0; height: var(--topbar-h); z-index: 20;
-      background: var(--primary); color:#fff; display:flex; align-items:center;
-      padding: 12px 24px; padding-left: calc(var(--aside-w) + 24px); box-shadow:0 2px 10px rgba(16,24,40,.12);
-    }
-    header.topbar > .topbar{ background: transparent !important; box-shadow: none !important; }
-    header.topbar .container{ max-width: none; width: 100%; margin: 0; padding: 0; }
-    header.topbar h5{ margin: 0; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* ===== TOPBAR (universal: funciona no painel e no envio) ===== */
+header.topbar,
+.topbar.blue.darken-3.white-text,
+body > .topbar, .app > .topbar, .main > .topbar{
+  position:fixed; top:0; left:0; right:0; height:var(--topbar-h); z-index:20;
+  background:var(--primary) !important; color:#fff !important;
+  display:flex; align-items:center;
+  padding:12px 24px; padding-left:calc(var(--aside-w) + 24px);
+  box-shadow:0 2px 10px rgba(16,24,40,.12);
+}
+/* neutraliza o “quadro azul interno” do Materialize quando há header */
+header.topbar > .topbar{background:transparent !important; box-shadow:none !important}
+/* container do topo: largura total + flex */
+header.topbar .container,
+.topbar.blue.darken-3.white-text .container,
+body > .topbar .container, .app > .topbar .container, .main > .topbar .container{
+  max-width:none !important; width:100% !important; margin:0 !important; padding:0 !important;
+  display:flex; align-items:center; gap:12px;
+}
+/* título: 1 linha, com reticências */
+header.topbar :is(h1,h2,h3,h4,h5,h6,.title,.m-0),
+.topbar.blue.darken-3.white-text :is(h1,h2,h3,h4,h5,h6,.title,.m-0),
+body > .topbar :is(h1,h2,h3,h4,h5,h6,.title,.m-0),
+.app > .topbar :is(h1,h2,h3,h4,h5,h6,.title,.m-0),
+.main > .topbar :is(h1,h2,h3,h4,h5,h6,.title,.m-0){
+  margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  flex:1 1 auto; min-width:0;
+}
+/* área da direita (chips/badges) */
+header.topbar .top-actions, header.topbar .right,
+.topbar.blue.darken-3.white-text .top-actions, .topbar.blue.darken-3.white-text .right,
+body > .topbar .top-actions, .app > .topbar .top-actions, .main > .topbar .top-actions{
+  margin-left:auto;
+}
+/* conteúdo desce para não ficar sob o topo */
+main, .main{padding-top:calc(var(--topbar-h) + 8px)}
 
-    /* 🔒 Sidebar fixa/rolável abaixo do topo */
-    aside{
-      background:#fff; border-right:1px solid var(--line); position: sticky; top: var(--topbar-h);
-      height: calc(100vh - var(--topbar-h)); overflow: auto; align-self: start; z-index: 6;
-    }
+/* ===== Sidebar fixa/rolável abaixo do topo ===== */
+aside{
+  position:sticky; top:var(--topbar-h);
+  height:calc(100vh - var(--topbar-h));
+  overflow:auto; align-self:start; z-index:6;
+  background:#fff; border-right:1px solid var(--line);
+}
 
-    /* Conteúdo principal (empurrado abaixo do topo fixo) */
-    main{ display:flex; flex-direction:column; padding-top: calc(var(--topbar-h) + 8px); }
+/* ===== Menu ===== */
+.menu a{
+  position:relative; display:flex; align-items:center; gap:12px;
+  padding:12px 18px; margin:6px 12px; color:#111827; border-radius:10px; font-weight:600;
+  background:transparent; box-shadow:none; border-left:0;
+}
+.menu a::before, .menu a::after{content:none !important}
+.menu a, .menu a:focus, .menu a:active{background:transparent !important; box-shadow:none !important; border-left:0 !important}
+.menu a:hover{background:var(--primary-light); color:#fff}
+.menu li.active a, .menu a.active{background:#e7efff !important; color:var(--primary) !important}
 
-    /* utilitários/estilo */
-    .page{padding:24px}
-    .muted{color:var(--muted)}
-    .card{border-radius:14px; box-shadow:0 6px 18px rgba(16,24,40,.06)}
-    .card-title{font-weight:600}
-    .table-wrapper{overflow:auto; border:1px solid var(--line); border-radius:10px; background:#fff}
-    table.striped>tbody>tr:nth-child(odd){background:#fafbff}
-    th{white-space:nowrap}
-    td{vertical-align:middle}
+/* ===== Content ===== */
+.content{max-width:1200px; margin:0 auto; padding:20px}
 
-    .chip-status{border-radius:999px; padding:2px 10px; font-weight:600; font-size:12px; display:inline-block}
-    .ok{background:#e7f8ef; color:#127c46}
-    .err{background:#fdecec; color:#b42318}
-    .pend{background:#fff7e6; color:#b54708}
+/* ===== Cards ===== */
+.card{background:var(--card); border:1px solid var(--line); border-radius:8px; padding:20px}
+.card h2,.card h3{color:var(--primary)}
+.card.edge{border-radius:14px; border:1px solid var(--line)}
+.kpi .card-content{padding:22px}
+.kpi .value{font-size:2.1rem; font-weight:800}
+.kpi .label{color:var(--muted); margin-top:4px}
+.action .card-content{text-align:center; padding:26px}
+.action .material-icons{font-size:50px; color:var(--primary); opacity:.95}
+.action .title{margin-top:10px; font-weight:800; font-size:1.5rem}
+.small-actions .card .card-content{padding:16px; text-align:center}
 
-    .search-row{display:grid; grid-template-columns: 1fr 160px 140px; gap:12px}
+/* ===== Botões ===== */
+.btn,.btn-primary{background:var(--primary) !important; color:#fff !important}
+.btn:hover,.btn-primary:hover{background:var(--primary-light) !important}
+.btn-secondary{background:#e0e0e0; color:var(--ink)}
+.btn-danger{background:transparent; color:#d32f2f}
 
-    @media (max-width: 992px){
-      .app{ grid-template-columns: 1fr; }
-      header.topbar{ padding-left: 16px; }
-      .search-row{ grid-template-columns: 1fr; }
-    }
-
-    /* menu lateral */
-    .menu{list-style:none; padding:0; margin:0}
-    .menu a{display:block; padding:12px 16px; color:#111827}
-    .menu a:hover{background:#f4f6fb}
-    .menu .active>a{background:#eef3ff; font-weight:600}
-    .menu .icon{font-size:20px; vertical-align:middle; margin-right:8px; color:#64748b}
-
-    .manual-link{ color:#b54708; font-weight:600; cursor:pointer; text-decoration:underline; }
-    .crop-wrap{ width:100%; max-height:60vh; overflow:auto; background:#f8fafc; border:1px solid #e5e7eb; border-radius:10px }
-    #cropImg{ max-width:100%; display:block; }
-
-  </style>
+/* ===== Responsivo ===== */
+@media (max-width:992px){
+  .app{grid-template-columns:1fr}
+  /* no mobile, o topo não precisa “reservar” o espaço do aside */
+  header.topbar,
+  .topbar.blue.darken-3.white-text,
+  body > .topbar, .app > .topbar, .main > .topbar{
+    padding-left:16px;
+  }
+  aside{display:none} /* remova se quiser manter o menu no mobile */
+}
+</style>
 
 
 </head>
