@@ -259,8 +259,8 @@ async function apiFetch(pathNoPhp, { method='GET', headers={}, body, cache='no-s
 }
 
 /* ===== UI helpers ===== */
-function setUnitHeader(u = {}){
-  const el = document.getElementById('unitIdName'); // painel usa unitIdName
+function setUnitHeader(u = {}) {
+  const el = document.getElementById('unitLabel') || document.getElementById('unitIdName');
   if (!el) return;
   const codigo = u.codigo ?? u.cod ?? u.id ?? '';
   const nome   = u.nome   ?? u.name ?? '';
@@ -296,14 +296,24 @@ async function initPainel(){
 async function carregarContextoDaAPI(){
   try{
     const data = await apiFetch('/auth_me.php');
+
+    // fallback se o backend retornar { user: {...} }
+    if (data?.user && !data?.unidade) {
+      const u = data.user;
+      data.unidade = { codigo: u.login || u.codigo || '', nome: u.unidade || u.nome || '' };
+      data.usuario = data.usuario || { nome: u.nome || u.login || 'Usuário' };
+    }
+
     if (data?.usuario?.nome) setUserName(data.usuario.nome);
     if (data?.unidade) setUnitHeader(data.unidade);
+
     setSession({ ...getSession(), ...data });
   }catch(e){
     console.warn('Falha ao carregar contexto da API', e);
     if (String(e.message).includes('UNAUTHORIZED')) redirectToLogin();
   }
 }
+
 
 /* ===== KPIs (placeholder) ===== */
 function setKPIs({ enviadas='—', corretores='—', unidade, usuario } = {}){
