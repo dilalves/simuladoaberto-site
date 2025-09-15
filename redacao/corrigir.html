@@ -164,37 +164,15 @@
         insc.textContent   = j.inscricao || '';
         status.textContent = j.status || 'Pendente';
 
-       // Renderiza a imagem do Drive dentro do iframe (com fallback)
+        // Renderiza a imagem do Drive dentro do iframe (com fallback)
+        // carrega dados do item (…)
         if (j.link) {
-          const imgUrl = toEmbeddableDriveUrl(j.link);
-
-          // HTML simples e seguro pro iframe
-          const html = `
-        <!doctype html>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width,initial-scale=1">
-        <meta name="referrer" content="no-referrer">
-        <style>
-          html,body{height:100%;margin:0;background:#fff}
-          .wrap{min-height:100%;display:flex;align-items:flex-start;justify-content:center}
-          img{max-width:100%;height:auto;display:block}
-        </style>
-        <div class="wrap">
-          <img src="${imgUrl.replace(/"/g,'&quot;')}" alt="Redação"
-              referrerpolicy="no-referrer"
-              decoding="async"
-              onerror="this.onerror=null; this.src='${API}/arquivo_view.php?id=${encodeURIComponent(j.id)}&v=${Date.now()}'">
-        </div>`.trim();
-
-          // força recarregar pelo modo HTML
-          viewer.removeAttribute('src');
-          if ('srcdoc' in viewer) {
-            viewer.srcdoc = html;                    // caminho preferido
-          } else {
-            viewer.src = 'data:text/html;charset=utf-8,' + encodeURIComponent(html); // fallback universal
-          }
+          // carregue SEM srcdoc, direto pelo proxy
+          const viewerUrl = `${API}/arquivo_proxy.php?id=${encodeURIComponent(j.id)}&v=${Date.now()}`;
+          viewer.removeAttribute('srcdoc');
+          viewer.src = viewerUrl;
         } else {
-          // sem link no JSON? usa o PHP como fallback
+          // se por algum motivo não vier link, ainda dá pra usar o view antigo
           viewer.src = `${API}/arquivo_view.php?id=${encodeURIComponent(j.id)}&v=${Date.now()}`;
         }
 
