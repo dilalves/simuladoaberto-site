@@ -121,15 +121,21 @@ document.addEventListener('DOMContentLoaded', () => {
   async function fetchPendentes(){
     try{
       const res = await fetch(`${API}/pendentes_list.php`, { headers: { ...authHeaders() }});
-      const j   = await res.json();
-      if (!res.ok || !j.ok) throw new Error(j?.error || 'Falha');
+      if (res.status === 401 || res.status === 403) { // token inválido/expirou
+        logout(); return;
+      }
+      const j = await res.json().catch(()=> ({}));
+      if (!res.ok || !j.ok) throw new Error(j?.error || `HTTP_${res.status}`);
       DATA = j.items || [];
       subinfo.textContent = `Unidade ${j.codUnidade} — ${DATA.length} pendente(s)`;
       render(DATA);
     }catch(e){
-      M && M.toast ? M.toast({html: 'Falha ao carregar pendentes'}) : alert('Falha ao carregar pendentes');
+      console.error('pendentes_list:', e);
+      (window.M && M.toast) ? M.toast({html: e.message || 'Falha ao carregar pendentes'}) : alert(e.message || 'Falha ao carregar pendentes');
     }
   }
+
+
   fetchPendentes();
 
   // "Pegar próxima" — simples: abre a próxima pendente (sem lock). Se quiser lock, fazemos um endpoint claim.
