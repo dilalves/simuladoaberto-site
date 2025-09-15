@@ -140,8 +140,8 @@
     const idLabel = document.getElementById('idLabel');
     const insc    = document.getElementById('insc');
     const status  = document.getElementById('status');
-    const viewer  = document.getElementById('viewer'); 
-    const vloading= document.getElementById('vloading');
+    const imgEl   = document.getElementById('viewer');
+    const vloading= document.getElementById('vloading');  
 
     const btnIniciar = document.getElementById('btnIniciar');
     const btnSalvar  = document.getElementById('btnSalvar');
@@ -164,9 +164,14 @@
 
     idLabel.textContent = id;
 
-    // overlay: esconde ao carregar o iframe ou se falhar
-    viewer.addEventListener('load',  () => vloading.classList.add('hide'));
-    viewer.addEventListener('error', () => { vloading.classList.add('hide'); M.toast({html:'Falha ao carregar imagem'}); })
+    // handlers de imagem
+      imgEl.onload  = () => vloading.classList.add('hide');
+      imgEl.onerror = () => {
+        vloading.classList.add('hide');
+        if (window.M) M.toast({html:'Falha ao carregar imagem'});
+      };
+
+
 
     // carrega dados do item
     (async function loadItem(){
@@ -183,13 +188,10 @@
         // Renderiza a imagem do Drive dentro do iframe (com fallback)
         // carrega dados do item (…)
         if (j.link) {
-          // carregue SEM srcdoc, direto pelo proxy
           const viewerUrl = `${API}/arquivo_proxy.php?id=${encodeURIComponent(j.id)}&v=${Date.now()}`;
-          //viewer.removeAttribute('srcdoc');
-          viewer.src = viewerUrl;
+          imgEl.src = viewerUrl;
         } else {
-          // se por algum motivo não vier link, ainda dá pra usar o view antigo
-          viewer.src = `${API}/arquivo_view.php?id=${encodeURIComponent(j.id)}&v=${Date.now()}`;
+          imgEl.src = `${API}/arquivo_view.php?id=${encodeURIComponent(j.id)}&v=${Date.now()}`;
         }
 
         // libera salvar se já estiver em tratamento
