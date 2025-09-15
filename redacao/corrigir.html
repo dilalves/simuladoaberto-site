@@ -164,14 +164,12 @@
         insc.textContent   = j.inscricao || '';
         status.textContent = j.status || 'Pendente';
 
-        // Renderiza direto a imagem do Drive dentro do iframe (sem passar por arquivo_view.php)
+       // Renderiza a imagem do Drive dentro do iframe (com fallback)
         if (j.link) {
           const imgUrl = toEmbeddableDriveUrl(j.link);
-          const esc = s => String(s)
-            .replace(/&/g,'&amp;').replace(/"/g,'&quot;')
-            .replace(/</g,'&lt;').replace(/>/g,'&gt;');
-          viewer.removeAttribute('src'); // força recarregar
-          viewer.srcdoc = `
+
+          // HTML simples e seguro pro iframe
+          const html = `
         <!doctype html>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -182,15 +180,23 @@
           img{max-width:100%;height:auto;display:block}
         </style>
         <div class="wrap">
-          <img src="${esc(toEmbeddableDriveUrl(j.link))}" alt="Redação">
+          <img src="${imgUrl.replace(/"/g,'&quot;')}" alt="Redação"
               referrerpolicy="no-referrer"
               decoding="async"
               onerror="this.onerror=null; this.src='${API}/arquivo_view.php?id=${encodeURIComponent(j.id)}&v=${Date.now()}'">
-        </div>`;
-        } else {
-          viewer.src = `${API}/arquivo_view.php?id=${encodeURIComponent(j.id)}&v=${Date.now()}`;
-        }     
+        </div>`.trim();
 
+          // força recarregar pelo modo HTML
+          viewer.removeAttribute('src');
+          if ('srcdoc' in viewer) {
+            viewer.srcdoc = html;                    // caminho preferido
+          } else {
+            viewer.src = 'data:text/html;charset=utf-8,' + encodeURIComponent(html); // fallback universal
+          }
+        } else {
+          // sem link no JSON? usa o PHP como fallback
+          viewer.src = `${API}/arquivo_view.php?id=${encodeURIComponent(j.id)}&v=${Date.now()}`;
+        }
 
         // libera salvar se já estiver em tratamento
         if ((j.status||'').toLowerCase().includes('tratamento')) {
