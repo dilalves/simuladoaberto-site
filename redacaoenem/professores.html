@@ -132,10 +132,6 @@
                     <input id="email" type="email" required>
                     <label for="email">E-mail</label>
                   </div>
-                  <div class="input-field col s12">
-                    <input id="login" type="text" required>
-                    <label for="login">Login</label>
-                  </div>
                   <div class="col s12" style="margin:6px 0 12px">
                     <label>
                       <input type="checkbox" id="ativo" checked />
@@ -171,7 +167,6 @@
                     <tr>
                       <th>Nome</th>
                       <th>E-mail</th>
-                      <th>Login</th>
                       <th style="width:90px">Ativo</th>
                       <th class="right-align" style="width:220px">Ações</th>
                     </tr>
@@ -300,8 +295,7 @@ let editId = 0;
 function limparForm(){
   editId = 0;
   document.getElementById('nome').value='';
-  document.getElementById('email').value='';
-  document.getElementById('login').value='';
+  document.getElementById('email').value='';  
   document.getElementById('ativo').checked=true;
   if (window.M && M.updateTextFields) M.updateTextFields();
 }
@@ -351,7 +345,6 @@ function editar(row){
   editId = row.id;
   document.getElementById('nome').value = row.nome || '';
   document.getElementById('email').value = row.email || '';
-  document.getElementById('login').value = row.login || '';
   document.getElementById('ativo').checked = !!row.ativo;
   if (window.M && M.updateTextFields) M.updateTextFields();
 }
@@ -361,12 +354,11 @@ async function salvarCorretor(){
     id: editId,
     nome: document.getElementById('nome').value.trim(),
     email: document.getElementById('email').value.trim(),
-    login: document.getElementById('login').value.trim(),
     ativo: document.getElementById('ativo').checked ? 1 : 0,
     unidade: unidadeAtual()
   };
-  if (!payload.nome || !payload.email || !payload.login) {
-    return toast('Preencha Nome, E-mail e Login');
+  if (!payload.nome || !payload.email) {
+    return toast('Preencha Nome e E-mail');
   }
   await apiFetch('/corretores_save', { method:'POST', body: JSON.stringify(payload) });
   toast(editId ? 'Professor atualizado' : 'Professor cadastrado');
