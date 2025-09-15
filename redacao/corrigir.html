@@ -164,8 +164,29 @@
         insc.textContent   = j.inscricao || '';
         status.textContent = j.status || 'Pendente';
 
-        // aponta o viewer para o endpoint que renderiza a imagem do Drive
-        viewer.src = `${API}/arquivo_view.php?id=${encodeURIComponent(j.id)}`;
+        // Renderiza direto a imagem do Drive dentro do iframe (sem passar por arquivo_view.php)
+        if (j.link) {
+          const esc = s => String(s)
+            .replace(/&/g,'&amp;').replace(/"/g,'&quot;')
+            .replace(/</g,'&lt;').replace(/>/g,'&gt;');
+          viewer.removeAttribute('src'); // garante que o iframe recarregue pelo srcdoc
+          viewer.srcdoc = `
+        <!doctype html>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width,initial-scale=1">
+        <style>
+          html,body{height:100%;margin:0;background:#fff}
+          .wrap{min-height:100%;display:flex;align-items:flex-start;justify-content:center}
+          img{max-width:100%;height:auto;display:block}
+        </style>
+        <div class="wrap">
+          <img src="${esc(j.link)}" alt="Redação">
+        </div>`;
+        } else {
+          // fallback: usa seu viewer em PHP (com cache-buster)
+          viewer.src = `${API}/arquivo_view.php?id=${encodeURIComponent(j.id)}&v=${Date.now()}`;
+        }
+
 
         // libera salvar se já estiver em tratamento
         if ((j.status||'').toLowerCase().includes('tratamento')) {
