@@ -202,13 +202,12 @@
 </div>
 
 <script>
-
-
 /* ===== CONFIG ===== */
 const API = 'https://api.secauxiliar.com.br/';
-const LOGIN_URL = '/redacaoeenem/index.html';
+const LOGIN_URL = '/redacaoenem/index.html';
 const SESS_KEY = 'sessao_redacao';
 
+/* Altura real da topbar */
 (function(){
   function applyTopHeights(){
     const top = document.querySelector('header.topbar');
@@ -220,43 +219,39 @@ const SESS_KEY = 'sessao_redacao';
 })();
 
 /* ===== Sessão ===== */
-function getSession(){
-  try { return JSON.parse(localStorage.getItem(SESS_KEY) || '{}'); }
-  catch(e){ return {}; }
-}
-function setSession(sess){
-  localStorage.setItem(SESS_KEY, JSON.stringify(sess || {}));
-}
-function getToken(){
-  const sess = getSession();
-  return (sess && sess.token) || localStorage.getItem('token') || '';
-}
-function authHeaders(){
-  const t = getToken();
-  return t ? { 'Authorization': `Bearer ${t}` } : {};
-}
+function getSession(){ try{ return JSON.parse(localStorage.getItem(SESS_KEY)||'{}'); }catch(_){ return {}; } }
+function setSession(s){ localStorage.setItem(SESS_KEY, JSON.stringify(s||{})); }
+function getToken(){ const s=getSession(); return (s&&s.token) || localStorage.getItem('token') || ''; }
+function authHeaders(){ const t=getToken(); return t ? { Authorization: 'Bearer '+t } : {}; }
 function redirectToLogin(){
-  const next = encodeURIComponent(location.pathname + location.search + location.hash);
+  const next = encodeURIComponent(location.pathname+location.search+location.hash);
   location.replace(`${LOGIN_URL}?next=${next}`);
 }
 
-/* ===== Fetch helper (com fallback .php) ===== */
+/* ===== Util: garantir .php ANTES do ? ===== */
+function ensurePhp(path){
+  if (path.includes('.php')) return path;
+  const i = path.indexOf('?');
+  if (i === -1) return path + '.php';
+  return path.slice(0, i) + '.php' + path.slice(i);
+}
+
+/* ===== Fetch helper (com fallback .php seguro) ===== */
 async function apiFetch(pathNoPhp, { method='GET', headers={}, body, cache='no-store' } = {}){
-  const baseHeaders = { 'Accept': 'application/json', ...authHeaders(), ...headers };
+  const baseHeaders = { Accept: 'application/json', ...authHeaders(), ...headers };
+  if (body && !baseHeaders['Content-Type']) baseHeaders['Content-Type'] = 'application/json';
   const opts = { method, cache, headers: baseHeaders, body };
 
   let res;
-  try { res = await fetch(`${API}${pathNoPhp}`, opts); } catch(e){ res = null; }
+  try { res = await fetch(API + pathNoPhp, opts); } catch(_) {}
 
-  // fallback .php
   if (!res || res.status === 404) {
-    const withPhp = pathNoPhp.endsWith('.php') ? pathNoPhp : pathNoPhp + '.php';
-    try { res = await fetch(`${API}${withPhp}`, opts); } catch(e){ /* ignore */ }
+    try { res = await fetch(API + ensurePhp(pathNoPhp), opts); } catch(_) {}
   }
 
   if (!res) throw new Error('NETWORK_FAIL');
   if (res.status === 401 || res.status === 403) throw new Error('UNAUTHORIZED');
-  if (!res.ok) {
+  if (!res.ok){
     const txt = await res.text().catch(()=> '');
     throw new Error(`API_${res.status}: ${txt || res.statusText}`);
   }
@@ -264,12 +259,12 @@ async function apiFetch(pathNoPhp, { method='GET', headers={}, body, cache='no-s
 }
 
 /* ===== UI helpers ===== */
-function setUnitHeader({ codigo, nome } = {}){
-  const el = document.getElementById('unitIdName');
-  if(!el) return;
-  if(codigo && nome) el.textContent = `${codigo} - ${nome}`;
-  else if(nome)      el.textContent = nome;
-  else               el.textContent = '—';
+function setUnitHeader(u = {}){
+  const el = document.getElementById('unitIdName'); // painel usa unitIdName
+  if (!el) return;
+  const codigo = u.codigo ?? u.cod ?? u.id ?? '';
+  const nome   = u.nome   ?? u.name ?? '';
+  el.textContent = (codigo && nome) ? `${codigo} - ${nome}` : (nome || '—');
 }
 function setUserName(nome){
   const el = document.getElementById('userName');
@@ -284,55 +279,52 @@ async function initPainel(){
     if (!getToken()) return redirectToLogin();
 
     const sess = getSession();
-    if (sess?.unidade?.codigo && sess?.unidade?.nome) {
+    if (sess?.unidade) {
       setUnitHeader(sess.unidade);
-      setUserName(sess?.usuario?.nome);
-    } else {
-      await carregarContextoDaAPI();
+      if (sess?.usuario?.nome) setUserName(sess.usuario.nome);
     }
+    await carregarContextoDaAPI(); // atualiza/garante unidade
 
-    // 🔴 Sem simulados/KPIs por simulado neste momento
     document.body.classList.add('ready');
-  } catch(err){
+  }catch(err){
     console.error('Falha na inicialização:', err);
     if (String(err.message).includes('UNAUTHORIZED')) return redirectToLogin();
   }
 }
 
-/* ===== Contexto (/me) ===== */
+/* ===== Contexto (/auth_me.php) ===== */
 async function carregarContextoDaAPI(){
   try{
-    // chama o endpoint real que você tem no servidor
-    const data = await apiFetch('/auth_me.php'); 
+    const data = await apiFetch('/auth_me.php');
     if (data?.usuario?.nome) setUserName(data.usuario.nome);
     if (data?.unidade) setUnitHeader(data.unidade);
-
-    const merged = { ...getSession(), ...data };
-    setSession(merged);
+    setSession({ ...getSession(), ...data });
   }catch(e){
     console.warn('Falha ao carregar contexto da API', e);
     if (String(e.message).includes('UNAUTHORIZED')) redirectToLogin();
   }
 }
 
-
-/* ===== KPIs (mantidos apenas para futura ligação; hoje ficam em "—") ===== */
+/* ===== KPIs (placeholder) ===== */
 function setKPIs({ enviadas='—', corretores='—', unidade, usuario } = {}){
   const elEnv = document.getElementById('kpiEnviadas');
   const elCor = document.getElementById('kpiCorretores');
   if (elEnv) elEnv.textContent = enviadas;
   if (elCor) elCor.textContent = corretores;
-  if (unidade?.codigo && unidade?.nome) setUnitHeader(unidade);
+  if (unidade) setUnitHeader(unidade);
   if (usuario?.nome) setUserName(usuario.nome);
 }
 
-/* ===== Bloqueio de cliques até ready (opcional) ===== */
+/* Bloqueio de clique até ready (opcional) */
 document.addEventListener('click', (ev) => {
   if (!document.body.classList.contains('ready')) {
-    const target = ev.target.closest('a,button');
-    if (target) { ev.preventDefault(); ev.stopPropagation(); }
+    const trg = ev.target.closest('a,button');
+    if (trg) { ev.preventDefault(); ev.stopPropagation(); }
   }
 });
 </script>
+
+
+
 </body>
 </html>
