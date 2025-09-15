@@ -15,6 +15,21 @@
       background:rgba(255,255,255,.6); backdrop-filter:saturate(120%) blur(1px);
     }
     .vloading.hide{ display:none; }
+
+    .viewer-img{
+      width:100%;
+      height:auto;         /* deixa a altura natural */
+      display:block;
+      border:1px solid #e5e7eb;
+      border-radius:10px;
+      background:#fff;
+    }
+
+    /* opcional: se quiser ver TUDO sem scroll interno, cabendo na tela
+      (a página rola; a imagem “se contém” na janela) */
+    @media (min-height:0px){
+      .viewer-img{ max-height:80vh; object-fit:contain; }
+    }
   </style>
 </head>
 <body>
@@ -43,8 +58,9 @@
             <div class="progress" style="width:240px; max-width:80%"><div class="indeterminate"></div></div>
             <div class="grey-text text-darken-1" style="margin-top:8px">Carregando redação…</div>
           </div>
-          <!-- viewer da redação (abre arquivo_view.php, que aponta p/ Google Drive) -->
-          <iframe id="viewer" class="viewer" referrerpolicy="no-referrer" loading="lazy"></iframe>
+
+          <!-- ERA <iframe id="viewer" ...></iframe> -->
+          <img id="viewer" class="viewer-img" alt="Redação" referrerpolicy="no-referrer" decoding="async">
         </div>
       </div>
 
@@ -124,7 +140,7 @@
     const idLabel = document.getElementById('idLabel');
     const insc    = document.getElementById('insc');
     const status  = document.getElementById('status');
-    const viewer  = document.getElementById('viewer');
+    const viewer  = document.getElementById('viewer'); 
     const vloading= document.getElementById('vloading');
 
     const btnIniciar = document.getElementById('btnIniciar');
@@ -149,8 +165,8 @@
     idLabel.textContent = id;
 
     // overlay: esconde ao carregar o iframe ou se falhar
-    viewer.addEventListener('load', ()=> vloading.classList.add('hide'));
-    viewer.addEventListener('error',()=> vloading.classList.add('hide'));
+    viewer.addEventListener('load',  () => vloading.classList.add('hide'));
+    viewer.addEventListener('error', () => { vloading.classList.add('hide'); M.toast({html:'Falha ao carregar imagem'}); })
 
     // carrega dados do item
     (async function loadItem(){
@@ -169,7 +185,7 @@
         if (j.link) {
           // carregue SEM srcdoc, direto pelo proxy
           const viewerUrl = `${API}/arquivo_proxy.php?id=${encodeURIComponent(j.id)}&v=${Date.now()}`;
-          viewer.removeAttribute('srcdoc');
+          //viewer.removeAttribute('srcdoc');
           viewer.src = viewerUrl;
         } else {
           // se por algum motivo não vier link, ainda dá pra usar o view antigo
