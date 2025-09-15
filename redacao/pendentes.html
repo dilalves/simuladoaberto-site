@@ -55,42 +55,51 @@
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+
   <script>
 document.addEventListener('DOMContentLoaded', () => {
-  const GAS_BASE = 'https://script.google.com/macros/s/AKfycbwwVf2cI1AgvUF6LgV9LYPhM1jNDFSQNdoB3YrzRCHXJBV-S-XEcC5iKVWV8_egNouq/exec';
+  const API = 'https://api.secauxiliar.com.br';
+  const SESS_KEY = 'sessao_redacao';
 
-  const tok  = localStorage.getItem('tok_corr');
-  const nome = localStorage.getItem('nome_corr');
-  if (!tok) { location.href = './'; return; }
-
-  document.getElementById('userLabel').textContent = nome || '';
-  document.getElementById('btnLogout').onclick = () => { localStorage.clear(); location.href = './'; };
-
-  const tbody  = document.getElementById('tbody');
-  const filtro = document.getElementById('filtro');
-  const subinfo= document.getElementById('subinfo');
-  const btnPegar = document.getElementById('btnPegar');
-  let DATA = [];
-
-  // helper JSONP
-  function jsonp(action, qs, cb){
-    const name = 'cb_'+action+'_'+Date.now();
-    let scr;
-    window[name] = (j)=>{ try{ cb(j); } finally{ delete window[name]; if (scr) scr.remove(); } };
-    scr = document.createElement('script');
-    const url = `${GAS_BASE}?action=${action}&token=${encodeURIComponent(tok)}&callback=${name}` + (qs ? `&${qs}` : '') + `&t=${Date.now()}`;
-    scr.src = url;
-    scr.onerror = ()=> M.toast({html:'Erro de conexão'});
-    document.body.appendChild(scr);
+  function sess(){
+    try { return JSON.parse(localStorage.getItem(SESS_KEY)||'{}'); } catch(_){ return {}; }
   }
+  function authHeaders(){
+    const t = (sess() && sess().token) || localStorage.getItem('tok_corr') || '';
+    return t ? {'Authorization':'Bearer '+t} : {};
+  }
+  function logout(){
+    localStorage.removeItem(SESS_KEY);
+    localStorage.removeItem('tok_corr');
+    localStorage.removeItem('nome_corr');
+    localStorage.removeItem('cod_corr');
+    location.href = './';
+  }
+
+  const s = sess();
+  const nome = (s.usuario && s.usuario.nome) || localStorage.getItem('nome_corr') || '';
+  if (!(s && s.token) && !localStorage.getItem('tok_corr')) { location.href='./'; return; }
+
+  document.getElementById('userLabel').textContent = nome;
+  document.getElementById('btnLogout').onclick = logout;
+
+  const tbody   = document.getElementById('tbody');
+  const filtro  = document.getElementById('filtro');
+  const subinfo = document.getElementById('subinfo');
+  const btnPegar= document.getElementById('btnPegar');
+  let DATA = [];
 
   function render(list){
     tbody.innerHTML = '';
+    if (!list.length){
+      tbody.innerHTML = '<tr><td colspan="5" class="center-align grey-text">Sem pendências.</td></tr>';
+      return;
+    }
     list.forEach(it => {
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td class="mono">${it.inscricao || ''}</td>
-        <td title="${it.arquivo||''}">${(it.arquivo||'').slice(0,48)}</td>
+        <td title="${(it.arquivo||'').replaceAll('"','&quot;')}">${(it.arquivo||'').slice(0,48)}</td>
         <td>${it.timestamp || ''}</td>
         <td>${it.status || ''}</td>
         <td><a class="btn-small blue" href="./corrigir.html?id=${encodeURIComponent(it.id)}">Corrigir</a></td>
@@ -101,7 +110,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   filtro.addEventListener('input', () => {
     const q = filtro.value.trim().toLowerCase();
-    if (!q) { render(DATA); return; }
+    if (!q) return render(DATA);
     const out = DATA.filter(it =>
       String(it.inscricao||'').toLowerCase().includes(q) ||
       String(it.arquivo||'').toLowerCase().includes(q)
@@ -109,31 +118,41 @@ document.addEventListener('DOMContentLoaded', () => {
     render(out);
   });
 
-  function fetchPendentes(){
-    jsonp('pendentes','', (j)=>{
-      if (!j || !j.ok) { M.toast({html: j?.error || 'Falha ao carregar pendentes'}); return; }
+  async function fetchPendentes(){
+    try{
+      const res = await fetch(`${API}/pendentes_list.php`, { headers: { ...authHeaders() }});
+      const j   = await res.json();
+      if (!res.ok || !j.ok) throw new Error(j?.error || 'Falha');
       DATA = j.items || [];
       subinfo.textContent = `Unidade ${j.codUnidade} — ${DATA.length} pendente(s)`;
       render(DATA);
-    });
+    }catch(e){
+      M && M.toast ? M.toast({html: 'Falha ao carregar pendentes'}) : alert('Falha ao carregar pendentes');
+    }
   }
   fetchPendentes();
 
-  // Pegar próxima (com lock no servidor)
-  btnPegar.onclick = () => {
+  // "Pegar próxima" — simples: abre a próxima pendente (sem lock). Se quiser lock, fazemos um endpoint claim.
+  btnPegar.onclick = async () => {
     btnPegar.classList.add('disabled');
-    jsonp('claim_next','', (j)=>{
-      btnPegar.classList.remove('disabled');
-      if (!j || !j.ok) {
-        const msg = (j && j.error === 'none_available') ? 'Não há redações disponíveis' : (j?.error || 'Falha ao buscar próxima');
-        M.toast({html: msg});
-        return;
+    try{
+      const res = await fetch(`${API}/correcoes_next.php`, { headers: { ...authHeaders() }});
+      const j   = await res.json();
+      if (!res.ok || !j.ok || !j.item) {
+        const msg = j?.error === 'none_available' ? 'Não há redações disponíveis' : 'Falha ao buscar próxima';
+        M && M.toast ? M.toast({html: msg}) : alert(msg);
+      } else {
+        location.href = './corrigir.html?id=' + encodeURIComponent(j.item.redacao_id);
       }
-      location.href = './corrigir.html?id=' + encodeURIComponent(j.id);
-    });
+    }catch(e){
+      M && M.toast ? M.toast({html: 'Erro de conexão'}) : alert('Erro de conexão');
+    }finally{
+      btnPegar.classList.remove('disabled');
+    }
   };
 });
 </script>
 
+  
 </body>
 </html>
