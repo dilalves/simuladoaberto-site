@@ -8,7 +8,7 @@
   <style>
     body { background:#f7f9fc; }
     .wrap { max-width:1100px; margin:24px auto; padding:0 12px; }
-    .viewer { width:100%; height:70vh; border:0; background:#fff; }
+    .viewer { width:100%; height:70vh; border:1px solid #e5e7eb; border-radius:10px; background:#fff; }
     .vloading{
       position:absolute; inset:0;
       display:flex; flex-direction:column; align-items:center; justify-content:center;
@@ -38,15 +38,15 @@
       </div>
 
       <div class="card-content">
-          <div id="vwrap" style="position:relative">
-            <div id="vloading" class="vloading">
-              <div class="progress" style="width:240px; max-width:80%"><div class="indeterminate"></div></div>
-              <div class="grey-text text-darken-1" style="margin-top:8px">Carregando redação…</div>
-            </div>
-            <iframe id="viewer" class="viewer"></iframe>
+        <div id="vwrap" style="position:relative">
+          <div id="vloading" class="vloading">
+            <div class="progress" style="width:240px; max-width:80%"><div class="indeterminate"></div></div>
+            <div class="grey-text text-darken-1" style="margin-top:8px">Carregando redação…</div>
           </div>
+          <!-- viewer da redação (abre arquivo_view.php, que aponta p/ Google Drive) -->
+          <iframe id="viewer" class="viewer" referrerpolicy="no-referrer" loading="lazy"></iframe>
         </div>
-
+      </div>
 
       <div class="card-content">
         <div class="row">
@@ -88,11 +88,12 @@
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
-  
+
   <script>
   document.addEventListener('DOMContentLoaded', () => {
     const API = 'https://api.secauxiliar.com.br';
     const SESS_KEY = 'sessao_redacao';
+
     const userLabel = document.getElementById('userLabel');
     const btnSair   = document.getElementById('btnSair');
 
@@ -102,7 +103,6 @@
       const t = (sess().token) || localStorage.getItem('tok_corr') || '';
       return t ? {'Authorization':'Bearer '+t, 'Content-Type':'application/json'} : {'Content-Type':'application/json'};
     }
-
     function logout(){
       localStorage.removeItem(SESS_KEY);
       localStorage.removeItem('tok_corr');
@@ -120,6 +120,7 @@
     const id = params.get('id') || params.get('rid');
     if (!id) { M.toast({html:'ID inválido'}); location.href='./pendentes.html'; return; }
 
+    // refs
     const idLabel = document.getElementById('idLabel');
     const insc    = document.getElementById('insc');
     const status  = document.getElementById('status');
@@ -136,18 +137,20 @@
     const c5 = document.getElementById('c5');
     const total = document.getElementById('total');
 
+    // soma e mantém label ativa
     function soma(){
       const v = [c1,c2,c3,c4,c5].map(el => Number(el.value||0));
       total.value = v.reduce((a,b)=>a+b,0);
+      if (window.M && M.updateTextFields) M.updateTextFields();
     }
     [c1,c2,c3,c4,c5].forEach(el => el.addEventListener('input', soma));
-    if (window.M && M.updateTextFields) M.updateTextFields();
     soma();
 
     idLabel.textContent = id;
 
-    // esconde overlay quando o iframe carregar
+    // overlay: esconde ao carregar o iframe ou se falhar
     viewer.addEventListener('load', ()=> vloading.classList.add('hide'));
+    viewer.addEventListener('error',()=> vloading.classList.add('hide'));
 
     // carrega dados do item
     (async function loadItem(){
@@ -161,27 +164,26 @@
         insc.textContent   = j.inscricao || '';
         status.textContent = j.status || 'Pendente';
 
-        // define a página de visualização (servida pelo seu domínio)
-        viewer.src = `${API}/arquivo_view.php?id=${encodeURIComponent(id)}`;
+        // aponta o viewer para o endpoint que renderiza a imagem do Drive
+        viewer.src = `${API}/arquivo_view.php?id=${encodeURIComponent(j.id)}`;
 
-        // se já estiver em tratamento para este corretor, libera salvar
-        if (j.status === 'EM TRATAMENTO' || j.status === 'Em tratamento') {
+        // libera salvar se já estiver em tratamento
+        if ((j.status||'').toLowerCase().includes('tratamento')) {
           btnSalvar.classList.remove('disabled');
           btnIniciar.classList.add('disabled');
         }
 
-        // se já existir correção (abrindo para reconsulta), você pode preencher campos:
+        // preenche notas se vierem do backend
         if (j.correcoes) {
-          const { c1:vc1=0, c2:vc2=0, c3:vc3=0, c4:vc4=0, c5:vc5=0, obs:vo='' } = j.correcoes;
-          c1.value=vc1; c2.value=vc2; c3.value=vc3; c4.value=vc4; c5.value=vc5; obs.value=vo;
+          const { c1:vc1=0, c2:vc2=0, c3:vc3=0, c4:vc4=0, c5:vc5=0 } = j.correcoes;
+          c1.value=vc1; c2.value=vc2; c3.value=vc3; c4.value=vc4; c5.value=vc5;
           soma();
-          if (window.M && M.updateTextFields) M.updateTextFields();
         }
       }catch(e){
         console.error(e);
         M.toast({html: e.message || 'Falha ao carregar item'});
+        vloading.classList.add('hide');
       }
-
     })();
 
     // iniciar (lock)
@@ -207,6 +209,7 @@
     // salvar (finalizar)
     btnSalvar.onclick = async () => {
       if (btnSalvar.classList.contains('disabled')) return;
+
       const vals = [c1,c2,c3,c4,c5].map(el=>Number(el.value||0));
       const ok = vals.every(v => v>=0 && v<=200 && v%40===0);
       if (!ok) { M.toast({html:'Cada competência deve ser 0, 40, 80, 120, 160 ou 200'}); return; }
@@ -229,9 +232,8 @@
       }
     };
 
-    // atalhos
-    const comps = [c1, c2, c3, c4, c5];
-    comps.forEach(el => {
+    // atalhos de teclado
+    [c1,c2,c3,c4,c5].forEach(el => {
       el.addEventListener('keydown', (e) => {
         const cur = Number(el.value || 0);
         if (e.key === 'ArrowUp')  { e.preventDefault(); el.value = Math.min(200, cur + 40); soma(); }
@@ -246,8 +248,5 @@
     });
   });
   </script>
-
-  
-
 </body>
 </html>
