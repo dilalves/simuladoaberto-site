@@ -206,7 +206,7 @@
 
 /* ===== CONFIG/API ===== */
 const API = 'https://api.secauxiliar.com.br/';
-const LOGIN_URL = '/redacaoeenem/login.html'; // manter conforme sua estrutura atual
+const LOGIN_URL = '/redacaoeenem/index.html'; // manter conforme sua estrutura atual
 const SESS_KEY = 'sessao_redacao';
 
 /* Sessão */
@@ -217,17 +217,21 @@ function authHeaders(){ const t=getToken(); return t?{'Authorization':'Bearer '+
 function redirectToLogin(){ const next=encodeURIComponent(location.pathname+location.search+location.hash); location.replace(`${LOGIN_URL}?next=${next}`); }
 
 /* Fetch helper com fallback .php */
-async function apiFetch(pathNoPhp, { method='GET', headers={}, body, cache='no-store' } = {}){
+async function apiFetch(pathNoPhp, { method='GET', headers={}, body, cache='no-store' } = {}) {
   const baseHeaders = { Accept: 'application/json', ...authHeaders(), ...headers };
-  if (body) baseHeaders['Content-Type'] = 'application/json'; // só quando precisa
+  if (body) baseHeaders['Content-Type'] = 'application/json';
   const opts = { method, cache, headers: baseHeaders, body };
 
+  // normal (sem .php)
   let res;
-  try { res = await fetch(`${API}${pathNoPhp}`, opts); } catch(e){ res = null; }
+  try { res = await fetch(`${API}${pathNoPhp}`, opts); } catch (e) { res = null; }
+
+  // se 404/erro, tenta com .php ANTES da query string
   if (!res || res.status === 404) {
-    const withPhp = pathNoPhp.endsWith('.php') ? pathNoPhp : pathNoPhp + '.php';
-    try { res = await fetch(`${API}${withPhp}`, opts); } catch(e){}
+    const withPhp = ensurePhp(pathNoPhp);   // <<< aqui a mágica
+    try { res = await fetch(`${API}${withPhp}`, opts); } catch (e) {}
   }
+
   if (!res) throw new Error('NETWORK_FAIL');
   if (res.status === 401 || res.status === 403) throw new Error('UNAUTHORIZED');
   if (!res.ok) {
@@ -235,6 +239,15 @@ async function apiFetch(pathNoPhp, { method='GET', headers={}, body, cache='no-s
     throw new Error(`API_${res.status}: ${txt || res.statusText}`);
   }
   return res.json();
+}
+
+function ensurePhp(path) {
+  if (path.includes('.php')) return path;        // já tem .php
+  const qIdx = path.indexOf('?');
+  if (qIdx === -1) return `${path}.php`;         // sem query
+  const base = path.slice(0, qIdx);
+  const qs   = path.slice(qIdx + 1);
+  return `${base}.php?${qs}`;                    // insere .php antes do ?
 }
 
 /* UI helpers */
