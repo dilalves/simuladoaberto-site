@@ -5,6 +5,12 @@
 <link rel="icon" type="image/x-icon" href="https://www.curso-objetivo.br/assets/img/favicon.ico" />
 <title>Login — Redação ENEM</title>
 <style>
+  :root{
+      --bg:#f7f8fb; --card:#ffffff; --line:#e9edf3; --ink:#0f172a; --muted:#6b7280; --primary:#0b3b78; --accent:#2563eb;
+      --aside-w: 260px;       /* largura do menu lateral */
+      --topbar-h: 64px;       /* altura do topo */
+    }
+
   body{font-family:system-ui,Arial;padding:24px;background:#f6f7fb}
   .card{max-width:420px;margin:56px auto;background:#fff;border-radius:12px;padding:24px;box-shadow:0 10px 30px rgba(0,0,0,.06)}
   input,button{width:95%;padding:12px;border-radius:8px;border:1px solid #ddd;margin-top:8px}
@@ -13,7 +19,7 @@
 </style>
 <body>
   <div class="card">
-    <h2>Redação ENEM — Acesso - x</h2>
+    <h2>Redação ENEM — Acesso</h2>
     <input id="login" placeholder="Login da unidade (ex.: 8529)" inputmode="numeric">
     <input id="senha" type="password" placeholder="Senha">
     <button id="btn">Entrar</button>
