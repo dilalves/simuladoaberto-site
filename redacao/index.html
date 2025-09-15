@@ -4,98 +4,108 @@
   <meta charset="UTF-8">
   <title>Login - Correção de Redações</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!-- Materialize CSS -->
+  <!-- Materialize -->
   <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
   <style>
-    body { background: #f7f9fc; }
-    .login-card {
-      max-width: 400px;
-      margin: 60px auto;
-      padding: 32px;
-      border-radius: 12px;
-    }
+    body { background:#f7f9fc; margin:0 }
+    header.topbar{position:fixed;top:0;left:0;right:0;height:64px;background:#0b3b78;color:#fff;display:flex;align-items:center;padding:0 24px;box-shadow:0 2px 8px rgba(0,0,0,.12)}
+    .page{max-width:420px;margin: calc(64px + 40px) auto 0; padding: 0 16px;}
+    .login-card{padding:24px;border-radius:12px}
   </style>
 </head>
 <body>
+  <header class="topbar"><h5>Simulado Aberto ENEM - Redação — Correção</h5></header>
 
-  <div class="card login-card z-depth-3">
-    <div class="card-content">
-      <span class="card-title center">Correção de Redações</span>
-      <div class="row">
-        <div class="input-field col s12">
-          <input id="login" type="text" required autocomplete="username">
-          <label for="login">Usuário</label>
+  <div class="page">
+    <div class="card login-card z-depth-2">
+      <div class="card-content">
+        <span class="card-title center">Entrar</span>
+        <div class="row" style="margin-bottom:0">
+          <div class="input-field col s12">
+            <input id="email" type="email" required autocomplete="username">
+            <label for="email">E-mail</label>
+          </div>
+          <div class="input-field col s12">
+            <input id="senha" type="password" required autocomplete="current-password">
+            <label for="senha">Senha</label>
+          </div>
         </div>
-        <div class="input-field col s12">
-          <input id="senha" type="password" required autocomplete="current-password">
-          <label for="senha">Senha</label>
+        <div class="center">
+          <button id="btnEntrar" class="btn blue waves-effect">Entrar</button>
         </div>
-      </div>
-      <div class="center">
-        <!-- antes: <a id="btnEntrar" class="btn blue waves-effect">Entrar</a> -->
-        <button id="btnEntrar" class="btn blue waves-effect">Entrar</button>
+        <p id="msg" class="grey-text center" style="margin-top:12px"></p>
       </div>
     </div>
   </div>
 
-  <!-- Materialize JS -->
- <script>
+<script>
+const API = 'https://api.secauxiliar.com.br';           // Hostinger (PHP)
+const SESS_KEY = 'sessao_redacao';                      // mesma chave das outras telas
+
+function setSession(obj){ localStorage.setItem(SESS_KEY, JSON.stringify(obj)); }
+
 document.addEventListener('DOMContentLoaded', () => {
   if (window.M && M.updateTextFields) M.updateTextFields();
 
-  const GAS_BASE = 'https://script.google.com/macros/s/AKfycbwwVf2cI1AgvUF6LgV9LYPhM1jNDFSQNdoB3YrzRCHXJBV-S-XEcC5iKVWV8_egNouq/exec';
+  // Se já logado, pula pra app
+  try {
+    const s = JSON.parse(localStorage.getItem(SESS_KEY)||'{}');
+    if (s && s.token) location.href = './app.html';
+  } catch (_) {}
+
   const btn = document.getElementById('btnEntrar');
-
-  async function doLogin(){
-    const login = document.getElementById('login').value.trim();
-    const senha = document.getElementById('senha').value.trim();
-    if (!login || !senha) { M.toast({html:'Preencha login e senha!'}); return; }
-
-    btn.classList.add('disabled');
-
-    // JSONP: cria callback global e injeta <script>
-    const cb = 'loginCb_' + Date.now();
-    window[cb] = (j) => {
-      try {
-        if (!j || !j.ok) {
-          M.toast({html: j?.error ? `Erro: ${j.error}` : 'Login inválido'});
-          btn.classList.remove('disabled');
-          return;
-        }
-        localStorage.setItem('tok_corr', j.token);
-        localStorage.setItem('nome_corr', j.nome);
-        localStorage.setItem('cod_corr', j.codUnidade);
-        location.href = './app.html';
-      } finally {
-        // limpeza
-        delete window[cb];
-        if (scr && scr.parentNode) scr.parentNode.removeChild(scr);
-      }
-    };
-
-    const url = `${GAS_BASE}?action=login`
-              + `&login=${encodeURIComponent(login)}`
-              + `&senha=${encodeURIComponent(senha)}`
-              + `&callback=${cb}`
-              + `&t=${Date.now()}`;
-
-    const scr = document.createElement('script');
-    scr.src = url;
-    scr.onerror = () => { M.toast({html:'Erro de conexão'}); btn.classList.remove('disabled'); };
-    document.body.appendChild(scr);
-  }
-
-  btn.addEventListener('click', (e)=>{ e.preventDefault(); doLogin(); });
-  ['login','senha'].forEach(id => {
-    document.getElementById(id).addEventListener('keydown', ev => {
-      if (ev.key === 'Enter') { ev.preventDefault(); doLogin(); }
+  btn.addEventListener('click', (e)=>{ e.preventDefault(); doLogin(btn); });
+  ['email','senha'].forEach(id=>{
+    document.getElementById(id).addEventListener('keydown', ev=>{
+      if (ev.key==='Enter'){ ev.preventDefault(); doLogin(btn); }
     });
   });
 });
+
+async function doLogin(btn){
+  const email = document.getElementById('email').value.trim().toLowerCase();
+  const senha = document.getElementById('senha').value;
+
+  const msgEl = document.getElementById('msg');
+  msgEl.textContent = '';
+  if (!email || !senha){
+    M.toast({html:'Preencha e-mail e senha!'}); return;
+  }
+
+  btn.classList.add('disabled');
+
+  try{
+    const res = await fetch(API + '/auth_login.php', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ email, senha })
+    });
+    const data = await res.json().catch(()=> ({}));
+
+    if (!res.ok || !data.ok){
+      const map = { credenciais_invalidas: 'E-mail ou senha inválidos.' };
+      msgEl.textContent = map[data.error] || 'Falha ao entrar.';
+      btn.classList.remove('disabled');
+      return;
+    }
+
+    // Sessão "oficial" (usada nas telas novas)
+    const sess = { token: data.token, usuario: data.usuario, unidade: data.unidade };
+    setSession(sess);
+
+    // Compatibilidade com código antigo (se você ainda usa essas chaves)
+    localStorage.setItem('tok_corr', data.token);
+    localStorage.setItem('nome_corr', data.usuario?.nome || '');
+    localStorage.setItem('cod_corr',  data.unidade?.codigo || '');
+
+    location.href = './app.html';
+  } catch(err){
+    console.error(err);
+    msgEl.textContent = 'Erro de rede.';
+    btn.classList.remove('disabled');
+  }
+}
 </script>
-
-
 </body>
 </html>
-
