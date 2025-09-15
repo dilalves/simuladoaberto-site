@@ -76,7 +76,7 @@ async function doLogin(btn){
   btn.classList.add('disabled');
 
   try{
-    const res = await fetch(API + '/auth_login.php', {
+    const res = await fetch(API + '/auth_login_prof.php', {
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body: JSON.stringify({ email, senha })
