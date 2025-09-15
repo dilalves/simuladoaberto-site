@@ -185,6 +185,20 @@
   </div>
 
 <script>
+
+(function(){
+  function applyTopHeights(){
+    const top = document.querySelector('header.topbar');
+    const sub = document.querySelector('.subbar, #subbar');
+    const topH = top ? top.offsetHeight : 64;
+    const subH = sub ? sub.offsetHeight : 0;
+    document.documentElement.style.setProperty('--topbar-h', topH + 'px');
+    document.documentElement.style.setProperty('--subbar-h', subH + 'px');
+  }
+  window.addEventListener('load', applyTopHeights);
+  window.addEventListener('resize', applyTopHeights);
+})();
+
 /* ===== CONFIG/API ===== */
 const API = 'https://api.secauxiliar.com.br/';
 const LOGIN_URL = '/redacaoeenem/login.html'; // manter conforme sua estrutura atual
