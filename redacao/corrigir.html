@@ -88,34 +88,44 @@
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+  
   <script>
   document.addEventListener('DOMContentLoaded', () => {
-    const GAS_BASE = 'https://script.google.com/macros/s/AKfycbwwVf2cI1AgvUF6LgV9LYPhM1jNDFSQNdoB3YrzRCHXJBV-S-XEcC5iKVWV8_egNouq/exec';
+    const API = 'https://api.secauxiliar.com.br';
+    const SESS_KEY = 'sessao_redacao';
 
-    const tok  = localStorage.getItem('tok_corr');
-    const nome = localStorage.getItem('nome_corr');
-    if (!tok) { location.href = './'; return; }
-    document.getElementById('userLabel').textContent = nome || '';
-    document.getElementById('btnSair').onclick = () => { localStorage.clear(); location.href = './'; };
+    // sessão/token
+    function sess(){ try { return JSON.parse(localStorage.getItem(SESS_KEY)||'{}'); } catch(_){ return {}; } }
+    function authHeaders(){
+      const t = (sess().token) || localStorage.getItem('tok_corr') || '';
+      return t ? {'Authorization':'Bearer '+t, 'Content-Type':'application/json'} : {'Content-Type':'application/json'};
+    }
+    function logout(){
+      localStorage.removeItem(SESS_KEY);
+      localStorage.removeItem('tok_corr');
+      localStorage.removeItem('nome_corr');
+      localStorage.removeItem('cod_corr');
+      location.href = './';
+    }
+
+    const nome = (sess().usuario && sess().usuario.nome) || localStorage.getItem('nome_corr') || '';
+    if (!((sess() && sess().token) || localStorage.getItem('tok_corr'))) { location.href='./'; return; }
+    userLabel.textContent = nome;
+    btnSair.onclick = logout;
 
     const params = new URLSearchParams(location.search);
     const id = params.get('id');
-    if (!id || id === 'undefined' || id === 'null') {
-      M.toast({html:'ID inválido'});
-      location.href = './pendentes.html';
-      return;
-    }
+    if (!id) { M.toast({html:'ID inválido'}); location.href='./pendentes.html'; return; }
 
+    const idLabel = document.getElementById('idLabel');
+    const insc    = document.getElementById('insc');
+    const status  = document.getElementById('status');
+    const viewer  = document.getElementById('viewer');
+    const vloading= document.getElementById('vloading');
 
-    const idLabel    = document.getElementById('idLabel');
-    const insc       = document.getElementById('insc');
-    const status     = document.getElementById('status');
-    const viewer     = document.getElementById('viewer');
     const btnIniciar = document.getElementById('btnIniciar');
     const btnSalvar  = document.getElementById('btnSalvar');
     const obs        = document.getElementById('obs');
-
-    // Competências
     const c1 = document.getElementById('c1');
     const c2 = document.getElementById('c2');
     const c3 = document.getElementById('c3');
@@ -133,93 +143,107 @@
 
     idLabel.textContent = id;
 
-    function jsonp(action, qs, cb){
-      const name = 'cb_'+action+'_'+Date.now();
-      let scr;
-      window[name] = (j)=>{ try{ cb(j); } finally{ delete window[name]; if (scr) scr.remove(); } };
-      scr = document.createElement('script');
-      scr.src = `${GAS_BASE}?action=${action}&token=${encodeURIComponent(tok)}&callback=${name}&${qs}&t=${Date.now()}`;
-      scr.onerror = ()=> M.toast({html:'Erro de conexão'});
-      document.body.appendChild(scr);
-    }
+    // esconde overlay quando o iframe carregar
+    viewer.addEventListener('load', ()=> vloading.classList.add('hide'));
 
     // carrega dados do item
-    jsonp('item', 'id='+encodeURIComponent(id), (j)=>{
-      if (!j || !j.ok) { M.toast({html: j?.error || 'Não encontrado'}); return; }
-      insc.textContent = j.inscricao || '';
-      status.textContent = j.status || '';
-      
-      // mostra o spinner e carrega o arquivo
-      vloading.classList.remove('hide');
-      
-      
-      viewer.src = `${GAS_BASE}?action=file&token=${encodeURIComponent(tok)}&id=${encodeURIComponent(id)}`;
-      //viewer.src = j.link || '';
-      if (j.status === 'EM TRATAMENTO') {
-        btnSalvar.classList.remove('disabled');
-        btnIniciar.classList.add('disabled');
-      }
-    });
+    (async function loadItem(){
+      try{
+        vloading.classList.remove('hide');
+        const res = await fetch(`${API}/correcoes_item.php?id=${encodeURIComponent(id)}`, { headers: { ...authHeaders() }});
+        if (res.status === 401 || res.status === 403) { logout(); return; }
+        const j = await res.json();
+        if (!res.ok || !j.ok) throw new Error(j?.error || `HTTP_${res.status}`);
 
-    btnIniciar.onclick = ()=>{
-      jsonp('lock', 'id='+encodeURIComponent(id), (j)=>{
-        if (!j || !j.ok) { M.toast({html: j?.error || 'Falha ao iniciar'}); return; }
-        status.textContent = j.status;
+        insc.textContent   = j.inscricao || '';
+        status.textContent = j.status || 'Pendente';
+
+        // define a página de visualização (servida pelo seu domínio)
+        viewer.src = `${API}/arquivo_view.php?id=${encodeURIComponent(id)}`;
+
+        // se já estiver em tratamento para este corretor, libera salvar
+        if (j.status === 'EM TRATAMENTO' || j.status === 'Em tratamento') {
+          btnSalvar.classList.remove('disabled');
+          btnIniciar.classList.add('disabled');
+        }
+
+        // se já existir correção (abrindo para reconsulta), você pode preencher campos:
+        if (j.correcoes) {
+          const { c1:vc1=0, c2:vc2=0, c3:vc3=0, c4:vc4=0, c5:vc5=0, obs:vo='' } = j.correcoes;
+          c1.value=vc1; c2.value=vc2; c3.value=vc3; c4.value=vc4; c5.value=vc5; obs.value=vo;
+          soma();
+          if (window.M && M.updateTextFields) M.updateTextFields();
+        }
+      }catch(e){
+        console.error(e);
+        M.toast({html: e.message || 'Falha ao carregar item'});
+      }
+    })();
+
+    // iniciar (lock)
+    btnIniciar.onclick = async () => {
+      try{
+        const res = await fetch(`${API}/correcoes_lock.php`, {
+          method:'POST', headers:{ ...authHeaders() },
+          body: JSON.stringify({ id })
+        });
+        if (res.status === 401 || res.status === 403) { logout(); return; }
+        const j = await res.json();
+        if (!res.ok || !j.ok) throw new Error(j?.error || 'Falha ao iniciar');
+
+        status.textContent = j.status || 'Em tratamento';
         btnSalvar.classList.remove('disabled');
         btnIniciar.classList.add('disabled');
         M.toast({html:'Em tratamento'});
-      });
+      }catch(e){
+        M.toast({html: e.message || 'Falha ao iniciar'});
+      }
     };
 
-    btnSalvar.onclick = ()=>{
+    // salvar (finalizar)
+    btnSalvar.onclick = async () => {
       if (btnSalvar.classList.contains('disabled')) return;
       const vals = [c1,c2,c3,c4,c5].map(el=>Number(el.value||0));
       const ok = vals.every(v => v>=0 && v<=200 && v%40===0);
       if (!ok) { M.toast({html:'Cada competência deve ser 0, 40, 80, 120, 160 ou 200'}); return; }
-      const vObs = obs.value || '';
-      const qs = `id=${encodeURIComponent(id)}&c1=${vals[0]}&c2=${vals[1]}&c3=${vals[2]}&c4=${vals[3]}&c5=${vals[4]}&obs=${encodeURIComponent(vObs)}`;
-      jsonp('submit', qs, (j)=>{
-        if (!j || !j.ok) { M.toast({html: j?.error || 'Falha ao salvar'}); return; }
+
+      try{
+        btnSalvar.classList.add('disabled');
+        const res = await fetch(`${API}/correcoes_submit.php`, {
+          method:'POST', headers:{ ...authHeaders() },
+          body: JSON.stringify({ id, c1:vals[0], c2:vals[1], c3:vals[2], c4:vals[3], c5:vals[4], obs: obs.value || '' })
+        });
+        if (res.status === 401 || res.status === 403) { logout(); return; }
+        const j = await res.json();
+        if (!res.ok || !j.ok) throw new Error(j?.error || 'Falha ao salvar');
+
         M.toast({html:`Correção salva! Total ${j.total}`});
         setTimeout(()=> location.href='./pendentes.html', 600);
-      });
+      }catch(e){
+        M.toast({html: e.message || 'Falha ao salvar'});
+        btnSalvar.classList.remove('disabled');
+      }
     };
-    
-    // atalhos de teclado (depois de declarar c1..c5, soma(), btnSalvar etc.)
+
+    // atalhos
     const comps = [c1, c2, c3, c4, c5];
-    
-    // ↑ / ↓ ajusta em passos de 40 pontos
     comps.forEach(el => {
       el.addEventListener('keydown', (e) => {
         const cur = Number(el.value || 0);
-        if (e.key === 'ArrowUp') {
-          e.preventDefault();
-          el.value = Math.min(200, cur + 40);
-          soma();
-        }
-        if (e.key === 'ArrowDown') {
-          e.preventDefault();
-          el.value = Math.max(0, cur - 40);
-          soma();
-        }
+        if (e.key === 'ArrowUp')  { e.preventDefault(); el.value = Math.min(200, cur + 40); soma(); }
+        if (e.key === 'ArrowDown'){ e.preventDefault(); el.value = Math.max(0,   cur - 40); soma(); }
       });
     });
-    
-    // Ctrl+S salva
     window.addEventListener('keydown', (e) => {
       if (e.ctrlKey && (e.key === 's' || e.key === 'S')) {
         e.preventDefault();
         if (!btnSalvar.classList.contains('disabled')) btnSalvar.click();
       }
-    });  
+    });
   });
-
-  const vloading = document.getElementById('vloading');
-  
-  // some o overlay quando o iframe terminar de carregar
-  viewer.addEventListener('load', ()=> vloading.classList.add('hide'));
-
-    
   </script>
+
+  
+
 </body>
 </html>
