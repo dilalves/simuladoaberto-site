@@ -40,8 +40,12 @@
       height: calc(100vh - var(--topbar-h)); overflow: auto; align-self: start; z-index: 6;
     }
 
-    /* Conteúdo principal (empurrado abaixo do topo fixo) */
-    main{ display:flex; flex-direction:column; padding-top: calc(var(--topbar-h) + 110px); }
+    /* Conteúdo principal (empurrado abaixo do topo fixo) 
+    main{ display:flex; flex-direction:column; padding-top: calc(var(--topbar-h) + 110px); }  */
+
+    main, .main {
+      padding-top: calc(var(--topbar-h, 64px) + var(--subbar-h, 0px) + 48px) !important;
+    }
 
     /* utilitários/estilo */
     .page{padding:24px}
