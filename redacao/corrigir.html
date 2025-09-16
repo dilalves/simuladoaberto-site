@@ -197,15 +197,10 @@
     function fitImage(){
       if(!naturalW || !naturalH) return;
 
-      const headerH = document.querySelector('nav')?.offsetHeight || 0;
-      const reservas = 140;
-      const availH = Math.max(360, window.innerHeight - headerH - reservas);
       const availW = viewerWrap.clientWidth;
 
-      let scale = availW / naturalW;
-      if (naturalH * scale > availH) {
-        scale = availH / naturalH;
-      }
+      // escala só pela largura disponível
+      const scale = availW / naturalW;
 
       imgEl.style.width  = Math.floor(naturalW * scale) + 'px';
       imgEl.style.height = Math.floor(naturalH * scale) + 'px';
