@@ -88,6 +88,7 @@
             </div>
             <div class="modal-footer">
               <a href="#!" id="notaSalvar" class="modal-close btn green">Salvar</a>
+              <a href="#!" id="notaExcluir" class="modal-close btn red">Excluir</a>
               <a href="#!" class="modal-close btn-flat">Cancelar</a>
             </div>
           </div>
@@ -232,6 +233,7 @@
     const pins = []; // {xPct, yPct, texto}
     let clickBuffer = null;
 
+    let editIndex = null; // índice do pin em edição
     function renderPins(){
       [...canvas.querySelectorAll('.pin')].forEach(el => el.remove());
       pins.forEach((p, idx) => {
@@ -240,10 +242,46 @@
         el.title = p.texto || `#${idx+1}`;
         el.style.left = `${p.xPct}%`;
         el.style.top  = `${p.yPct}%`;
-        el.onclick = () => M.toast({html: el.title || '(sem texto)'}); // preview simples
+        el.onclick = () => {
+          // abrir modal de edição
+          editIndex = idx;
+          notaTexto.value = p.texto;
+          if (M.updateTextFields) M.updateTextFields();
+          notaPos.textContent = `Pin #${idx+1} — ${p.xPct.toFixed(1)}% × ${p.yPct.toFixed(1)}%`;
+          M.Modal.getInstance(notaModal).open();
+        };
         canvas.appendChild(el);
       });
     }
+
+    // salvar edição / novo
+    notaSalvar.addEventListener('click', () => {
+      if (editIndex !== null) {
+        // edição
+        pins[editIndex].texto = notaTexto.value.trim();
+        M.toast({html:'Anotação atualizada'});
+      } else if (clickBuffer) {
+        // novo
+        pins.push({ ...clickBuffer, texto: notaTexto.value.trim() });
+        M.toast({html:'Anotação salva'});
+      }
+      clickBuffer = null;
+      editIndex = null;
+      renderPins();
+    });
+
+    // excluir
+    document.getElementById('notaExcluir').addEventListener('click', () => {
+      if (editIndex !== null) {
+        pins.splice(editIndex, 1);
+        renderPins();
+        M.toast({html:'Anotação removida'});
+      }
+      editIndex = null;
+      clickBuffer = null;
+    });
+
+
     function clickToPercents(evt){
       const r = imgEl.getBoundingClientRect();
       const x = evt.clientX - r.left;
