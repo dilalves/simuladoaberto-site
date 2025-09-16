@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Minhas Correções – Correção de Redações</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
+  <style>
+    body { background:#f7f9fc; }
+    .wrap { max-width:1100px; margin:24px auto; padding:0 12px; }
+    .table-wrap { overflow-x:auto; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .clearfix::after { content: ""; display: block; clear: both; }
+  </style>
+</head>
+<body>
+  <nav class="blue darken-3">
+    <div class="nav-wrapper wrap">
+      <a class="brand-logo">Correção de Redações</a>
+      <ul class="right">
+        <li><a id="userLabel"></a></li>
+        <li><a id="btnLogout">Sair</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <div class="wrap">
+    <div>
+      <a href="./app.html" class="btn grey">Voltar ao Painel</a>
+    </div>
+    <div class="clearfix"></div>
+
+    <div class="card">
+      <div class="card-content">
+        <span class="card-title">Minhas Correções <small class="grey-text" id="subinfo"></small></span>
+        <div class="input-field">
+          <input id="filtro" type="text" placeholder="Filtrar por inscrição/arquivo...">
+        </div>
+        <div class="table-wrap">
+          <table class="highlight responsive-table">
+            <thead>
+              <tr>
+                <th class="mono">Inscrição</th>
+                <th>Arquivo</th>
+                <th>Data</th>
+                <th>Status</th>
+                <th>Abrir</th>
+              </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+
+  <script>
+document.addEventListener('DOMContentLoaded', () => {
+  const API = 'https://api.secauxiliar.com.br';
+  const SESS_KEY = 'sessao_redacao';
+
+  function sess(){
+    try { return JSON.parse(localStorage.getItem(SESS_KEY)||'{}'); } catch(_){ return {}; }
+  }
+  function authHeaders(){
+    const t = (sess() && sess().token) || localStorage.getItem('tok_corr') || '';
+    return t ? {'Authorization':'Bearer '+t} : {};
+  }
+  function logout(){
+    localStorage.removeItem(SESS_KEY);
+    localStorage.removeItem('tok_corr');
+    localStorage.removeItem('nome_corr');
+    localStorage.removeItem('cod_corr');
+    location.href = './';
+  }
+
+  const s = sess();
+  const nome = (s.usuario && s.usuario.nome) || localStorage.getItem('nome_corr') || '';
+  if (!(s && s.token) && !localStorage.getItem('tok_corr')) { location.href='./'; return; }
+
+  document.getElementById('userLabel').textContent = nome;
+  document.getElementById('btnLogout').onclick = logout;
+
+  const tbody   = document.getElementById('tbody');
+  const filtro  = document.getElementById('filtro');
+  const subinfo = document.getElementById('subinfo');
+  let DATA = [];
+
+  function render(list){
+    tbody.innerHTML = '';
+    if (!list.length){
+      tbody.innerHTML = '<tr><td colspan="5" class="center-align grey-text">Nenhuma correção encontrada.</td></tr>';
+      return;
+    }
+    list.forEach(it => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="mono">${it.inscricao || ''}</td>
+        <td title="${(it.arquivo||'').replaceAll('"','&quot;')}">${(it.arquivo||'').slice(0,48)}</td>
+        <td>${it.timestamp || ''}</td>
+        <td>${it.status || ''}</td>
+        <td><a class="btn-small blue" href="./corrigir.html?id=${encodeURIComponent(it.id)}">Reabrir</a></td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  filtro.addEventListener('input', () => {
+    const q = filtro.value.trim().toLowerCase();
+    if (!q) return render(DATA);
+    const out = DATA.filter(it =>
+      String(it.inscricao||'').toLowerCase().includes(q) ||
+      String(it.arquivo||'').toLowerCase().includes(q)
+    );
+    render(out);
+  });
+
+  async function fetchCorrecoes(){
+    try{
+      const res = await fetch(`${API}/correcoes_list.php`, { headers: { ...authHeaders() }});
+      if (res.status === 401 || res.status === 403) {
+        logout(); return;
+      }
+      const j = await res.json().catch(()=> ({}));
+      if (!res.ok || !j.ok) throw new Error(j?.error || `HTTP_${res.status}`);
+      DATA = j.items || [];
+      subinfo.textContent = `Unidade ${j.codUnidade} — ${DATA.length} correção(ões)`;
+      render(DATA);
+    }catch(e){
+      console.error('correcoes_list:', e);
+      (window.M && M.toast) ? M.toast({html: e.message || 'Falha ao carregar correções'}) : alert(e.message || 'Falha ao carregar correções');
+    }
+  }
+
+  fetchCorrecoes();
+});
+</script>
+</body>
+</html>
