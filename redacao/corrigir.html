@@ -13,7 +13,7 @@
     .viewer-canvas{ position:relative; display:inline-block; } /* <- tem o tamanho da imagem */
     .viewer-img{
       display:block;
-      width:100%; height:auto;
+      width:auto; height:auto;
       max-width:100%;
       border:1px solid #e5e7eb; border-radius:10px; background:#fff;
     }
@@ -191,22 +191,31 @@
     let naturalW = 0, naturalH = 0;
     function fitImage(){
       if(!naturalW || !naturalH) return;
+
       const headerH = document.querySelector('nav')?.offsetHeight || 0;
-      const reservas = 160; // título/status/respiro
+      const reservas = 140; // título/status/respiro
       const availH = Math.max(360, window.innerHeight - headerH - reservas);
       const availW = viewerWrap.clientWidth;
 
-      const scale = Math.min(availW / naturalW, availH / naturalH);
-      const w = Math.floor(naturalW * scale);
-      const h = Math.floor(naturalH * scale);
+      // 🔑 Ajuste: forçar largura maior, mas sem passar da altura
+      const scaleW = availW / naturalW;
+      const scaleH = availH / naturalH;
+      
+      // Antes usava Math.min() → deixava muito pequena
+      // Agora vamos privilegiar a largura (scaleW), mas limitar se estourar a altura
+      let scale = scaleW;
+      if (naturalH * scale > availH) {
+        scale = scaleH; // reduz só se passar da tela
+      }
 
-      imgEl.style.width  = w + 'px';
-      imgEl.style.height = h + 'px';
+      imgEl.style.width  = Math.floor(naturalW * scale) + 'px';
+      imgEl.style.height = Math.floor(naturalH * scale) + 'px';
 
-      // canvas acompanha a imagem (pins ficam na posição)
-      canvas.style.width  = w + 'px';
-      canvas.style.height = h + 'px';
+      // centralizar
+      imgEl.style.display = 'block';
+      imgEl.style.margin  = '0 auto';
     }
+
     window.addEventListener('resize', () => { fitImage(); renderPins(); });
 
     imgEl.onload = () => {
