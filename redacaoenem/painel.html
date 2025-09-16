@@ -96,10 +96,16 @@
   <main>
     <header class="topbar">
       <div class="topbar blue darken-3 white-text">
-        <div class="container">
+        <div class="container" style="display:flex; align-items:center; justify-content:space-between">
           <h5 class="m-0">
             Redação Online – <span id="unitLabel">—</span>
           </h5>
+          <div style="display:flex; gap:8px; align-items:center">
+            <span id="userName" class="hide-on-small-only" style="opacity:.9"></span>
+            <a id="btnLogout" class="btn waves-effect waves-light red darken-1" href="#!" onclick="logout()">
+              <i class="material-icons left">exit_to_app</i>Sair
+            </a>
+          </div>
         </div>
       </div>
     </header>
@@ -332,6 +338,23 @@ document.addEventListener('click', (ev) => {
     if (trg) { ev.preventDefault(); ev.stopPropagation(); }
   }
 });
+
+function wipeSession(){
+  try {
+    localStorage.removeItem(SESS_KEY);
+    localStorage.removeItem('token');        // compat
+    // limpa caches do navegador (se houver)
+    if (window.caches && caches.keys) {
+      caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
+    }
+  } catch(_) {}
+}
+
+function logout(){
+  wipeSession();
+  // volta para a tela de login
+  location.replace('/redacaoenem/index.html');
+}
 </script>
 
 
