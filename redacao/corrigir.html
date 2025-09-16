@@ -11,13 +11,18 @@
 
     .viewer-wrap{ position:relative; }
     .viewer-canvas{ position:relative; display:inline-block; } /* <- tem o tamanho da imagem */
-    .viewer-img{
-      display:block;
-      width:auto; height:auto;
-      max-width:100%;
-      border:1px solid #e5e7eb; border-radius:10px; background:#fff;
-    }
-    .viewer-img.fill-screen{ max-height:80vh; object-fit:contain; }
+    .viewer-img {
+        display:block;
+        border:1px solid #e5e7eb;
+        border-radius:10px;
+        background:#fff;
+        margin:0 auto;             /* centraliza */
+      }
+    .viewer-img.fill-screen {
+        max-width:100%;
+        max-height:none;            /* remove limite */
+        object-fit:contain;         /* garante proporção */
+      }
 
     .vloading{
       position:absolute; inset:0;
@@ -193,27 +198,17 @@
       if(!naturalW || !naturalH) return;
 
       const headerH = document.querySelector('nav')?.offsetHeight || 0;
-      const reservas = 140; // título/status/respiro
+      const reservas = 140;
       const availH = Math.max(360, window.innerHeight - headerH - reservas);
       const availW = viewerWrap.clientWidth;
 
-      // 🔑 Ajuste: forçar largura maior, mas sem passar da altura
-      const scaleW = availW / naturalW;
-      const scaleH = availH / naturalH;
-      
-      // Antes usava Math.min() → deixava muito pequena
-      // Agora vamos privilegiar a largura (scaleW), mas limitar se estourar a altura
-      let scale = scaleW;
+      let scale = availW / naturalW;
       if (naturalH * scale > availH) {
-        scale = scaleH; // reduz só se passar da tela
+        scale = availH / naturalH;
       }
 
       imgEl.style.width  = Math.floor(naturalW * scale) + 'px';
       imgEl.style.height = Math.floor(naturalH * scale) + 'px';
-
-      // centralizar
-      imgEl.style.display = 'block';
-      imgEl.style.margin  = '0 auto';
     }
 
     window.addEventListener('resize', () => { fitImage(); renderPins(); });
