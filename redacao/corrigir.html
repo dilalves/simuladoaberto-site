@@ -1,16 +1,24 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Corrigir redação</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet" />
   <style>
     body { background:#f7f9fc; }
-    .wrap { max-width: 1280px; margin:24px auto; padding:0 12px; }
+    .wrap { max-width:1280px; margin:24px auto; padding:0 12px; }
 
-    .viewer { width:100%; height:70vh; border:1px solid #e5e7eb; border-radius:10px; background:#fff; }
-    
+    .viewer-wrap{ position:relative; }
+    .viewer-img{
+      display:block;
+      width:auto; height:auto;
+      max-width:100%;
+      border:1px solid #e5e7eb; border-radius:10px; background:#fff;
+    }
+    /* ocupa boa parte da tela sem barras internas */
+    .viewer-img.fill-screen{ max-height:80vh; object-fit:contain; }
+
     .vloading{
       position:absolute; inset:0;
       display:flex; flex-direction:column; align-items:center; justify-content:center;
@@ -18,21 +26,12 @@
     }
     .vloading.hide{ display:none; }
 
-    .viewer-img{
-      width: 100%;
-      height: auto;
-      display: block;
-      border: 1px solid #e5e7eb;
-      border-radius: 10px;
-      background: #fff;
-      max-height: 85vh;       /* deixa maior que antes (70vh) */
-      object-fit: contain;    /* mantém proporção e evita barras internas */
-    }
-
-    /* opcional: se quiser ver TUDO sem scroll interno, cabendo na tela
-      (a página rola; a imagem “se contém” na janela) */
-    @media (min-height:0px){
-      .viewer-img{ max-height:80vh; object-fit:contain; }
+    /* pinos das anotações */
+    .pin{
+      position:absolute; width:14px; height:14px;
+      border-radius:50%; border:2px solid #fff; background:#e53935;
+      box-shadow:0 1px 4px rgba(0,0,0,.3);
+      transform:translate(-50%,-50%); cursor:pointer;
     }
   </style>
 </head>
@@ -57,41 +56,39 @@
       </div>
 
       <div class="card-content">
-        <div id="vwrap" style="position:relative">
+        <div id="viewerWrap" class="viewer-wrap">
           <div id="vloading" class="vloading">
             <div class="progress" style="width:240px; max-width:80%"><div class="indeterminate"></div></div>
             <div class="grey-text text-darken-1" style="margin-top:8px">Carregando redação…</div>
           </div>
-
-          <!-- ERA <iframe id="viewer" ...></iframe> -->
-          <img id="viewer" class="viewer-img" alt="Redação" referrerpolicy="no-referrer" decoding="async">
+          <img id="viewer" class="viewer-img fill-screen" alt="Redação" referrerpolicy="no-referrer" decoding="async" />
         </div>
       </div>
 
       <div class="card-content">
         <div class="row">
           <div class="input-field col s6 m2">
-            <input id="c1" type="number" min="0" max="200" step="40" value="0">
+            <input id="c1" type="number" min="0" max="200" step="40" value="0" />
             <label for="c1">C1 (0–200)</label>
           </div>
           <div class="input-field col s6 m2">
-            <input id="c2" type="number" min="0" max="200" step="40" value="0">
+            <input id="c2" type="number" min="0" max="200" step="40" value="0" />
             <label for="c2">C2 (0–200)</label>
           </div>
           <div class="input-field col s6 m2">
-            <input id="c3" type="number" min="0" max="200" step="40" value="0">
+            <input id="c3" type="number" min="0" max="200" step="40" value="0" />
             <label for="c3">C3 (0–200)</label>
           </div>
           <div class="input-field col s6 m2">
-            <input id="c4" type="number" min="0" max="200" step="40" value="0">
+            <input id="c4" type="number" min="0" max="200" step="40" value="0" />
             <label for="c4">C4 (0–200)</label>
           </div>
           <div class="input-field col s6 m2">
-            <input id="c5" type="number" min="0" max="200" step="40" value="0">
+            <input id="c5" type="number" min="0" max="200" step="40" value="0" />
             <label for="c5">C5 (0–200)</label>
           </div>
           <div class="input-field col s12 m2">
-            <input id="total" type="number" readonly value="0">
+            <input id="total" type="number" readonly value="0" />
             <label for="total" class="active">Total</label>
           </div>
           <div class="input-field col s12">
@@ -105,6 +102,22 @@
         </div>
       </div>
     </div>
+
+    <!-- Modal de anotação -->
+    <div id="notaModal" class="modal">
+      <div class="modal-content">
+        <h5>Anotação</h5>
+        <p class="grey-text text-darken-1" id="notaPos"></p>
+        <div class="input-field">
+          <textarea id="notaTexto" class="materialize-textarea" rows="3" placeholder="Escreva a observação…"></textarea>
+          <label for="notaTexto">Observação</label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <a href="#!" id="notaSalvar" class="modal-close btn green">Salvar</a>
+        <a href="#!" class="modal-close btn-flat">Cancelar</a>
+      </div>
+    </div>
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
@@ -114,10 +127,28 @@
     const API = 'https://api.secauxiliar.com.br';
     const SESS_KEY = 'sessao_redacao';
 
+    // ------- elementos -------
     const userLabel = document.getElementById('userLabel');
     const btnSair   = document.getElementById('btnSair');
+    const idLabel   = document.getElementById('idLabel');
+    const insc      = document.getElementById('insc');
+    const statusEl  = document.getElementById('status');
 
-    // sessão/token
+    const viewerWrap= document.getElementById('viewerWrap');
+    const vloading  = document.getElementById('vloading');
+    const imgEl     = document.getElementById('viewer');
+
+    const btnIniciar= document.getElementById('btnIniciar');
+    const btnSalvar = document.getElementById('btnSalvar');
+    const obs       = document.getElementById('obs');
+    const c1 = document.getElementById('c1');
+    const c2 = document.getElementById('c2');
+    const c3 = document.getElementById('c3');
+    const c4 = document.getElementById('c4');
+    const c5 = document.getElementById('c5');
+    const total     = document.getElementById('total');
+
+    // ------- sessão/token -------
     function sess(){ try { return JSON.parse(localStorage.getItem(SESS_KEY)||'{}'); } catch(_){ return {}; } }
     function authHeaders(){
       const t = (sess().token) || localStorage.getItem('tok_corr') || '';
@@ -139,45 +170,96 @@
     const params = new URLSearchParams(location.search);
     const id = params.get('id') || params.get('rid');
     if (!id) { M.toast({html:'ID inválido'}); location.href='./pendentes.html'; return; }
+    idLabel.textContent = id;
 
-    // refs
-    const idLabel = document.getElementById('idLabel');
-    const insc    = document.getElementById('insc');
-    const status  = document.getElementById('status');
-    const imgEl   = document.getElementById('viewer');
-    const vloading= document.getElementById('vloading');  
-
-    const btnIniciar = document.getElementById('btnIniciar');
-    const btnSalvar  = document.getElementById('btnSalvar');
-    const obs        = document.getElementById('obs');
-    const c1 = document.getElementById('c1');
-    const c2 = document.getElementById('c2');
-    const c3 = document.getElementById('c3');
-    const c4 = document.getElementById('c4');
-    const c5 = document.getElementById('c5');
-    const total = document.getElementById('total');
-
-    // soma e mantém label ativa
+    // ------- soma / total -------
     function soma(){
       const v = [c1,c2,c3,c4,c5].map(el => Number(el.value||0));
       total.value = v.reduce((a,b)=>a+b,0);
       if (window.M && M.updateTextFields) M.updateTextFields();
     }
-    [c1,c2,c3,c4,c5].forEach(el => el.addEventListener('input', soma));
+    ;[c1,c2,c3,c4,c5].forEach(el => el.addEventListener('input', soma));
     soma();
 
-    idLabel.textContent = id;
+    // ------- dimensionamento proporcional -------
+    let naturalW = 0, naturalH = 0;
+    function fitImage(){
+      if(!naturalW || !naturalH) return;
+      const headerH = document.querySelector('nav')?.offsetHeight || 0;
+      const reservas = 160; // título/status/respiro
+      const availH = Math.max(360, window.innerHeight - headerH - reservas);
+      const availW = viewerWrap.clientWidth;
 
-    // handlers de imagem
-      imgEl.onload  = () => vloading.classList.add('hide');
-      imgEl.onerror = () => {
-        vloading.classList.add('hide');
-        if (window.M) M.toast({html:'Falha ao carregar imagem'});
+      const scale = Math.min(availW / naturalW, availH / naturalH);
+      imgEl.style.width  = Math.floor(naturalW * scale) + 'px';
+      imgEl.style.height = Math.floor(naturalH * scale) + 'px';
+    }
+    window.addEventListener('resize', fitImage);
+
+    imgEl.onload = () => {
+      naturalW = imgEl.naturalWidth;
+      naturalH = imgEl.naturalHeight;
+      fitImage();
+      vloading.classList.add('hide');
+    };
+    imgEl.onerror = () => {
+      vloading.classList.add('hide');
+      M.toast({html:'Falha ao carregar imagem'});
+    };
+
+    // ------- anotações (pinos) -------
+    const notaModal  = document.getElementById('notaModal');
+    const notaTexto  = document.getElementById('notaTexto');
+    const notaPos    = document.getElementById('notaPos');
+    const notaSalvar = document.getElementById('notaSalvar');
+    M.Modal.init(notaModal);
+    const pins = []; // {xPct, yPct, texto}
+    let clickBuffer = null;
+
+    function renderPins(){
+      [...viewerWrap.querySelectorAll('.pin')].forEach(el => el.remove());
+      pins.forEach((p, i) => {
+        const el = document.createElement('div');
+        el.className = 'pin';
+        el.title = p.texto || `#${i+1}`;
+        const left = (p.xPct/100) * imgEl.clientWidth;
+        const top  = (p.yPct/100) * imgEl.clientHeight;
+        el.style.left = (imgEl.offsetLeft + left) + 'px';
+        el.style.top  = (imgEl.offsetTop  + top)  + 'px';
+        el.onclick = () => M.toast({html: el.title || '(sem texto)'});
+        viewerWrap.appendChild(el);
+      });
+    }
+    function clickToPercents(evt){
+      const r = imgEl.getBoundingClientRect();
+      const x = evt.clientX - r.left, y = evt.clientY - r.top;
+      return {
+        xPct: Math.max(0, Math.min(100, (x / imgEl.clientWidth)  * 100)),
+        yPct: Math.max(0, Math.min(100, (y / imgEl.clientHeight) * 100)),
       };
+    }
+    imgEl.addEventListener('click', (evt) => {
+      if (!naturalW || !naturalH) return;
+      clickBuffer = clickToPercents(evt);
+      notaTexto.value = '';
+      if (M.updateTextFields) M.updateTextFields();
+      notaPos.textContent = `Posição: ${clickBuffer.xPct.toFixed(1)}% × ${clickBuffer.yPct.toFixed(1)}%`;
+      M.Modal.getInstance(notaModal).open();
+    });
+    notaSalvar.addEventListener('click', () => {
+      if (!clickBuffer) return;
+      pins.push({ ...clickBuffer, texto: (notaTexto.value || '').trim() });
+      clickBuffer = null;
+      renderPins();
+      // Ex.: enviar para o backend:
+      // fetch(`${API}/correcoes_notas_save.php`, { method:'POST', headers:{...authHeaders()}, body: JSON.stringify({ id, notas: pins }) });
+      M.toast({html:'Anotação salva'});
+    });
+    // re-render quando redimensionar
+    const _origFit = fitImage;
+    fitImage = function(){ _origFit(); renderPins(); };
 
-
-
-    // carrega dados do item
+    // ------- carregar item -------
     (async function loadItem(){
       try{
         vloading.classList.remove('hide');
@@ -187,24 +269,19 @@
         if (!res.ok || !j.ok) throw new Error(j?.error || `HTTP_${res.status}`);
 
         insc.textContent   = j.inscricao || '';
-        status.textContent = j.status || 'Pendente';
+        statusEl.textContent = j.status || 'Pendente';
 
-        // Renderiza a imagem do Drive dentro do iframe (com fallback)
-        // carrega dados do item (…)
         if (j.link) {
-          const viewerUrl = `${API}/arquivo_proxy.php?id=${encodeURIComponent(j.id)}&v=${Date.now()}`;
-          imgEl.src = viewerUrl;
+          imgEl.src = `${API}/arquivo_proxy.php?id=${encodeURIComponent(j.id)}&v=${Date.now()}`;
         } else {
           imgEl.src = `${API}/arquivo_view.php?id=${encodeURIComponent(j.id)}&v=${Date.now()}`;
         }
 
-        // libera salvar se já estiver em tratamento
         if ((j.status||'').toLowerCase().includes('tratamento')) {
           btnSalvar.classList.remove('disabled');
           btnIniciar.classList.add('disabled');
         }
 
-        // preenche notas se vierem do backend
         if (j.correcoes) {
           const { c1:vc1=0, c2:vc2=0, c3:vc3=0, c4:vc4=0, c5:vc5=0 } = j.correcoes;
           c1.value=vc1; c2.value=vc2; c3.value=vc3; c4.value=vc4; c5.value=vc5;
@@ -217,18 +294,17 @@
       }
     })();
 
-    // iniciar (lock)
+    // ------- iniciar (lock) -------
     btnIniciar.onclick = async () => {
       try{
         const res = await fetch(`${API}/correcoes_lock.php`, {
-          method:'POST', headers:{ ...authHeaders() },
-          body: JSON.stringify({ id })
+          method:'POST', headers:{ ...authHeaders() }, body: JSON.stringify({ id })
         });
         if (res.status === 401 || res.status === 403) { logout(); return; }
         const j = await res.json();
         if (!res.ok || !j.ok) throw new Error(j?.error || 'Falha ao iniciar');
 
-        status.textContent = j.status || 'Em tratamento';
+        statusEl.textContent = j.status || 'Em tratamento';
         btnSalvar.classList.remove('disabled');
         btnIniciar.classList.add('disabled');
         M.toast({html:'Em tratamento'});
@@ -237,10 +313,9 @@
       }
     };
 
-    // salvar (finalizar)
+    // ------- salvar (finalizar) -------
     btnSalvar.onclick = async () => {
       if (btnSalvar.classList.contains('disabled')) return;
-
       const vals = [c1,c2,c3,c4,c5].map(el=>Number(el.value||0));
       const ok = vals.every(v => v>=0 && v<=200 && v%40===0);
       if (!ok) { M.toast({html:'Cada competência deve ser 0, 40, 80, 120, 160 ou 200'}); return; }
@@ -263,12 +338,12 @@
       }
     };
 
-    // atalhos de teclado
+    // atalhos
     [c1,c2,c3,c4,c5].forEach(el => {
       el.addEventListener('keydown', (e) => {
         const cur = Number(el.value || 0);
-        if (e.key === 'ArrowUp')  { e.preventDefault(); el.value = Math.min(200, cur + 40); soma(); }
-        if (e.key === 'ArrowDown'){ e.preventDefault(); el.value = Math.max(0,   cur - 40); soma(); }
+        if (e.key === 'ArrowUp')   { e.preventDefault(); el.value = Math.min(200, cur + 40); soma(); }
+        if (e.key === 'ArrowDown') { e.preventDefault(); el.value = Math.max(0,   cur - 40); soma(); }
       });
     });
     window.addEventListener('keydown', (e) => {
@@ -278,26 +353,6 @@
       }
     });
   });
-
-  // troca link "file/d/.../view" por "uc?export=view&id=..."
-  function toEmbeddableDriveUrl(url) {
-    if (!url) return url;
-    let m = url.match(/https?:\/\/drive\.google\.com\/file\/d\/([^/]+)/i);
-    if (m) return `https://drive.google.com/uc?export=view&id=${m[1]}`;
-    m = url.match(/https?:\/\/drive\.google\.com\/open\?id=([^&]+)/i);
-    if (m) return `https://drive.google.com/uc?export=view&id=${m[1]}`;
-    return url; // não é drive, deixa como está
-  }
-
-  // ajusta a altura máxima da imagem considerando cabeçalho e margens
-    function fitViewer() {
-      const headerH = document.querySelector('nav')?.offsetHeight || 0;
-      const reservas = 140; // espaço para título, status e respiro
-      const alvo = Math.max(360, window.innerHeight - headerH - reservas);
-      viewer.style.maxHeight = alvo + 'px';
-    }
-    window.addEventListener('resize', fitViewer);
-    fitViewer();
   </script>
 </body>
 </html>
