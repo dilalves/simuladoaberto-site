@@ -10,13 +10,13 @@
     .wrap { max-width:1280px; margin:24px auto; padding:0 12px; }
 
     .viewer-wrap{ position:relative; }
+    .viewer-canvas{ position:relative; display:inline-block; } /* <- tem o tamanho da imagem */
     .viewer-img{
       display:block;
       width:auto; height:auto;
       max-width:100%;
       border:1px solid #e5e7eb; border-radius:10px; background:#fff;
     }
-    /* ocupa boa parte da tela sem barras internas */
     .viewer-img.fill-screen{ max-height:80vh; object-fit:contain; }
 
     .vloading{
@@ -61,7 +61,28 @@
             <div class="progress" style="width:240px; max-width:80%"><div class="indeterminate"></div></div>
             <div class="grey-text text-darken-1" style="margin-top:8px">Carregando redação…</div>
           </div>
-          <img id="viewer" class="viewer-img fill-screen" alt="Redação" referrerpolicy="no-referrer" decoding="async" />
+
+          <!-- canvas = contêiner que agrupa imagem + pins (e recebe zoom) -->
+          <div id="canvas" class="viewer-canvas">
+            <img id="viewer" class="viewer-img fill-screen"
+                 alt="Redação" referrerpolicy="no-referrer" decoding="async" />
+          </div>
+
+          <!-- Modal de anotação -->
+          <div id="notaModal" class="modal">
+            <div class="modal-content">
+              <h5>Anotação</h5>
+              <p class="grey-text text-darken-1" id="notaPos"></p>
+              <div class="input-field">
+                <textarea id="notaTexto" class="materialize-textarea" rows="3" placeholder="Escreva a observação…"></textarea>
+                <label for="notaTexto">Observação</label>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <a href="#!" id="notaSalvar" class="modal-close btn green">Salvar</a>
+              <a href="#!" class="modal-close btn-flat">Cancelar</a>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -102,22 +123,6 @@
         </div>
       </div>
     </div>
-
-    <!-- Modal de anotação -->
-    <div id="notaModal" class="modal">
-      <div class="modal-content">
-        <h5>Anotação</h5>
-        <p class="grey-text text-darken-1" id="notaPos"></p>
-        <div class="input-field">
-          <textarea id="notaTexto" class="materialize-textarea" rows="3" placeholder="Escreva a observação…"></textarea>
-          <label for="notaTexto">Observação</label>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <a href="#!" id="notaSalvar" class="modal-close btn green">Salvar</a>
-        <a href="#!" class="modal-close btn-flat">Cancelar</a>
-      </div>
-    </div>
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
@@ -128,25 +133,26 @@
     const SESS_KEY = 'sessao_redacao';
 
     // ------- elementos -------
-    const userLabel = document.getElementById('userLabel');
-    const btnSair   = document.getElementById('btnSair');
-    const idLabel   = document.getElementById('idLabel');
-    const insc      = document.getElementById('insc');
-    const statusEl  = document.getElementById('status');
+    const userLabel  = document.getElementById('userLabel');
+    const btnSair    = document.getElementById('btnSair');
+    const idLabel    = document.getElementById('idLabel');
+    const insc       = document.getElementById('insc');
+    const statusEl   = document.getElementById('status');
 
-    const viewerWrap= document.getElementById('viewerWrap');
-    const vloading  = document.getElementById('vloading');
-    const imgEl     = document.getElementById('viewer');
+    const viewerWrap = document.getElementById('viewerWrap');
+    const canvas     = document.getElementById('canvas');
+    const vloading   = document.getElementById('vloading');
+    const imgEl      = document.getElementById('viewer');
 
-    const btnIniciar= document.getElementById('btnIniciar');
-    const btnSalvar = document.getElementById('btnSalvar');
-    const obs       = document.getElementById('obs');
+    const btnIniciar = document.getElementById('btnIniciar');
+    const btnSalvar  = document.getElementById('btnSalvar');
+    const obs        = document.getElementById('obs');
     const c1 = document.getElementById('c1');
     const c2 = document.getElementById('c2');
     const c3 = document.getElementById('c3');
     const c4 = document.getElementById('c4');
     const c5 = document.getElementById('c5');
-    const total     = document.getElementById('total');
+    const total      = document.getElementById('total');
 
     // ------- sessão/token -------
     function sess(){ try { return JSON.parse(localStorage.getItem(SESS_KEY)||'{}'); } catch(_){ return {}; } }
@@ -178,7 +184,7 @@
       total.value = v.reduce((a,b)=>a+b,0);
       if (window.M && M.updateTextFields) M.updateTextFields();
     }
-    ;[c1,c2,c3,c4,c5].forEach(el => el.addEventListener('input', soma));
+    [c1,c2,c3,c4,c5].forEach(el => el.addEventListener('input', soma));
     soma();
 
     // ------- dimensionamento proporcional -------
@@ -191,10 +197,17 @@
       const availW = viewerWrap.clientWidth;
 
       const scale = Math.min(availW / naturalW, availH / naturalH);
-      imgEl.style.width  = Math.floor(naturalW * scale) + 'px';
-      imgEl.style.height = Math.floor(naturalH * scale) + 'px';
+      const w = Math.floor(naturalW * scale);
+      const h = Math.floor(naturalH * scale);
+
+      imgEl.style.width  = w + 'px';
+      imgEl.style.height = h + 'px';
+
+      // canvas acompanha a imagem (pins ficam na posição)
+      canvas.style.width  = w + 'px';
+      canvas.style.height = h + 'px';
     }
-    window.addEventListener('resize', fitImage);
+    window.addEventListener('resize', () => { fitImage(); renderPins(); });
 
     imgEl.onload = () => {
       naturalW = imgEl.naturalWidth;
@@ -213,33 +226,32 @@
     const notaPos    = document.getElementById('notaPos');
     const notaSalvar = document.getElementById('notaSalvar');
     M.Modal.init(notaModal);
+
     const pins = []; // {xPct, yPct, texto}
     let clickBuffer = null;
 
     function renderPins(){
-      [...viewerWrap.querySelectorAll('.pin')].forEach(el => el.remove());
-      pins.forEach((p, i) => {
+      [...canvas.querySelectorAll('.pin')].forEach(el => el.remove());
+      pins.forEach((p, idx) => {
         const el = document.createElement('div');
         el.className = 'pin';
-        el.title = p.texto || `#${i+1}`;
-        const left = (p.xPct/100) * imgEl.clientWidth;
-        const top  = (p.yPct/100) * imgEl.clientHeight;
-        el.style.left = (imgEl.offsetLeft + left) + 'px';
-        el.style.top  = (imgEl.offsetTop  + top)  + 'px';
-        el.onclick = () => M.toast({html: el.title || '(sem texto)'});
-        viewerWrap.appendChild(el);
+        el.title = p.texto || `#${idx+1}`;
+        el.style.left = `${p.xPct}%`;
+        el.style.top  = `${p.yPct}%`;
+        el.onclick = () => M.toast({html: el.title || '(sem texto)'}); // preview simples
+        canvas.appendChild(el);
       });
     }
     function clickToPercents(evt){
       const r = imgEl.getBoundingClientRect();
-      const x = evt.clientX - r.left, y = evt.clientY - r.top;
+      const x = evt.clientX - r.left;
+      const y = evt.clientY - r.top;
       return {
         xPct: Math.max(0, Math.min(100, (x / imgEl.clientWidth)  * 100)),
         yPct: Math.max(0, Math.min(100, (y / imgEl.clientHeight) * 100)),
       };
     }
     imgEl.addEventListener('click', (evt) => {
-      if (!naturalW || !naturalH) return;
       clickBuffer = clickToPercents(evt);
       notaTexto.value = '';
       if (M.updateTextFields) M.updateTextFields();
@@ -251,13 +263,8 @@
       pins.push({ ...clickBuffer, texto: (notaTexto.value || '').trim() });
       clickBuffer = null;
       renderPins();
-      // Ex.: enviar para o backend:
-      // fetch(`${API}/correcoes_notas_save.php`, { method:'POST', headers:{...authHeaders()}, body: JSON.stringify({ id, notas: pins }) });
       M.toast({html:'Anotação salva'});
     });
-    // re-render quando redimensionar
-    const _origFit = fitImage;
-    fitImage = function(){ _origFit(); renderPins(); };
 
     // ------- carregar item -------
     (async function loadItem(){
@@ -268,7 +275,7 @@
         const j = await res.json();
         if (!res.ok || !j.ok) throw new Error(j?.error || `HTTP_${res.status}`);
 
-        insc.textContent   = j.inscricao || '';
+        insc.textContent     = j.inscricao || '';
         statusEl.textContent = j.status || 'Pendente';
 
         if (j.link) {
@@ -287,6 +294,18 @@
           c1.value=vc1; c2.value=vc2; c3.value=vc3; c4.value=vc4; c5.value=vc5;
           soma();
         }
+
+        // se backend devolver notas
+        if (Array.isArray(j.notas)) {
+          pins.length = 0;
+          j.notas.forEach(n => pins.push({
+            xPct: Number(n.xPct),
+            yPct: Number(n.yPct),
+            texto: n.texto || ''
+          }));
+          renderPins();
+        }
+
       }catch(e){
         console.error(e);
         M.toast({html: e.message || 'Falha ao carregar item'});
@@ -316,19 +335,27 @@
     // ------- salvar (finalizar) -------
     btnSalvar.onclick = async () => {
       if (btnSalvar.classList.contains('disabled')) return;
+
       const vals = [c1,c2,c3,c4,c5].map(el=>Number(el.value||0));
       const ok = vals.every(v => v>=0 && v<=200 && v%40===0);
       if (!ok) { M.toast({html:'Cada competência deve ser 0, 40, 80, 120, 160 ou 200'}); return; }
 
       try{
         btnSalvar.classList.add('disabled');
+
         const res = await fetch(`${API}/correcoes_submit.php`, {
-          method:'POST', headers:{ ...authHeaders() },
-          body: JSON.stringify({ id, c1:vals[0], c2:vals[1], c3:vals[2], c4:vals[3], c5:vals[4], obs: obs.value || '' })
+          method:'POST',
+          headers:{ ...authHeaders() },
+          body: JSON.stringify({
+            id,
+            c1:vals[0], c2:vals[1], c3:vals[2], c4:vals[3], c5:vals[4],
+            obs: (obs.value || ''),
+            notas: pins                 // << envia os pins
+          })
         });
-        if (res.status === 401 || res.status === 403) { logout(); return; }
+
         const j = await res.json();
-        if (!res.ok || !j.ok) throw new Error(j?.error || 'Falha ao salvar');
+        if (!res.ok || !j.ok) throw new Error(j?.message || j?.error || 'Falha ao salvar');
 
         M.toast({html:`Correção salva! Total ${j.total}`});
         setTimeout(()=> location.href='./pendentes.html', 600);
@@ -352,6 +379,22 @@
         if (!btnSalvar.classList.contains('disabled')) btnSalvar.click();
       }
     });
+
+    // ====== ZOOM COM SCROLL (CTRL + roda) ======
+    let zoom = 1;
+    function applyZoom(){
+      canvas.style.transform = `scale(${zoom})`;
+      canvas.style.transformOrigin = 'top center';
+      canvas.style.willChange = 'transform';
+    }
+    canvas.addEventListener('wheel', (e) => {
+      if (!e.ctrlKey) return;
+      e.preventDefault();
+      const step = (e.deltaY < 0) ? 1.1 : 0.9;
+      zoom = Math.max(0.5, Math.min(3, zoom * step));
+      applyZoom();
+    }, { passive:false });
+    canvas.addEventListener('dblclick', () => { zoom = 1; applyZoom(); });
   });
   </script>
 </body>
