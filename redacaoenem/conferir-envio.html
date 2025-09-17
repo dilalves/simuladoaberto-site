@@ -456,36 +456,40 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   //5) RECUSAR IMAGEM INUTILIZADA
-    document.getElementById('mm-recusar')?.addEventListener('click', async () => {
-    const id = Number(
-      (currentRecord && currentRecord.id) ||
-      document.getElementById('modalManual').dataset.id ||
-      0
-    );
-    if (!id) { M.toast({html: 'ID inválido'}); return; }
+    document.getElementById('mm-recusar')?.addEventListener('click', () => {
+      const id = Number(
+        (currentRecord && currentRecord.id) ||
+        document.getElementById('modalManual').dataset.id ||
+        0
+      );
+      if (!id) { M.toast({html:'ID inválido'}); return; }
 
-    try {
-      const res = await fetch('https://api.secauxiliar.com.br/recusar_imagem.php', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...authHeaders()                 // <— envia Bearer se houver
-        },
-        body: JSON.stringify({ id })
+      confirmDialog({
+        title: 'Recusar imagem?',
+        text:  'Isto marcará o registro como RECUSADO e ele não irá para correção. Deseja continuar?',
+        okText:'Sim, recusar',
+        okClass:'red darken-1',
+        onOk: async () => {
+          try {
+            const res = await fetch('https://api.secauxiliar.com.br/recusar_imagem.php', {
+              method:'POST',
+              headers:{ 'Content-Type':'application/json', ...authHeaders() },
+              body: JSON.stringify({ id })
+            });
+            const data = await res.json().catch(()=> ({}));
+            if (!res.ok || !data?.ok) throw new Error(data?.error || 'Falha');
+
+            M.toast({ html:'Imagem recusada.' });
+            M.Modal.getInstance(document.getElementById('modalManual'))?.close();
+            await load(); // recarrega a lista
+          } catch (e) {
+            console.error(e);
+            M.toast({ html:'Não foi possível recusar.' });
+          }
+        }
       });
-      const data = await res.json().catch(()=> ({}));
-      if (!res.ok || !data?.ok) throw new Error(data?.error || 'Falha');
+    });
 
-      M.toast({ html:'Imagem recusada.' });
-      M.Modal.getInstance(document.getElementById('modalManual'))?.close();
-
-      // 🔄 atualiza a lista (substitui carregarTabela?.())
-      await load();
-    } catch (e) {
-      console.error(e);
-      M.toast({ html:'Não foi possível recusar.' });
-    }
-  });
 
 });
 
@@ -511,6 +515,21 @@ function guessImageUrl(row){
   } catch (_) {
     return link;
   }
+}
+
+function confirmDialog({ title='Confirmar', text='Tem certeza?', okText='Confirmar', okClass='red', onOk }){
+  const el = document.getElementById('confirmModal');
+  document.getElementById('confirmTitle').textContent = title;
+  document.getElementById('confirmText').textContent  = text;
+
+  const okBtn = document.getElementById('confirmOk');
+  okBtn.textContent = okText;
+  okBtn.className   = 'modal-close btn ' + okClass;
+
+  const handler = () => onOk && onOk();
+  okBtn.addEventListener('click', handler, { once:true });
+
+  (M.Modal.getInstance(el) || M.Modal.init(el, {dismissible:true})).open();
 }
 
 function wipeSession(){
@@ -560,6 +579,19 @@ function logout(){
     <a href="#!" class="modal-close btn-flat">Cancelar</a>
     <a id="mm-recusar" href="#!" class="btn red darken-1 waves-effect">Recusar</a>
     <a id="mm-salvar" href="#!" class="btn blue darken-2 waves-effect">Salvar</a>
+  </div>
+</div>
+
+
+<!-- Modal de confirmação genérico -->
+<div id="confirmModal" class="modal">
+  <div class="modal-content">
+    <h6 id="confirmTitle" style="margin:0 0 8px">Confirmar ação</h6>
+    <p id="confirmText">Tem certeza?</p>
+  </div>
+  <div class="modal-footer">
+    <a href="#!" class="modal-close btn-flat">Cancelar</a>
+    <a id="confirmOk" href="#!" class="modal-close btn red">Confirmar</a>
   </div>
 </div>
 
