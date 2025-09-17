@@ -367,12 +367,17 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!a) return;
 
     // 1) capturar os dados do registro clicado
+    const tr = a.closest('tr');                       // fallback
+    const rowId = a.dataset.id || tr?.dataset.id || '';  // <— garante o id
     currentRecord = {
       id:        a.dataset.id || '',
       img:       a.dataset.img || '',           // URL direta da imagem
       nome:      a.dataset.nome || '',
       inscricao: a.dataset.inscricao || ''
     };
+
+    document.getElementById('modalManual').dataset.id = rowId;
+
 
     // 2) preencher campos do modal
     document.getElementById('mm-arquivo').textContent = currentRecord.nome || '(sem nome)';
@@ -452,27 +457,35 @@ document.addEventListener('DOMContentLoaded', () => {
 
   //5) RECUSAR IMAGEM INUTILIZADA
     document.getElementById('mm-recusar')?.addEventListener('click', async () => {
-      const id = Number(document.getElementById('modalManual').dataset.id || 0);
-      if (!id) { M.toast({html: 'ID inválido'}); return; }
+    const id = Number(
+      (currentRecord && currentRecord.id) ||
+      document.getElementById('modalManual').dataset.id ||
+      0
+    );
+    if (!id) { M.toast({html: 'ID inválido'}); return; }
 
-      try {
-        const res = await fetch('https://api.secauxiliar.com.br/recusar_imagem.php', {
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({ id })
-        });
-        const data = await res.json();
-        if (!res.ok || !data?.ok) throw new Error(data?.error || 'Falha');
+    try {
+      const res = await fetch('https://api.secauxiliar.com.br/recusar_imagem.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...authHeaders()                 // <— envia Bearer se houver
+        },
+        body: JSON.stringify({ id })
+      });
+      const data = await res.json().catch(()=> ({}));
+      if (!res.ok || !data?.ok) throw new Error(data?.error || 'Falha');
 
-        M.toast({html:'Imagem recusada.'});
-        M.Modal.getInstance(document.getElementById('modalManual'))?.close();
-        carregarTabela?.(); // atualize a lista
-      } catch (e) {
-        console.error(e);
-        M.toast({html:'Não foi possível recusar.'});
-      }
-    });
+      M.toast({ html:'Imagem recusada.' });
+      M.Modal.getInstance(document.getElementById('modalManual'))?.close();
 
+      // 🔄 atualiza a lista (substitui carregarTabela?.())
+      await load();
+    } catch (e) {
+      console.error(e);
+      M.toast({ html:'Não foi possível recusar.' });
+    }
+  });
 
 });
 
@@ -500,6 +513,23 @@ function guessImageUrl(row){
   }
 }
 
+function wipeSession(){
+  try {
+    localStorage.removeItem(SESS_KEY);
+    localStorage.removeItem('token');        // compat
+    // limpa caches do navegador (se houver)
+    if (window.caches && caches.keys) {
+      caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
+    }
+  } catch(_) {}
+}
+
+function logout(){
+  wipeSession();
+  // volta para a tela de login
+  location.replace('/redacaoenem/index.html');
+}
+
 </script>
 
 <!-- Modal: Tratamento Manual - O USUÁRIO DEVE INSERI A INSCRIÇÃO MANUALMENTE OU RECUSAR A IMAGEM-->
@@ -521,7 +551,7 @@ function guessImageUrl(row){
       <div class="input-field col s12 m6">
         <input id="mm-inscricao" type="text" placeholder="Digite a inscrição">
         <label for="mm-inscricao" class="active">Inscrição</label>
-        <span class="helper-text">Você pode colar/editar manualmente. (A captura é só guia visual.)</span>
+        <span class="helper-text">Insira o número cerreto de inscrição.</span>
       </div>
     </div>
   </div>
