@@ -361,31 +361,21 @@ function editar(row){
   if (window.M && M.updateTextFields) M.updateTextFields();
 }
 
-async function salvarCorretor(data){
-  try {
-    const r = await fetch('https://api.secauxiliar.com.br/corretores_save.php', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify(data)
-    });
-
-    const resp = await r.json().catch(()=> ({}));
-
-    if(r.status === 409){
-      // Aqui exibe o alerta amigável
-      M.toast({html: 'Este e-mail já está cadastrado nesta unidade!', classes: 'red'});
-      return;
-    }
-    if(!r.ok){
-      M.toast({html: 'Erro ao salvar. Tente novamente.', classes: 'red'});
-      throw new Error('API_'+r.status);
-    }
-
-    M.toast({html: 'Corretor salvo com sucesso!', classes: 'green'});
-    // atualizar listagem, limpar formulário, etc.
-  }catch(e){
-    console.error(e);
-    M.toast({html: 'Falha inesperada. Veja o console.', classes: 'orange'});
+async function salvarCorretor(){
+  const payload = {
+    id: editId,
+    nome: document.getElementById('nome').value.trim(),
+    email: document.getElementById('email').value.trim(),
+    ativo: document.getElementById('ativo').checked ? 1 : 0,
+    unidade: unidadeAtual()
+  };
+  if (!payload.nome || !payload.email) {
+    return toast('Preencha Nome e E-mail');
+  }
+  await apiFetch('/corretores_save', { method:'POST', body: JSON.stringify(payload) });
+  toast(editId ? 'Professor atualizado' : 'Professor cadastrado');
+  limparForm();
+  carregarLista();
   }
 }
 
