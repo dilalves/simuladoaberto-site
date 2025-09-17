@@ -29,7 +29,8 @@
     header.topbar{
       position: fixed; top: 0; left: 0; right: 0; height: var(--topbar-h); z-index: 20;
       background: var(--primary); color:#fff; display:flex; align-items:center;
-      padding: 12px 24px; padding-left: calc(var(--aside-w) + 24px); box-shadow:0 2px 10px rgba(16,24,40,.12);
+      padding: 12px 24px; padding-left: 0; box-shadow:0 2px 10px rgba(16,24,40,.12);
+      /*calc(var(--aside-w) + 24px)*/
     }
     header.topbar > .topbar{ background: transparent !important; box-shadow: none !important; }
     header.topbar .container{ max-width: none; width: 100%; margin: 0; padding: 0; }
@@ -98,15 +99,15 @@
       <div class="topbar blue darken-3 white-text"
           style="display:flex; align-items:center; justify-content:space-between; padding:0 24px; width:100%;">
         
-        <!-- ESQUERDA: logo + título -->
+        <!-- Bloco ESQUERDA -->
         <div style="display:flex; align-items:center; gap:12px;">
-          <img src="/redacaoenem/logo-mini.png" alt="Logo" style="height:28px; width:auto;">
+          <img src="/redacaoenem/logo-mini.png" alt="Logo" style="height:28px; width:auto; margin-left:8px;">
           <h5 class="m-0" style="margin:0; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">
             Redação Online – <span id="unitLabel">—</span>
           </h5>
         </div>
 
-        <!-- DIREITA: botão sair -->
+        <!-- Bloco DIREITA -->
         <div style="display:flex; gap:8px; align-items:center">
           <a id="btnLogout" class="btn-flat waves-effect white-text" href="#!" onclick="logout()">
             <i class="material-icons left">exit_to_app</i>Sair
