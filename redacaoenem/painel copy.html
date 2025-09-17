@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link rel="icon" type="image/x-icon" href="https://www.curso-objetivo.br/assets/img/favicon.ico" />
+  <title>Painel • Simulado ENEM - Redação</title>
+
+  <!-- Materialize -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+  <!-- Google Icons -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg:#f7f8fb; --card:#ffffff; --line:#e9edf3; --ink:#0f172a; --muted:#6b7280; --primary:#0b3b78; --accent:#2563eb;
+      --aside-w: 260px;       /* largura do menu lateral */
+      --topbar-h: 64px;       /* altura do topo */
+    }
+
+    html,body{height:100%}
+    body{background:var(--bg); color:var(--ink)}
+
+    /* ===== Layout ===== */
+    .app{ display:grid; grid-template-columns: var(--aside-w) 1fr; min-height:100vh; }
+
+    /* 🔒 Topo azul: full-width, fixo e alinhado ao lado do menu */
+    header.topbar{
+      position: fixed; top: 0; left: 0; right: 0; height: var(--topbar-h); z-index: 20;
+      background: var(--primary); color:#fff; display:flex; align-items:center;
+      padding: 12px 24px; padding-left: 0; box-shadow:0 2px 10px rgba(16,24,40,.12);
+      /*calc(var(--aside-w) + 24px)*/
+    }
+    header.topbar > .topbar{ background: transparent !important; box-shadow: none !important; }
+    header.topbar .container{ max-width: none; width: 100%; margin: 0; padding: 0; }
+    header.topbar h5{ margin: 0; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    /* 🔒 Sidebar fixa/rolável abaixo do topo */
+    aside{
+      background:#fff; border-right:1px solid var(--line); position: sticky; top: var(--topbar-h);
+      height: calc(100vh - var(--topbar-h)); overflow: auto; align-self: start; z-index: 6;
+    }
+
+    /* Conteúdo principal (empurrado abaixo do topo fixo) */
+    main{ display:flex; flex-direction:column; padding-top: calc(var(--topbar-h) + 8px); }
+
+    /* utilitários/estilo */
+    .page{padding:24px}
+    .muted{color:var(--muted)}
+    .card{border-radius:14px; box-shadow:0 6px 18px rgba(16,24,40,.06)}
+    .card-title{font-weight:600}
+    .table-wrapper{overflow:auto; border:1px solid var(--line); border-radius:10px; background:#fff}
+    table.striped>tbody>tr:nth-child(odd){background:#fafbff}
+    th{white-space:nowrap}
+    td{vertical-align:middle}
+
+    .chip-status{border-radius:999px; padding:2px 10px; font-weight:600; font-size:12px; display:inline-block}
+    .ok{background:#e7f8ef; color:#127c46}
+    .err{background:#fdecec; color:#b42318}
+    .pend{background:#fff7e6; color:#b54708}
+
+    .search-row{display:grid; grid-template-columns: 1fr 160px 140px; gap:12px}
+
+    @media (max-width: 992px){
+      .app{ grid-template-columns: 1fr; }
+      header.topbar{ padding-left: 16px; }
+      .search-row{ grid-template-columns: 1fr; }
+    }
+
+    /* menu lateral */
+    .menu{list-style:none; padding:0; margin:0}
+    .menu a{display:block; padding:12px 16px; color:#111827}
+    .menu a:hover{background:#f4f6fb}
+    .menu .active>a{background:#eef3ff; font-weight:600}
+    .menu .icon{font-size:20px; vertical-align:middle; margin-right:8px; color:#64748b}
+  </style>
+</head>
+
+<body>
+<div class="app">
+  <!-- ===== Sidebar (igual ao envio.html) ===== -->
+  <aside>
+    <div class="center" style="padding:18px 0 8px">
+      <span class="title" style="font-weight:700;color:#0b3b78">Redação</span>
+    </div>
+    <ul class="menu">
+      <li class="active"><a href="/redacaoenem/painel.html"><span class="icon material-icons">dashboard</span>Dashboard</a></li>
+      <li><a href="/redacaoenem/envio.html"><span class="icon material-icons">cloud_upload</span>Envio de Redações</a></li>
+      <li><a href="/redacaoenem/professores.html"><span class="icon material-icons">group</span>Professores</a></li>
+      <li><a href="/redacaoenem/relatorios.html"><span class="icon material-icons">bar_chart</span>Relatórios</a></li>
+      <li><a href="/redacaoenem/config.html"><span class="icon material-icons">settings</span>Configurações</a></li>
+    </ul>
+  </aside>
+
+  <!-- ===== Main (igual ao envio.html) ===== -->
+  <main>
+    <header class="topbar">
+      <div class="topbar blue darken-3 white-text"
+          style="display:flex; align-items:center; justify-content:space-between; padding:0 24px; width:100%;">
+        
+        <!-- Bloco ESQUERDA -->
+        <div style="display:flex; align-items:center; gap:12px;">
+          <img src="/redacaoenem/logo-mini.png" alt="Logo" style="height:28px; width:auto; margin-left:8px;">
+          <h5 class="m-0" style="margin:0; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">
+            Simulado Aberto ENEM - Redação – <span id="unitLabel">—</span>
+          </h5>
+        </div>
+
+        <!-- Bloco DIREITA -->
+        <div style="display:flex; gap:8px; align-items:center">
+          <a id="btnLogout" class="btn-flat waves-effect white-text" href="#!" onclick="logout()">
+            <i class="material-icons left">exit_to_app</i>Sair
+          </a>
+        </div>
+      </div>
+    </header>
+
+
+
+    <!-- ===== Conteúdo do seu painel, preservado ===== -->
+    <section class="page">
+      <!-- KPIs -->
+      <div class="row" style="margin-bottom:10px">
+        <div class="col s12 m6">
+          <div class="card z-depth-0">
+            <div class="card-content center">
+              <div class="value" id="kpiEnviadas">—</div>
+              <div class="label">Redações enviadas</div>
+            </div>
+          </div>
+        </div>
+        <div class="col s12 m6">
+          <div class="card z-depth-0">
+            <div class="card-content center">
+              <div class="value" id="kpiCorretores">—</div>
+              <div class="label">Corretores</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Ações (3 cards) -->
+      <div class="row">
+        <div class="col s12 m4">
+          <div class="card hoverable">
+            <div class="card-content">
+              <i class="material-icons">cloud_upload</i>
+              <div class="title" style="font-weight:700">Enviar redação</div>
+              <p class="grey-text">Imagens ou PDF • Lote permitido</p>
+            </div>
+            <div class="card-action center">
+              <a href="/redacaoenem/envio.html" class="btn waves-effect waves-light blue darken-2">
+                <i class="material-icons left">arrow_forward</i>Abrir envio
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div class="col s12 m4">
+          <div class="card hoverable">
+            <div class="card-content">
+              <i class="material-icons">face</i>
+              <div class="title" style="font-weight:700">Corretores</div>
+              <p class="grey-text">Gerencie professores da unidade</p>
+            </div>
+            <div class="card-action center">
+              <a href="/redacaoenem/professores.html" class="btn-flat">Abrir</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="col s12 m4">
+          <div class="card hoverable">
+            <div class="card-content">
+              <i class="material-icons">search</i>
+              <div class="title" style="font-weight:700">Conferir envio</div>
+              <p class="grey-text">Validar inscrição manualmente</p>
+            </div>
+            <div class="card-action center">
+              <a href="/redacaoenem/conferir-envio.html" class="btn-flat">Abrir</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Ações menores (opcional) -->
+      <div class="row">
+        <div class="col s12 m4">
+          <div class="card z-depth-0 hoverable">
+            <div class="card-content">
+              <i class="material-icons">east</i>
+              <div style="font-weight:700">Enviar redação</div>
+            </div>
+          </div>
+        </div>
+        <div class="col s12 m4">
+          <div class="card z-depth-0 hoverable">
+            <div class="card-content">
+              <i class="material-icons">badge</i>
+              <div style="font-weight:700">Cadastrar professor</div>
+            </div>
+          </div>
+        </div>
+        <div class="col s12 m4">
+          <div class="card z-depth-0 hoverable">
+            <div class="card-content">
+              <i class="material-icons">settings</i>
+              <div style="font-weight:700">Configurar unidade</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+/* ===== CONFIG ===== */
+const API = 'https://api.secauxiliar.com.br/';
+const LOGIN_URL = '/redacaoenem/index.html';
+const SESS_KEY = 'sessao_redacao';
+
+/* Altura real da topbar */
+(function(){
+  function applyTopHeights(){
+    const top = document.querySelector('header.topbar');
+    const topH = top ? top.offsetHeight : 64;
+    document.documentElement.style.setProperty('--topbar-h', topH + 'px');
+  }
+  window.addEventListener('load', applyTopHeights);
+  window.addEventListener('resize', applyTopHeights);
+})();
+
+/* ===== Sessão ===== */
+function getSession(){ try{ return JSON.parse(localStorage.getItem(SESS_KEY)||'{}'); }catch(_){ return {}; } }
+function setSession(s){ localStorage.setItem(SESS_KEY, JSON.stringify(s||{})); }
+function getToken(){ const s=getSession(); return (s&&s.token) || localStorage.getItem('token') || ''; }
+function authHeaders(){ const t=getToken(); return t ? { Authorization: 'Bearer '+t } : {}; }
+function redirectToLogin(){
+  const next = encodeURIComponent(location.pathname+location.search+location.hash);
+  location.replace(`${LOGIN_URL}?next=${next}`);
+}
+
+/* ===== Util: garantir .php ANTES do ? ===== */
+function ensurePhp(path){
+  if (path.includes('.php')) return path;
+  const i = path.indexOf('?');
+  if (i === -1) return path + '.php';
+  return path.slice(0, i) + '.php' + path.slice(i);
+}
+
+/* ===== Fetch helper (com fallback .php seguro) ===== */
+async function apiFetch(pathNoPhp, { method='GET', headers={}, body, cache='no-store' } = {}){
+  const baseHeaders = { Accept: 'application/json', ...authHeaders(), ...headers };
+  if (body && !baseHeaders['Content-Type']) baseHeaders['Content-Type'] = 'application/json';
+  const opts = { method, cache, headers: baseHeaders, body };
+
+  let res;
+  try { res = await fetch(API + pathNoPhp, opts); } catch(_) {}
+
+  if (!res || res.status === 404) {
+    try { res = await fetch(API + ensurePhp(pathNoPhp), opts); } catch(_) {}
+  }
+
+  if (!res) throw new Error('NETWORK_FAIL');
+  if (res.status === 401 || res.status === 403) throw new Error('UNAUTHORIZED');
+  if (!res.ok){
+    const txt = await res.text().catch(()=> '');
+    throw new Error(`API_${res.status}: ${txt || res.statusText}`);
+  }
+  return res.json();
+}
+
+/* ===== UI helpers ===== */
+function setUnitHeader(u = {}) {
+  const el = document.getElementById('unitLabel') || document.getElementById('unitIdName');
+  if (!el) return;
+  const codigo = u.codigo ?? u.cod ?? u.id ?? '';
+  const nome   = u.nome   ?? u.name ?? '';
+  el.textContent = (codigo && nome) ? `${codigo} - ${nome}` : (nome || '—');
+}
+function setUserName(nome){
+  const el = document.getElementById('userName');
+  if (el && nome) el.textContent = nome;
+}
+
+/* ===== Boot ===== */
+document.addEventListener('DOMContentLoaded', initPainel);
+
+async function initPainel(){
+  try{
+    if (!getToken()) return redirectToLogin();
+
+    const sess = getSession();
+    if (sess?.unidade) {
+      setUnitHeader(sess.unidade);
+      if (sess?.usuario?.nome) setUserName(sess.usuario.nome);
+    }
+    await carregarContextoDaAPI(); // atualiza/garante unidade
+
+    document.body.classList.add('ready');
+  }catch(err){
+    console.error('Falha na inicialização:', err);
+    if (String(err.message).includes('UNAUTHORIZED')) return redirectToLogin();
+  }
+}
+
+/* ===== Contexto (/auth_me.php) ===== */
+async function carregarContextoDaAPI(){
+  try{
+    const data = await apiFetch('/auth_me.php');
+
+    // fallback se o backend retornar { user: {...} }
+    if (data?.user && !data?.unidade) {
+      const u = data.user;
+      data.unidade = { codigo: u.login || u.codigo || '', nome: u.unidade || u.nome || '' };
+      data.usuario = data.usuario || { nome: u.nome || u.login || 'Usuário' };
+    }
+
+    if (data?.usuario?.nome) setUserName(data.usuario.nome);
+    if (data?.unidade) setUnitHeader(data.unidade);
+
+    setSession({ ...getSession(), ...data });
+  }catch(e){
+    console.warn('Falha ao carregar contexto da API', e);
+    if (String(e.message).includes('UNAUTHORIZED')) redirectToLogin();
+  }
+}
+
+
+/* ===== KPIs (placeholder) ===== */
+function setKPIs({ enviadas='—', corretores='—', unidade, usuario } = {}){
+  const elEnv = document.getElementById('kpiEnviadas');
+  const elCor = document.getElementById('kpiCorretores');
+  if (elEnv) elEnv.textContent = enviadas;
+  if (elCor) elCor.textContent = corretores;
+  if (unidade) setUnitHeader(unidade);
+  if (usuario?.nome) setUserName(usuario.nome);
+}
+
+/* Bloqueio de clique até ready (opcional) */
+document.addEventListener('click', (ev) => {
+  if (!document.body.classList.contains('ready')) {
+    const trg = ev.target.closest('a,button');
+    if (trg) { ev.preventDefault(); ev.stopPropagation(); }
+  }
+});
+
+function wipeSession(){
+  try {
+    localStorage.removeItem(SESS_KEY);
+    localStorage.removeItem('token');        // compat
+    // limpa caches do navegador (se houver)
+    if (window.caches && caches.keys) {
+      caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
+    }
+  } catch(_) {}
+}
+
+function logout(){
+  wipeSession();
+  // volta para a tela de login
+  location.replace('/redacaoenem/index.html');
+}
+</script>
+
+
+
+</body>
+</html>
