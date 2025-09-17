@@ -92,20 +92,36 @@
     </ul>
   </aside>
 
-  <!-- ===== Main (igual ao envio.html) ===== -->
+  <!-- ===== Main (igual ao envio.html) ===== 
   <main>
     <header class="topbar">
       <div class="topbar blue darken-3 white-text" 
           style="display:flex; align-items:center; justify-content:space-between; padding:0 24px;">
         
-        <!-- Título alinhado à esquerda -->
+        **** Título alinhado à esquerda ****
         <h5 class="m-0" style="margin:0; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">
           Redação Online – <span id="unitLabel">—</span>
         </h5>
 
-        <!-- Usuário + botão sair alinhados à direita -->
+        **** Usuário + botão sair alinhados à direita ****
+        <div style="display:flex; gap:8px; align-items:center">     
+          <a id="btnLogout" class="btn-flat waves-effect white-text" href="#!" onclick="logout()">
+            <i class="material-icons left">exit_to_app</i>Sair
+          </a>
+        </div>
+      </div>
+    </header> ===== -->
+
+    <header class="topbar">
+      <div class="topbar blue darken-3 white-text"
+          style="display:flex; align-items:center; justify-content:space-between; padding:0 24px; width:100%;">
+        <!-- ESQUERDA -->
+        <h5 class="m-0" style="margin:0; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">
+          Redação Online – <span id="unitLabel">—</span>
+        </h5>
+
+        <!-- DIREITA -->
         <div style="display:flex; gap:8px; align-items:center">
-          <span id="userName" class="hide-on-small-only" style="opacity:.9"></span>
           <a id="btnLogout" class="btn-flat waves-effect white-text" href="#!" onclick="logout()">
             <i class="material-icons left">exit_to_app</i>Sair
           </a>
