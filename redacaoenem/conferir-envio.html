@@ -364,6 +364,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Abre modal ao clicar no "TRATAMENTO MANUAL"
   tbody.addEventListener('click', (ev) => {
     const a = ev.target.closest('.manual-link');
+    document.getElementById('modalManual').dataset.id = row.id;
     if (!a) return;
 
     // 1) capturar os dados do registro clicado
@@ -451,23 +452,28 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   //5) RECUSAR IMAGEM INUTILIZADA
-    document.getElementById('mm-recusar').addEventListener('click', async () => {
-    try {
-      // Exemplo: chamada para marcar como recusado
-      await apiFetch('/recusar_imagem.php', {
-        method: 'POST',
-        body: JSON.stringify({ arquivo: document.getElementById('mm-arquivo').textContent }),
-      });
-      M.toast({html: 'Imagem recusada com sucesso!'});
-      const modal = M.Modal.getInstance(document.getElementById('modalManual'));
-      modal.close();
-      // Aqui pode atualizar a lista sem reload:
-      carregarTabela();
-    } catch (err) {
-      console.error('Erro ao recusar:', err);
-      M.toast({html: 'Falha ao recusar inscrição'});
-    }
-  });
+    document.getElementById('mm-recusar')?.addEventListener('click', async () => {
+      const id = Number(document.getElementById('modalManual').dataset.id || 0);
+      if (!id) { M.toast({html: 'ID inválido'}); return; }
+
+      try {
+        const res = await fetch('https://api.secauxiliar.com.br/recusar_imagem.php', {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ id })
+        });
+        const data = await res.json();
+        if (!res.ok || !data?.ok) throw new Error(data?.error || 'Falha');
+
+        M.toast({html:'Imagem recusada.'});
+        M.Modal.getInstance(document.getElementById('modalManual'))?.close();
+        carregarTabela?.(); // atualize a lista
+      } catch (e) {
+        console.error(e);
+        M.toast({html:'Não foi possível recusar.'});
+      }
+    });
+
 
 });
 
