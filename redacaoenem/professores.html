@@ -394,6 +394,24 @@ async function convidar(id){
   const ret = await apiFetch('/corretores_convite', { method:'POST', body: JSON.stringify({id, unidade:unidadeAtual()}) });
   toast(ret.sent ? 'Convite enviado por e-mail' : 'Convite gerado');
 }
+
+function wipeSession(){
+  try {
+    localStorage.removeItem(SESS_KEY);
+    localStorage.removeItem('token');        // compat
+    // limpa caches do navegador (se houver)
+    if (window.caches && caches.keys) {
+      caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
+    }
+  } catch(_) {}
+}
+
+function logout(){
+  wipeSession();
+  // volta para a tela de login
+  location.replace('/redacaoenem/index.html');
+}
+
 </script>
 </body>
 </html>

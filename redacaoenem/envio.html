@@ -462,6 +462,23 @@ function updateSendButton(){
   // btn.innerHTML = `<i class="material-icons left">send</i> Enviar${pendentes ? ` (${pendentes})` : ''}`;
 }
 
+function wipeSession(){
+  try {
+    localStorage.removeItem(SESS_KEY);
+    localStorage.removeItem('token');        // compat
+    // limpa caches do navegador (se houver)
+    if (window.caches && caches.keys) {
+      caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
+    }
+  } catch(_) {}
+}
+
+function logout(){
+  wipeSession();
+  // volta para a tela de login
+  location.replace('/redacaoenem/index.html');
+}
+
 
 </script>
 </body>
