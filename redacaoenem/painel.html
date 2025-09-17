@@ -97,12 +97,16 @@
     <header class="topbar">
       <div class="topbar blue darken-3 white-text"
           style="display:flex; align-items:center; justify-content:space-between; padding:0 24px; width:100%;">
-        <!-- ESQUERDA -->
-        <h5 class="m-0" style="margin:0; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">
-          Redação Online – <span id="unitLabel">—</span>
-        </h5>
+        
+        <!-- ESQUERDA: logo + título -->
+        <div style="display:flex; align-items:center; gap:12px;">
+          <img src="/redacaoenem/logo-mini.png" alt="Logo" style="height:28px; width:auto;">
+          <h5 class="m-0" style="margin:0; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">
+            Redação Online – <span id="unitLabel">—</span>
+          </h5>
+        </div>
 
-        <!-- DIREITA -->
+        <!-- DIREITA: botão sair -->
         <div style="display:flex; gap:8px; align-items:center">
           <a id="btnLogout" class="btn-flat waves-effect white-text" href="#!" onclick="logout()">
             <i class="material-icons left">exit_to_app</i>Sair
@@ -110,6 +114,7 @@
         </div>
       </div>
     </header>
+
 
 
     <!-- ===== Conteúdo do seu painel, preservado ===== -->
