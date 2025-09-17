@@ -449,6 +449,26 @@ document.addEventListener('DOMContentLoaded', () => {
       btn.classList.remove('disabled');
     }
   });
+
+  //5) RECUSAR IMAGEM INUTILIZADA
+    document.getElementById('mm-recusar').addEventListener('click', async () => {
+    try {
+      // Exemplo: chamada para marcar como recusado
+      await apiFetch('/recusar_imagem.php', {
+        method: 'POST',
+        body: JSON.stringify({ arquivo: document.getElementById('mm-arquivo').textContent }),
+      });
+      M.toast({html: 'Imagem recusada com sucesso!'});
+      const modal = M.Modal.getInstance(document.getElementById('modalManual'));
+      modal.close();
+      // Aqui pode atualizar a lista sem reload:
+      carregarTabela();
+    } catch (err) {
+      console.error('Erro ao recusar:', err);
+      M.toast({html: 'Falha ao recusar inscrição'});
+    }
+  });
+
 });
 
 
@@ -477,7 +497,7 @@ function guessImageUrl(row){
 
 </script>
 
-<!-- Modal: Tratamento Manual -->
+<!-- Modal: Tratamento Manual - O USUÁRIO DEVE INSERI A INSCRIÇÃO MANUALMENTE OU RECUSAR A IMAGEM-->
 <div id="modalManual" class="modal modal-fixed-footer">
   <div class="modal-content">
     <h5>Tratamento manual da inscrição</h5>
@@ -501,10 +521,13 @@ function guessImageUrl(row){
     </div>
   </div>
   <div class="modal-footer">
+    <!-- Botões -->
     <a href="#!" class="modal-close btn-flat">Cancelar</a>
+    <a id="mm-recusar" href="#!" class="btn red darken-1 waves-effect">Recusar</a>
     <a id="mm-salvar" href="#!" class="btn blue darken-2 waves-effect">Salvar</a>
   </div>
 </div>
+
 
 
 </body>
