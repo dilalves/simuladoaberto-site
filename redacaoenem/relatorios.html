@@ -233,18 +233,45 @@ async function load(){
 
 /* CSV rápido */
 function toCsv(v){ if(v==null) return ''; const s=String(v).replace(/"/g,'""'); return /[;"\n]/.test(s)?`"${s}"`:s; }
-function downloadCsv(){
-  const hdr = ['INSCRICAO','NOME_ARQUIVO_RECEBIDO','NOME_ARQUIVO_FINAL','OMR_STATUS','C1','C2','C3','C4','C5','TOTAL','CORRETOR'];
-  const lines = [hdr.join(';')];
-  LAST.forEach(r=>{
-    lines.push([
-      r.inscricao, r.nome_recebido, r.nome_final, r.omr_status,
-      r.c1, r.c2, r.c3, r.c4, r.c5, r.total, r.corretor
-    ].map(toCsv).join(';'));
-  });
-  const blob = new Blob(["\uFEFF"+lines.join('\n')], {type:'text/csv;charset=utf-8;'});
-  const a = document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='relatorio_redacoes.csv'; a.click(); URL.revokeObjectURL(a.href);
-}
+
+function csvNum(v){
+    if (v == null) return '';
+    const s = String(v).replace(/"/g, '""');
+    return /[;"\n]/.test(s) ? `"${s}"` : s;
+  }
+
+  /* força célula como TEXTO no Excel (evita perder zeros) */
+  function csvText(v){
+    const s = (v == null ? '' : String(v).replace(/"/g, '""'));
+    return `="${s}"`;
+  }
+
+  function downloadCsv(){
+    const hdr = [
+      'INSCRICAO','NOME_ARQUIVO_RECEBIDO','NOME_ARQUIVO_FINAL',
+      'OMR_STATUS','C1','C2','C3','C4','C5','TOTAL','CORRETOR'
+    ];
+    const lines = [hdr.join(';')];
+
+    LAST.forEach(r => {
+      lines.push([
+        csvText(r.inscricao),               // <<--- aqui força texto
+        csvNum(r.nome_recebido),
+        csvNum(r.nome_final),
+        csvNum(r.omr_status),
+        csvNum(r.c1), csvNum(r.c2), csvNum(r.c3), csvNum(r.c4), csvNum(r.c5),
+        csvNum(r.total),
+        csvNum(r.corretor)
+      ].join(';'));
+    });
+
+    const blob = new Blob(["\uFEFF" + lines.join('\n')], { type:'text/csv;charset=utf-8;' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'relatorio_redacoes.csv';
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
 
 /* Boot */
 document.addEventListener('DOMContentLoaded', ()=>{
