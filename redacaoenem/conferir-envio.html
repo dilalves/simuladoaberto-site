@@ -364,7 +364,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // Abre modal ao clicar no "TRATAMENTO MANUAL"
   tbody.addEventListener('click', (ev) => {
     const a = ev.target.closest('.manual-link');
-    document.getElementById('modalManual').dataset.id = row.id;
     if (!a) return;
 
     // 1) capturar os dados do registro clicado
