@@ -48,20 +48,8 @@
   button{background:#0d6efd;border:none;color:#fff;cursor:pointer}
   .msg{margin-top:12px;color:#b00}
 </style>
+
 <body>
-
-  <header class="topbar">
-      <div class="topbar blue darken-3 white-text"
-          style="display:flex; align-items:center; justify-content:space-between; padding:0 24px; width:100%;">
-        <div style="display:flex; align-items:center; gap:12px;">
-          <img src="/redacaoenem/logo-mini.png" alt="Logo" style="height:28px; width:auto; margin-left:8px;">
-          <h5 class="m-0" style="margin:0; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">
-            Simulado Aberto ENEM - Redação
-          </h5>
-        </div>
-      </div>
-    </header>
-
   <div class="card">
     <h2>Redação ENEM — Acesso</h2>
     <input id="login" placeholder="Login da unidade (ex.: 8529)" inputmode="numeric">
@@ -71,8 +59,7 @@
   </div>
 
 <script>
-//const API = 'https://api.secauxiliar.com.br/'; // ou seu subdomínio da API
-const API = ''// 'https://api.secauxiliar.com.br/'; // ou seu subdomínio da API
+const API = 'https://api.secauxiliar.com.br/'; // ou seu subdomínio da API
 
 document.getElementById('btn').onclick = async () => {
   const login = document.getElementById('login').value.trim();
@@ -81,8 +68,7 @@ document.getElementById('btn').onclick = async () => {
   msg.textContent = '';
 
   try {
-    //ALTERADA NESSA LINHA -> const r = await fetch(`${API}auth_login.php`, {
-    const r = await fetch(`${API}/proxy_auth_login.php`, {  
+    const r = await fetch(`${API}auth_login.php`, {
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body: JSON.stringify({login, senha})
