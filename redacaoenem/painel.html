@@ -370,34 +370,52 @@ document.addEventListener('click', (ev) => {
 
 /*bloco para estatísticas - mostrar redações e corretores por unidade */
 async function carregarKPIs() {
-  try{
-    // pegue o codUnd do contexto/sessão como você já faz
-    const sess  = JSON.parse(localStorage.getItem('sessao_redacao')||'{}');
-    const codUnd = (sess?.unidade?.codigo || localStorage.getItem('login') || '').toString().trim();
-    if (!codUnd) return;
+  try {
+    // pega o codUnd de várias fontes (ordem de preferência)
+    const sess = JSON.parse(localStorage.getItem('sessao_redacao') || '{}');
+    const codUnd = String(
+      (sess && sess.unidade && sess.unidade.codigo) ||
+      localStorage.getItem('login') ||           // salvo no login
+      localStorage.getItem('last_login') ||      // fallback
+      ''
+    ).trim();
+
+    if (!codUnd) {
+      console.warn('carregarKPIs: sem codUnd – nada a carregar.');
+      // opcional: mostrar traços
+      ['kpiEnviadas','kpiTratamento','kpiRecusadas','kpiCorrigidas']
+        .forEach(id => { const el = document.getElementById(id); if (el) el.textContent = '—'; });
+      return;
+    }
 
     const r = await fetch('https://api.secauxiliar.com.br/dashboard_stats.php', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',                     // <-- se a API exigir cookie
       body: JSON.stringify({ codUnd })
     });
-    const j = await r.json();
-    if (!r.ok || !j?.ok) throw new Error(j?.error || 'Falha ao carregar KPIs');
+
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok || !j.ok) throw new Error(j.error || 'Falha ao carregar KPIs');
 
     const d = j.data || {};
     document.getElementById('kpiEnviadas').textContent   = d.enviadas   ?? '—';
     document.getElementById('kpiTratamento').textContent = d.tratamento ?? '—';
     document.getElementById('kpiRecusadas').textContent  = d.recusadas  ?? '—';
     document.getElementById('kpiCorrigidas').textContent = d.corrigidas ?? '—';
-    //document.getElementById('kpiCorretores').textContent = d.corretores ?? '—';
-  }catch(e){
-    console.error(e);
+  } catch (e) {
+    console.error('carregarKPIs:', e);
     ['kpiEnviadas','kpiTratamento','kpiRecusadas','kpiCorrigidas']
       .forEach(id => { const el = document.getElementById(id); if (el) el.textContent = '—'; });
   }
 }
-document.addEventListener('DOMContentLoaded', carregarKPIs);
 
+// garante que roda no carregamento
+document.addEventListener('DOMContentLoaded', () => {
+  // se você tiver uma função que popula a sessão (ex.: carregarContexto), chame-a antes:
+  // await carregarContexto().catch(()=>{});
+  carregarKPIs();
+});
 
 function wipeSession(){
   try {
