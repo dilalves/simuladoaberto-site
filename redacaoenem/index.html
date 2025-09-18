@@ -3,8 +3,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="icon" type="image/x-icon" href="https://www.curso-objetivo.br/assets/img/favicon.ico" />
-<title>Login — Redação ENEM</title>
+<title>Login — Simulado Aberto ENEM - Redação</title>
 <style>
+
   :root{
       --bg:#f7f8fb; --card:#ffffff; --line:#e9edf3; --ink:#0f172a; --muted:#6b7280; --primary:#0b3b78; --accent:#2563eb;
       --aside-w: 260px;       /* largura do menu lateral */
@@ -13,10 +14,35 @@
 
   body{font-family:system-ui,Arial;padding:24px;background:#f6f7fb}
   .card{max-width:420px;margin:56px auto;background:#fff;border-radius:12px;padding:24px;box-shadow:0 10px 30px rgba(0,0,0,.06)}
-  input,button{width:95%;padding:12px;border-radius:8px;border:1px solid #ddd;margin-top:8px}
+  
+    input{
+    width:95%;
+    padding:12px;
+    border-radius:8px;
+    border:1px solid #ddd;
+    margin-top:8px;
+  }
+
+  /* botão menor e centralizado */
+  #btn{
+    width:160px;            /* ajuste o tamanho aqui */
+    padding:12px 16px;
+    border-radius:8px;
+    display:block;
+    margin:12px auto 0;     /* centraliza */
+    border:none;
+    background:#0d6efd;
+    color:#fff;
+    cursor:pointer;
+  }
+  #btn:hover{ filter: brightness(1.03); }
+  #btn:disabled{ opacity:.6; cursor:default; }
+
   button{background:#0d6efd;border:none;color:#fff;cursor:pointer}
   .msg{margin-top:12px;color:#b00}
+
 </style>
+
 <body>
   <div class="card">
     <h2>Redação ENEM — Acesso</h2>
@@ -27,36 +53,105 @@
   </div>
 
 <script>
-const API = 'https://api.secauxiliar.com.br/'; // ou seu subdomínio da API
+  // ===== Config =====
+  const API = 'https://api.secauxiliar.com.br'; // sua API
 
-document.getElementById('btn').onclick = async () => {
-  const login = document.getElementById('login').value.trim();
-  const senha = document.getElementById('senha').value;
-  const msg = document.getElementById('msg');
-  msg.textContent = '';
+  const btnLogin   = document.querySelector('#btn');     // id do seu HTML
+  const inputLogin = document.querySelector('#login');   // id do seu HTML
+  const inputSenha = document.querySelector('#senha');
+  const msg        = document.querySelector('#msg');
 
-  try {
-    const r = await fetch(`${API}auth_login.php`, {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({login, senha})
-    });
-    const data = await r.json();
-    if (!r.ok || !data.ok) {
-      msg.textContent = data.error || 'Falha no login';
-      return;
-    }
-    // guarda token
-    localStorage.setItem('token', data.token);
-    localStorage.setItem('unidade', data.unidade);
-    localStorage.setItem('login', data.login);
+  let loginInFlight = false;
 
-    // vai para página protegida
-    location.href = './painel.html';
-  } catch (e) {
-    msg.textContent = 'Erro de rede';
+  function nextUrl(){
+    const p = new URLSearchParams(location.search);
+    return p.get('next') || 'painel.html';
   }
-};
+
+  // Helper: fetch que sempre envia cookies e tenta ler JSON
+  async function apiJSON(url, opts = {}){
+    const r = await fetch(url, { credentials:'include', ...opts });
+    const text = await r.text();
+    let data = {};
+    try { data = text ? JSON.parse(text) : {}; } catch {}
+    if (!r.ok) {
+      const err = data?.error || data?.message || `HTTP_${r.status}`;
+      const e = new Error(err); e.status = r.status; throw e;
+    }
+    return data;
+  }
+
+  // Limpa sessão no domínio da API (equivale ao SAIR)
+  async function safeResetSession(){
+    try { await fetch(`${API}/logout.php`, { method:'POST', credentials:'include' }); } catch {}
+    try {
+      localStorage.removeItem('TOKEN');
+      localStorage.removeItem('unidade');
+      localStorage.removeItem('login');
+    } catch {}
+  }
+
+  async function doLogin(cod, senha, retried=false){
+    if (loginInFlight) return;
+    loginInFlight = true;
+
+    const oldTxt = btnLogin.textContent;
+    btnLogin.disabled = true;
+    btnLogin.textContent = 'Entrando…';
+    msg.textContent = '';
+
+    try{
+      // 1) Login
+      const data = await apiJSON(`${API}/auth_login.php`, {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json' },
+        body: JSON.stringify({ login: cod, senha })
+      });
+
+      // Se a API devolver JWT, guarda (opcional)
+      if (data.token)   localStorage.setItem('TOKEN', data.token);
+      if (data.unidade) localStorage.setItem('unidade', data.unidade);
+      if (data.login)   localStorage.setItem('login',   data.login);
+
+      // 2) Valida sessão imediatamente
+      try{
+        await apiJSON(`${API}/auth_me.php`, { method:'GET' });
+      }catch(e){
+        // Sessão/cookie falhou → limpa e tenta uma única vez
+        await safeResetSession();
+        if (!retried){
+          return doLogin(cod, senha, true);
+        }
+        throw new Error('Sessão anterior estava corrompida. Limpei. Tente novamente.');
+      }
+
+      // 3) Sucesso
+      localStorage.setItem('last_login', cod);
+      location.href = nextUrl();
+
+    }catch(e){
+      msg.textContent = e.message || 'Não foi possível entrar.';
+    }finally{
+      loginInFlight = false;
+      btnLogin.disabled = false;
+      btnLogin.textContent = oldTxt;
+    }
+  }
+
+  // Eventos
+  btnLogin.addEventListener('click', ()=> {
+    doLogin(inputLogin.value.trim(), inputSenha.value.trim());
+  });
+  document.addEventListener('keydown', (ev)=>{
+    if (ev.key === 'Enter') doLogin(inputLogin.value.trim(), inputSenha.value.trim());
+  });
+
+  // Prefill do último login usado (conveniência)
+  document.addEventListener('DOMContentLoaded', ()=>{
+    const last = localStorage.getItem('last_login');
+    if (last) inputLogin.value = last;
+  });
 </script>
+
 </body>
 </html>
