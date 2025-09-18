@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Loader – Logo Objetivo (CSS/SVG)</title>
+<style>
+  :root{
+    /* azul institucional aproximado (ajuste se quiser) */
+    --azul:#0b3b78;
+    --dur:2.8s;           /* duração do ciclo */
+    --ease:cubic-bezier(.4,.0,.2,1);
+  }
+  html,body{
+    height:100%;
+    margin:0;
+    background:#f7f9fc;
+    display:grid;
+    place-items:center;
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  }
+  .wrap{
+    display:grid;
+    gap:.75rem;
+    place-items:center;
+  }
+  .legend{ color:#485260; font-size:.9rem; }
+
+  /* --- animações --- */
+  @keyframes dot-shift {
+    0%   { transform: translate(0,0) scale(0.85); opacity:.0; }
+    8%   { opacity:1; }
+    45%  { transform: translate(-170px,0) scale(1); }
+    55%  { transform: translate(-170px,0) scale(1); }
+    92%  { opacity:1; }
+    100% { transform: translate(0,0) scale(0.85); opacity:.0; }
+  }
+
+  @keyframes chevron-pulse {
+    0%,100% { transform: scale(1); opacity:.95; }
+    50%     { transform: scale(1.06); opacity:1; }
+  }
+
+  @keyframes ring-spin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+  }
+
+  /* aplica nas peças do SVG via class */
+  .dot   { animation: dot-shift var(--dur) var(--ease) infinite; transform-box: fill-box; transform-origin: center; }
+  .chevs { animation: chevron-pulse calc(var(--dur)*.8) var(--ease) infinite; transform-box: fill-box; transform-origin: center; }
+  .ring  { animation: ring-spin calc(var(--dur)*3) linear infinite; transform-box: fill-box; transform-origin: center; }
+
+  /* respeita redução de movimento do SO */
+  @media (prefers-reduced-motion: reduce){
+    .dot,.chevs,.ring{ animation: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <!-- SVG construído em camadas para podermos animar as partes -->
+  <svg width="520" height="220" viewBox="0 0 520 220" role="img" aria-label="Loader Objetivo">
+    <!-- fundo transparente -->
+    <defs>
+      <!-- máscara para cavar círculo branco dentro do disco da direita -->
+      <mask id="ring-mask">
+        <rect x="0" y="0" width="520" height="220" fill="white"/>
+        <!-- fura o miolo -->
+        <circle cx="380" cy="110" r="64" fill="black"/>
+      </mask>
+    </defs>
+
+    <!-- barras diagonais (aproximação visual do logo) -->
+    <g transform="translate(0 0) rotate(0 260 110)">
+      <rect x="190" y="15"  width="26" height="190" fill="var(--azul)" transform="rotate(45 203 110)"/>
+      <rect x="215" y="15"  width="26" height="190" fill="var(--azul)" transform="rotate(45 228 110)"/>
+    </g>
+
+    <!-- disco grande da direita (com “anel” usando máscara) -->
+    <g class="ring">
+      <circle cx="380" cy="110" r="96" fill="var(--azul)" mask="url(#ring-mask)"/>
+    </g>
+
+    <!-- chevrons (duas setas apontando para a direita) -->
+    <g class="chevs" fill="white" opacity="0.95">
+      <!-- chevron externo -->
+      <polygon points="300,30  336,30  410,110  336,190 300,190  374,110"/>
+      <!-- chevron interno -->
+      <polygon points="316,50  344,50  392,110  344,170 316,170  364,110"/>
+    </g>
+
+    <!-- círculo central branco (miolo visual entre chevrons) -->
+    <circle cx="360" cy="110" r="54" fill="white"/>
+
+    <!-- pequeno círculo que “sai” do centro para a esquerda -->
+    <!-- posição inicial no centro “óptico” do logo (próximo ao miolo) -->
+    <g transform="translate(360,110)">
+      <circle class="dot" r="36" fill="var(--azul)"/>
+    </g>
+
+    <!-- círculo da esquerda (posição final de referência) -->
+    <circle cx="120" cy="110" r="50" fill="var(--azul)"/>
+  </svg>
+
+  <div class="legend">Carregando…</div>
+</div>
+
+</body>
+</html>
