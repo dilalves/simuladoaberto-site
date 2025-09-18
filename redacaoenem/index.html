@@ -11,6 +11,16 @@
       --topbar-h: 64px;       /* altura do topo */
     }
 
+    header.topbar{
+      position: fixed; top: 0; left: 0; right: 0; height: var(--topbar-h); z-index: 20;
+      background: var(--primary); color:#fff; display:flex; align-items:center;
+      padding: 12px 24px; padding-left: 0; box-shadow:0 2px 10px rgba(16,24,40,.12);
+      /*calc(var(--aside-w) + 24px)*/
+    }
+    header.topbar > .topbar{ background: transparent !important; box-shadow: none !important; }
+    header.topbar .container{ max-width: none; width: 100%; margin: 0; padding: 0; }
+    header.topbar h5{ margin: 0; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
   body{font-family:system-ui,Arial;padding:24px;background:#f6f7fb}
   .card{max-width:420px;margin:56px auto;background:#fff;border-radius:12px;padding:24px;box-shadow:0 10px 30px rgba(0,0,0,.06)}
   /* inputs continuam largos */
