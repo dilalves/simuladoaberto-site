@@ -15,7 +15,6 @@
       position: fixed; top: 0; left: 0; right: 0; height: var(--topbar-h); z-index: 20;
       background: var(--primary); color:#fff; display:flex; align-items:center;
       padding: 12px 24px; padding-left: 0; box-shadow:0 2px 10px rgba(16,24,40,.12);
-      /*calc(var(--aside-w) + 24px)*/
     }
     header.topbar > .topbar{ background: transparent !important; box-shadow: none !important; }
     header.topbar .container{ max-width: none; width: 100%; margin: 0; padding: 0; }
@@ -72,7 +71,8 @@
   </div>
 
 <script>
-const API = 'https://api.secauxiliar.com.br/'; // ou seu subdomínio da API
+//const API = 'https://api.secauxiliar.com.br/'; // ou seu subdomínio da API
+const API = ''// 'https://api.secauxiliar.com.br/'; // ou seu subdomínio da API
 
 document.getElementById('btn').onclick = async () => {
   const login = document.getElementById('login').value.trim();
@@ -81,7 +81,8 @@ document.getElementById('btn').onclick = async () => {
   msg.textContent = '';
 
   try {
-    const r = await fetch(`${API}auth_login.php`, {
+    //ALTERADA NESSA LINHA -> const r = await fetch(`${API}auth_login.php`, {
+    const r = await fetch(`${API}/proxy_auth_login.php`, {  
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body: JSON.stringify({login, senha})
