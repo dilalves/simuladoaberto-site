@@ -121,40 +121,46 @@
     <!-- ===== Conteúdo do seu painel, preservado ===== -->
     <section class="page">
       <!-- KPIs -->
-      <div class="row" style="margin-bottom:10px">
-        <div class="col s12 m6 l3">
-          <div class="card z-depth-0">
-            <div class="card-content center">
-              <div class="value" id="kpiEnviadas">—</div>
-              <div class="label">Enviadas</div>
-            </div>
-          </div>
-        </div>
-        <div class="col s12 m6 l3">
-          <div class="card z-depth-0">
-            <div class="card-content center">
-              <div class="value" id="kpiTratamento">—</div>
-              <div class="label">Tratamento Manual</div>
-            </div>
-          </div>
-        </div>
-        <div class="col s12 m6 l3">
-          <div class="card z-depth-0">
-            <div class="card-content center">
-              <div class="value" id="kpiRecusadas">—</div>
-              <div class="label">Recusadas</div>
-            </div>
-          </div>
-        </div>
-        <div class="col s12 m6 l3">
-          <div class="card z-depth-0">
-            <div class="card-content center">
-              <div class="value" id="kpiCorrigidas">—</div>
-              <div class="label">Finalizadas</div>
-            </div>
+    <div class="row" style="margin-bottom:10px">
+      <div class="col s12 m6 l3">
+        <div class="card z-depth-0">
+          <div class="card-content center">
+            <div class="value" id="kpiEnviadas">—</div>
+            <div class="label">Enviadas</div>
           </div>
         </div>
       </div>
+
+      <div class="col s12 m6 l3">
+        <div class="card z-depth-0">
+          <div class="card-content center">
+            <div class="value" id="kpiCorrigidas">—</div>
+            <div class="label">Finalizadas</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col s12 m6 l3">
+        <div class="card z-depth-0">
+          <div class="card-content center">
+            <div class="value" id="kpiRecusadas">—</div>
+            <div class="label">Recusadas</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tratamento Manual em card separado (opcional) -->
+    <div class="row" style="margin-top:-6px; margin-bottom:10px">
+      <div class="col s12 m6 l3">
+        <div class="card z-depth-0">
+          <div class="card-content center">
+            <div class="value" id="kpiTratamento">—</div>
+            <div class="label">Tratamento Manual</div>
+          </div>
+        </div>
+      </div>
+    </div>
 
 
       <!-- Ações (3 cards) -->
@@ -347,16 +353,6 @@ async function carregarContextoDaAPI(){
 }
 
 
-/* ===== KPIs (placeholder) ===== */
-function setKPIs({ enviadas='—', corretores='—', unidade, usuario } = {}){
-  const elEnv = document.getElementById('kpiEnviadas');
-  const elCor = document.getElementById('kpiCorretores');
-  if (elEnv) elEnv.textContent = enviadas;
-  if (elCor) elCor.textContent = corretores;
-  if (unidade) setUnitHeader(unidade);
-  if (usuario?.nome) setUserName(usuario.nome);
-}
-
 /* Bloqueio de clique até ready (opcional) */
 document.addEventListener('click', (ev) => {
   if (!document.body.classList.contains('ready')) {
@@ -365,57 +361,78 @@ document.addEventListener('click', (ev) => {
   }
 });
 
+/* ===== KPIs (placeholder) ===== */
 
+const nf = new Intl.NumberFormat('pt-BR');
+
+function setKPIs({
+  enviadas = '—',
+  corrigidas = '—',
+  recusadas = '—',
+  tratamento = '—',
+  unidade, usuario
+} = {}) {
+  const ids = {
+    kpiEnviadas:   enviadas,
+    kpiCorrigidas: corrigidas,
+    kpiRecusadas:  recusadas,
+    kpiTratamento: tratamento,
+  };
+  Object.entries(ids).forEach(([id, val]) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val;
+  });
+
+  if (unidade) setUnitHeader(unidade);
+  if (usuario?.nome) setUserName(usuario.nome);
+}
 
 
 /*bloco para estatísticas - mostrar redações e corretores por unidade */
 async function carregarKPIs() {
   try {
-    // pega o codUnd de várias fontes (ordem de preferência)
-    const sess = JSON.parse(localStorage.getItem('sessao_redacao') || '{}');
+    // pega o codUnd de várias fontes (sessão é prioridade)
+    const sess = getSession();
     const codUnd = String(
-      (sess && sess.unidade && sess.unidade.codigo) ||
-      localStorage.getItem('login') ||           // salvo no login
-      localStorage.getItem('last_login') ||      // fallback
+      sess?.unidade?.codigo ||
+      localStorage.getItem('login') || // compat
+      localStorage.getItem('last_login') ||
       ''
     ).trim();
 
     if (!codUnd) {
-      console.warn('carregarKPIs: sem codUnd – nada a carregar.');
-      // opcional: mostrar traços
-      ['kpiEnviadas','kpiTratamento','kpiRecusadas','kpiCorrigidas']
-        .forEach(id => { const el = document.getElementById(id); if (el) el.textContent = '—'; });
+      setKPIs(); // coloca “—”
+      console.warn('carregarKPIs: sem codUnd.');
       return;
     }
 
-    const r = await fetch('https://api.secauxiliar.com.br/dashboard_stats.php', {
+    const res = await fetch(API + 'dashboard_stats.php', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',                     // <-- se a API exigir cookie
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
       body: JSON.stringify({ codUnd })
     });
 
-    const j = await r.json().catch(() => ({}));
-    if (!r.ok || !j.ok) throw new Error(j.error || 'Falha ao carregar KPIs');
+    // tenta parsear e checa status
+    let data;
+    try { data = await res.json(); } catch { data = {}; }
+    if (!res.ok || !data.ok) {
+      throw new Error(data?.error || `HTTP_${res.status}`);
+    }
 
-    const d = j.data || {};
-    document.getElementById('kpiEnviadas').textContent   = d.enviadas   ?? '—';
-    document.getElementById('kpiTratamento').textContent = d.tratamento ?? '—';
-    document.getElementById('kpiRecusadas').textContent  = d.recusadas  ?? '—';
-    document.getElementById('kpiCorrigidas').textContent = d.corrigidas ?? '—';
+    const d = data.data || {};
+    setKPIs({
+      enviadas:   nf.format(d.enviadas   ?? 0),
+      corrigidas: nf.format(d.corrigidas ?? 0),
+      recusadas:  nf.format(d.recusadas  ?? 0),
+      tratamento: nf.format(d.tratamento ?? 0),
+    });
   } catch (e) {
     console.error('carregarKPIs:', e);
-    ['kpiEnviadas','kpiTratamento','kpiRecusadas','kpiCorrigidas']
-      .forEach(id => { const el = document.getElementById(id); if (el) el.textContent = '—'; });
+    setKPIs(); // “—”
   }
 }
 
-// garante que roda no carregamento
-document.addEventListener('DOMContentLoaded', () => {
-  // se você tiver uma função que popula a sessão (ex.: carregarContexto), chame-a antes:
-  // await carregarContexto().catch(()=>{});
-  carregarKPIs();
-});
+
 
 function wipeSession(){
   try {
