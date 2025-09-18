@@ -370,27 +370,33 @@ document.addEventListener('click', (ev) => {
 
 /*bloco para estatísticas - mostrar redações e corretores por unidade */
 async function carregarKPIs() {
-  try {
-    const sess = getSession();
-    const codUnd = sess?.unidade?.codigo || sess?.login || '';
+  try{
+    // pegue o codUnd do contexto/sessão como você já faz
+    const sess  = JSON.parse(localStorage.getItem('sessao_redacao')||'{}');
+    const codUnd = (sess?.unidade?.codigo || localStorage.getItem('login') || '').toString().trim();
     if (!codUnd) return;
 
-    const res = await apiFetch('/dashboard_stats.php', {
-      method: 'POST',
+    const r = await fetch('https://api.secauxiliar.com.br/dashboard_stats.php', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
       body: JSON.stringify({ codUnd })
     });
+    const j = await r.json();
+    if (!r.ok || !j?.ok) throw new Error(j?.error || 'Falha ao carregar KPIs');
 
-    const enviadas   = res?.data?.enviadas ?? '—';
-    const corretores = res?.data?.corretores ?? '—';
-
-    const elEnv = document.getElementById('kpiEnviadas');
-    const elCor = document.getElementById('kpiCorretores');
-    if (elEnv) elEnv.textContent = enviadas;
-    if (elCor) elCor.textContent = corretores;
-  } catch (e) {
-    console.warn('Falha ao carregar KPIs', e);
+    const d = j.data || {};
+    document.getElementById('kpiEnviadas').textContent   = d.enviadas   ?? '—';
+    document.getElementById('kpiTratamento').textContent = d.tratamento ?? '—';
+    document.getElementById('kpiRecusadas').textContent  = d.recusadas  ?? '—';
+    document.getElementById('kpiCorrigidas').textContent = d.corrigidas ?? '—';
+    //document.getElementById('kpiCorretores').textContent = d.corretores ?? '—';
+  }catch(e){
+    console.error(e);
+    ['kpiEnviadas','kpiTratamento','kpiRecusadas','kpiCorrigidas']
+      .forEach(id => { const el = document.getElementById(id); if (el) el.textContent = '—'; });
   }
 }
+document.addEventListener('DOMContentLoaded', carregarKPIs);
 
 
 function wipeSession(){
