@@ -83,13 +83,20 @@
 
   // Limpa sessão no domínio da API (equivale ao SAIR)
   async function safeResetSession(){
-    try { await fetch(`${API}/logout.php`, { method:'POST', credentials:'include' }); } catch {}
-    try {
-      localStorage.removeItem('TOKEN');
-      localStorage.removeItem('unidade');
-      localStorage.removeItem('login');
-    } catch {}
-  }
+     try{
+    ['TOKEN','token','unidade','login','sessao_redacao'].forEach(k=>localStorage.removeItem(k));
+    if (window.caches?.keys) caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
+  }catch{}
+}
+
+  async function apiLogout(){
+      try{ await fetch(`${API}/logout.php`, { method:'POST', credentials:'include' }); }catch{}
+    }
+
+    async function resetSession(){
+      await apiLogout();
+      wipeSessionLocal();
+    }
 
   async function doLogin(cod, senha, retried=false){
     if (loginInFlight) return;
