@@ -73,36 +73,103 @@
   </div>
 
 <script>
-const API = 'https://api.secauxiliar.com.br/'; // ou seu subdomínio da API
+// === CONFIG ===
+const STORAGE_KEY = 'sessao_redacao';      // onde você guarda o JSON da sessão
+const MAX_IDLE_MS = 30 * 60 * 1000;        // 30 min de inatividade
+const MAX_TTL_MS  = 2  * 60 * 60 * 1000;   // 2 horas de sessão total
 
-document.getElementById('btn').onclick = async () => {
-  const login = document.getElementById('login').value.trim();
-  const senha = document.getElementById('senha').value;
-  const msg = document.getElementById('msg');
-  msg.textContent = '';
-
-  try {
-    const r = await fetch(`${API}auth_login.php`, {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({login, senha})
-    });
-    const data = await r.json();
-    if (!r.ok || !data.ok) {
-      msg.textContent = data.error || 'Falha no login';
-      return;
-    }
-    // guarda token
-    localStorage.setItem('token', data.token);
-    localStorage.setItem('unidade', data.unidade);
-    localStorage.setItem('login', data.login);
-
-    // vai para página protegida
-    location.href = './painel.html';
-  } catch (e) {
-    msg.textContent = 'Erro de rede';
-  }
+// === STORAGE WRAPPER (prefere sessionStorage, faz fallback p/ localStorage) ===
+const S = {
+  get raw() { return sessionStorage.getItem(STORAGE_KEY) || localStorage.getItem(STORAGE_KEY); },
+  set raw(v) { try { sessionStorage.setItem(STORAGE_KEY, v); localStorage.removeItem(STORAGE_KEY); } catch(e) { localStorage.setItem(STORAGE_KEY, v); } },
+  clear()    { try { sessionStorage.removeItem(STORAGE_KEY); } catch(e){} try { localStorage.removeItem(STORAGE_KEY); } catch(e){} }
 };
+
+// === CRIA/ATUALIZA A SESSÃO COM METADADOS ===
+function createOrRefreshSession(payload) {
+  const now = Date.now();
+  let sess = readSession();
+  if (!sess) {
+    sess = {
+      data: payload || {},          // ex.: { unidade: { codigo: "1501", ... }, login: "1501" }
+      createdAt: now,
+      lastActiveAt: now,
+      expiresAt: now + MAX_TTL_MS
+    };
+  } else {
+    sess.lastActiveAt = now;
+  }
+  S.raw = JSON.stringify(sess);
+  return sess;
+}
+
+// === LÊ/VALIDA A SESSÃO (checa TTL e inatividade) ===
+function readSession() {
+  if (!S.raw) return null;
+  try {
+    const sess = JSON.parse(S.raw);
+    const now  = Date.now();
+    if (!sess.createdAt || !sess.lastActiveAt || !sess.expiresAt) throw new Error('meta ausente');
+    const idleOk = (now - sess.lastActiveAt) <= MAX_IDLE_MS;
+    const ttlOk  = now <= sess.expiresAt;
+    if (!idleOk || !ttlOk) {
+      S.clear();
+      return null;
+    }
+    return sess;
+  } catch {
+    S.clear();
+    return null;
+  }
+}
+
+// === LOGOUT/FINALIZAÇÃO ===
+function hardLogout(redirectToLogin = true) {
+  S.clear();
+  try { localStorage.removeItem('last_login'); } catch(e){}
+  if (redirectToLogin) location.href = '/redacaoenem/index.html';
+}
+
+// === HEARTBEAT DE ATIVIDADE ===
+let _idleTimer = null;
+function bumpActivity() {
+  const sess = readSession();
+  if (!sess) return;
+  sess.lastActiveAt = Date.now();
+  S.raw = JSON.stringify(sess);
+  if (_idleTimer) clearTimeout(_idleTimer);
+  _idleTimer = setTimeout(() => hardLogout(true), MAX_IDLE_MS + 5000);
+}
+['click','keydown','mousemove','touchstart','scroll'].forEach(evt =>
+  window.addEventListener(evt, bumpActivity, { passive: true })
+);
+
+// === LIMPESA AO SAIR/OCULTAR ===
+// pagehide funciona melhor no mobile/Safari do que beforeunload.
+// visibilitychange cobre trocas de aba/app suspenso.
+function clearOnExit() { S.clear(); }
+window.addEventListener('pagehide', clearOnExit);
+window.addEventListener('beforeunload', clearOnExit);
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') clearOnExit();
+});
+
+// === BOOTSTRAP NA CARGA ===
+(function bootstrapSession() {
+  const sess = readSession();
+  if (!sess) {
+    // sem sessão válida → força login
+    hardLogout(true);
+    return;
+  }
+  // sessão válida → inicia heartbeat
+  bumpActivity();
+})();
+
+// Exemplo de uso ao logar com sucesso:
+// createOrRefreshSession({ unidade: { codigo: '1501' }, login: '1501' });
 </script>
+
+
 </body>
 </html>
