@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Sessões — Admin</title>
+
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css"/>
+
+  <style>
+    :root{ --primary:#0b3b78; --bg:#f7f8fb; }
+    body{ background:var(--bg); }
+    header.topbar{ background:var(--primary); color:#fff; padding:14px 16px; display:flex; justify-content:space-between; align-items:center; }
+    header .brand{ font-weight:700; letter-spacing:.2px; font-size:1.05rem; }
+    .card{ border-radius:16px; }
+    table.striped thead th { position: sticky; top: 0; background:#fff; z-index:1; }
+    .table-container{ max-height:70vh; overflow:auto; }
+    code{ user-select:all; }
+  </style>
+</head>
+<body>
+
+<header class="topbar z-depth-1">
+  <div class="brand">Curso Objetivo Vestibulares - Simulados Abertos - Admin</div>
+  <div class="right">
+    <a id="btnRefresh" class="btn-small blue darken-1"><i class="material-icons left">refresh</i>Atualizar</a>
+  </div>
+</header>
+
+<main class="container" style="margin-top:18px;">
+  <div class="card">
+    <div class="card-content">
+      <span class="card-title">Sessões ativas</span>
+      <p class="grey-text">Gerencie logins abertos. Você pode encerrar uma sessão esquecida.</p>
+
+      <div class="table-container" style="margin-top:12px;">
+        <table class="striped highlight" id="tbl">
+          <thead>
+          <tr>
+            <th>Código</th>
+            <th>Unidade</th>
+            <th>Usuário</th>
+            <th>Sessão (SID)</th>
+            <th>Hora início</th>
+            <th>Tempo</th>
+            <th>Última atividade</th>
+            <th>IP</th>
+            <th>UA</th>
+            <th>Ações</th>
+          </tr>
+          </thead>
+          <tbody id="tbody">
+            <tr><td colspan="10" class="center-align grey-text">Carregando…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+<script>
+// ====== CONFIG ======
+const API_BASE = "https://api.secauxiliar.com.br/admin"; // <— ajuste aqui
+
+let CSRF = "";
+
+// util
+function fmtDur(secs){
+  secs = Math.max(0, secs|0);
+  const h = Math.floor(secs/3600),
+        m = Math.floor((secs%3600)/60),
+        s = secs%60;
+  if (h) return `${h}h ${m}m`;
+  if (m) return `${m}m`;
+  return `${s}s`;
+}
+
+async function loadSessions(){
+  const tbody = document.getElementById('tbody');
+  tbody.innerHTML = `<tr><td colspan="10" class="center-align grey-text">Carregando…</td></tr>`;
+
+  try {
+    const r = await fetch(`${API_BASE}/sessions_list.php`, {
+      method: 'GET',
+      credentials: 'include' // envia cookies da sessão do PHP
+    });
+    if (r.status === 401) {
+      tbody.innerHTML = `<tr><td colspan="10" class="center-align red-text">Não autenticado no servidor. Faça login no admin (PHP) e recarregue.</td></tr>`;
+      return;
+    }
+    const data = await r.json();
+    CSRF = data.csrf || "";
+    const sessions = Array.isArray(data.sessions) ? data.sessions : [];
+
+    if (!sessions.length) {
+      tbody.innerHTML = `<tr><td colspan="10" class="center-align grey-text">Nenhuma sessão ativa.</td></tr>`;
+      return;
+    }
+
+    // ordenar por last_seen desc
+    sessions.sort((a,b)=> (b.last_seen||0) - (a.last_seen||0));
+
+    const now = Math.floor(Date.now()/1000);
+    tbody.innerHTML = sessions.map(s=>{
+      const start = s.start_ts ? new Date(s.start_ts*1000) : null;
+      const last  = s.last_seen ? new Date(s.last_seen*1000) : null;
+      const tempo = s.start_ts ? fmtDur(now - s.start_ts) : '-';
+      const uaEsc = (s.ua || '').replaceAll('"','&quot;');
+      return `
+        <tr>
+          <td>${s.codigo||''}</td>
+          <td>${s.unidade||''}</td>
+          <td>${s.user||''}</td>
+          <td><code>${s.sid||''}</code></td>
+          <td>${start ? start.toLocaleString() : '-'}</td>
+          <td>${tempo}</td>
+          <td>${last ? last.toLocaleString() : '-'}</td>
+          <td>${s.ip||''}</td>
+          <td title="${uaEsc}" style="max-width:320px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${s.ua||''}</td>
+          <td>
+            <button class="btn-small red lighten-1" onclick="encerrar('${s.sid||''}')">
+              <i class="material-icons left">power_settings_new</i>Encerrar
+            </button>
+          </td>
+        </tr>`;
+    }).join('');
+  } catch (e){
+    console.error(e);
+    tbody.innerHTML = `<tr><td colspan="10" class="center-align red-text">Erro ao listar sessões.</td></tr>`;
+  }
+}
+
+async function encerrar(sid){
+  if (!sid) return;
+  if (!confirm('Encerrar a sessão selecionada?')) return;
+  try {
+    const r = await fetch(`${API_BASE}/end_session.php`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ sid, csrf: CSRF })
+    });
+    const data = await r.json();
+    if (data.ok) {
+      M.toast({text: 'Sessão encerrada.', displayLength: 1500});
+      loadSessions();
+    } else {
+      M.toast({text: 'Falha: ' + (data.error||'erro'), classes:'red', displayLength: 3000});
+    }
+  } catch (e){
+    console.error(e);
+    M.toast({text: 'Erro de rede.', classes:'red'});
+  }
+}
+
+document.getElementById('btnRefresh').addEventListener('click', loadSessions);
+document.addEventListener('DOMContentLoaded', loadSessions);
+</script>
+</body>
+</html>
