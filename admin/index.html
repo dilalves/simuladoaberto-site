@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Login — Área Administrativa</title>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css"/>
+  <style>
+    :root{ --bg:#f7f8fb; --ink:#0f172a; --primary:#0b3b78; }
+    body{ background:var(--bg); color:var(--ink); }
+    .card{ border-radius:16px }
+    .brand{ font-weight:700; letter-spacing:.3px }
+  </style>
+</head>
+<body class="container">
+  <div class="row" style="margin-top:8vh;">
+    <div class="col s12 m8 l6 offset-m2 offset-l3">
+      <div class="card z-depth-2">
+        <div class="card-content">
+          <span class="card-title brand">Área Administrativa</span>
+          <p class="grey-text">Demonstração (Front-end only)</p>
+
+          <div id="error" class="card-panel red lighten-4 red-text text-darken-4" style="display:none; border-radius:12px; margin-top:12px;">
+            <i class="material-icons left">error</i>
+            <span id="errmsg">Usuário ou senha inválidos.</span>
+          </div>
+
+          <form id="loginForm" autocomplete="off">
+            <div class="input-field">
+              <input id="user" name="user" type="text" required>
+              <label for="user">Usuário</label>
+            </div>
+            <div class="input-field">
+              <input id="pass" name="pass" type="password" required>
+              <label for="pass">Senha</label>
+              <label style="display:block;margin-top:8px;">
+                <input type="checkbox" id="togglePass"><span>Mostrar senha</span>
+              </label>
+            </div>
+            <button class="btn waves-effect waves-light" type="submit">
+              Entrar <i class="material-icons right">login</i>
+            </button>
+          </form>
+        </div>
+        <div class="card-action">
+          <small>Para testar: <b>Usuário:</b> Adilson &nbsp; <b>Senha:</b> Aa372833</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+// === Config (somente p/ teste) ===
+const USER_ALLOWED = "Adilson";
+// SHA-256 da senha "Aa372833" em Base64:
+const PASS_SHA256_B64 = "G3mqvAuMiGmxMYSYZTZI0IbgKXPNMpI5P0KDrn+P/lg=";
+// storage key p/ "sessão"
+const TOKEN_KEY = "admin_demo_token";
+
+// Mostrar/ocultar senha
+document.getElementById('togglePass').addEventListener('change', e=>{
+  const f = document.getElementById('pass'); f.type = e.target.checked ? 'text' : 'password';
+});
+
+// Se já estiver "logado", manda p/ admin
+if (localStorage.getItem(TOKEN_KEY)) {
+  location.href = "admin.html";
+}
+
+// Util: calcula SHA-256 em Base64 no browser
+async function sha256Base64(text){
+  const enc = new TextEncoder().encode(text);
+  const buf = await crypto.subtle.digest("SHA-256", enc);
+  const bytes = new Uint8Array(buf);
+  // Base64
+  let binary = ""; bytes.forEach(b => binary += String.fromCharCode(b));
+  return btoa(binary);
+}
+
+function showError(msg){
+  const el = document.getElementById('error');
+  document.getElementById('errmsg').textContent = msg || 'Usuário ou senha inválidos.';
+  el.style.display = 'block';
+}
+
+document.getElementById('loginForm').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const user = (document.getElementById('user').value || '').trim();
+  const pass = document.getElementById('pass').value || '';
+
+  try {
+    const hashB64 = await sha256Base64(pass);
+    if (user === USER_ALLOWED && hashB64 === PASS_SHA256_B64) {
+      // "Cria sessão" (falso login)
+      const payload = { user, ts: Date.now() };
+      localStorage.setItem(TOKEN_KEY, JSON.stringify(payload));
+      // Redireciona
+      location.href = "admin.html";
+    } else {
+      showError('Usuário ou senha inválidos.');
+    }
+  } catch(err){
+    console.error(err);
+    showError('Falha ao processar login no navegador.');
+  }
+});
+</script>
+</body>
+</html>
