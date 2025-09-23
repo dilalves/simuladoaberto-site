@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Admin — Simulados Abertos</title>
+
+  <!-- Materialize -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css"/>
+
+  <style>
+    :root{
+      --primary:#0b3b78; /* azul da barra */
+      --bg:#f7f8fb;
+    }
+    body{ background:var(--bg); }
+    /* Topbar azul */
+    .topbar{
+      background:var(--primary);
+      color:#fff;
+      padding:14px 16px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+    }
+    .topbar .brand{
+      font-weight:700; letter-spacing:.2px; font-size:1.05rem;
+    }
+    /* Área de menus suspensos */
+    .menu-row{
+      margin:18px auto 0 auto;
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+    .card { border-radius:16px; }
+    .dropdown-content { border-radius:12px; overflow:hidden; }
+  </style>
+</head>
+<body>
+
+  <!-- Guarda "sessão" simples no front -->
+  <script>
+    const TOKEN_KEY = "admin_demo_token";
+    const raw = localStorage.getItem(TOKEN_KEY);
+    if (!raw) { window.location.href = "index.html"; }
+  </script>
+
+  <!-- Barra azul topo -->
+  <header class="topbar z-depth-1">
+    <div class="brand">Curso Objetivo Vestibulares - Simulados Abertos - Admin</div>
+    <div>
+      <a id="btnLogout" class="btn-small red waves-effect">
+        <i class="material-icons left">logout</i>Sair
+      </a>
+    </div>
+  </header>
+
+  <!-- Conteúdo -->
+  <main class="container">
+    <!-- Linha com os menus suspensos -->
+    <div class="menu-row">
+      <!-- Cadastros -->
+      <a class="dropdown-trigger btn waves-effect" href="#!" data-target="dd-cadastros">
+        <i class="material-icons left">assignment</i>Cadastros
+        <i class="material-icons right">arrow_drop_down</i>
+      </a>
+      <ul id="dd-cadastros" class="dropdown-content">
+        <li><a href="#" id="go-unidades">Unidades</a></li>
+        <li><a href="#" id="go-simulados">Simulados</a></li>
+      </ul>
+
+      <!-- Sessões -->
+      <a class="dropdown-trigger btn waves-effect" href="#!" data-target="dd-sessoes">
+        <i class="material-icons left">group</i>Sessões
+        <i class="material-icons right">arrow_drop_down</i>
+      </a>
+      <ul id="dd-sessoes" class="dropdown-content">
+        <li><a href="#" id="go-sessoes-unidades">Unidades</a></li>
+        <li><a href="#" id="go-sessoes-professores">Professores</a></li>
+      </ul>
+
+      <!-- Relatórios -->
+      <a class="dropdown-trigger btn waves-effect" href="#!" data-target="dd-relatorios">
+        <i class="material-icons left">bar_chart</i>Relatórios
+        <i class="material-icons right">arrow_drop_down</i>
+      </a>
+      <ul id="dd-relatorios" class="dropdown-content">
+        <li><a href="#" id="go-rel-unidades-conveniadas">Unidades conveniadas</a></li>
+        <li><a href="#" id="go-rel-simulados">Simulados</a></li>
+      </ul>
+    </div>
+
+    <!-- Uma cartinha de boas-vindas (opcional) -->
+    <div class="row" style="margin-top:18px;">
+      <div class="col s12 m10 l8 offset-m1 offset-l2">
+        <div class="card z-depth-1">
+          <div class="card-content">
+            <span class="card-title">Bem-vindo(a)!</span>
+            <p>Escolha um item nos menus acima para acessar as funcionalidades.
+               Estas páginas serão criadas em seguida.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Materialize JS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+
+  <script>
+    // Init dropdowns
+    document.addEventListener('DOMContentLoaded', function() {
+      const elems = document.querySelectorAll('.dropdown-trigger');
+      M.Dropdown.init(elems, {
+        alignment: 'left',
+        coverTrigger: false,
+        constrainWidth: false
+      });
+    });
+
+    // Rotas futuras (por enquanto apenas placeholders):
+    const nav = (path) => {
+      // quando criarmos as páginas, troque por: location.href = path;
+      M.toast({text: 'Abrir: ' + path, displayLength: 1600});
+    };
+
+    document.getElementById('go-unidades')                  .addEventListener('click', ()=>nav('cadastros-unidades.html'));
+    document.getElementById('go-simulados')                 .addEventListener('click', ()=>nav('cadastros-simulados.html'));
+
+    document.getElementById('go-sessoes-unidades')          .addEventListener('click', ()=>nav('sessoes-unidades.html'));
+    document.getElementById('go-sessoes-professores')       .addEventListener('click', ()=>nav('sessoes-professores.html'));
+
+    document.getElementById('go-rel-unidades-conveniadas')  .addEventListener('click', ()=>nav('relatorios-unidades-conveniadas.html'));
+    document.getElementById('go-rel-simulados')             .addEventListener('click', ()=>nav('relatorios-simulados.html'));
+
+    // Logout
+    document.getElementById('btnLogout').addEventListener('click', ()=>{
+      localStorage.removeItem('admin_demo_token');
+      location.href = 'index.html';
+    });
+  </script>
+</body>
+</html>
