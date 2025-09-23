@@ -77,11 +77,14 @@ document.getElementById('loginForm').addEventListener('submit', async (e)=>{
 
   try {
     const r = await fetch(`${API_BASE}/login_admin.php`, {
-      method: 'POST',
-      credentials: 'include',              // MUITO IMPORTANTE: envia/recebe cookie da sessão PHP
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ user, pass }) // ex.: Admin / SenhaForte123 (no PHP)
-    });
+        method: 'POST',
+        credentials: 'include',            // precisa para enviar/receber cookie
+        // sem headers! (para evitar preflight)
+        body: new URLSearchParams({        // simple request: x-www-form-urlencoded
+          user, 
+          pass
+        })
+      });
 
     if (!r.ok) {
       const data = await r.json().catch(()=>({}));
