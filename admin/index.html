@@ -44,43 +44,29 @@
           </form>
         </div>
         <div class="card-action">
-          <small>Para testar: <b>Usuário:</b> Adilson &nbsp; <b>Senha:</b> Aa372833</small>
         </div>
       </div>
     </div>
   </div>
 
 <script>
-// === Config (somente p/ teste) ===
-const USER_ALLOWED = "Adilson";
-// SHA-256 da senha "Aa372833" em Base64:
-const PASS_SHA256_B64 = "G3mqvAuMiGmxMYSYZTZI0IbgKXPNMpI5P0KDrn+P/lg=";
-// storage key p/ "sessão"
-const TOKEN_KEY = "admin_demo_token";
+// ===== CONFIG =====
+const API_BASE = "https://api.secauxiliar.com.br/admin"; // ajuste se mudar a pasta
+const TOKEN_KEY = "admin_demo_token"; // só p/ redirecionar o front (sessão real fica no PHP)
 
 // Mostrar/ocultar senha
 document.getElementById('togglePass').addEventListener('change', e=>{
   const f = document.getElementById('pass'); f.type = e.target.checked ? 'text' : 'password';
 });
 
-// Se já estiver "logado", manda p/ admin
+// Se já estiver "logado" no front, manda para a área (opcional)
 if (localStorage.getItem(TOKEN_KEY)) {
   location.href = "admin.html";
 }
 
-// Util: calcula SHA-256 em Base64 no browser
-async function sha256Base64(text){
-  const enc = new TextEncoder().encode(text);
-  const buf = await crypto.subtle.digest("SHA-256", enc);
-  const bytes = new Uint8Array(buf);
-  // Base64
-  let binary = ""; bytes.forEach(b => binary += String.fromCharCode(b));
-  return btoa(binary);
-}
-
 function showError(msg){
   const el = document.getElementById('error');
-  document.getElementById('errmsg').textContent = msg || 'Usuário ou senha inválidos.';
+  document.getElementById('errmsg').textContent = msg || 'Falha no login.';
   el.style.display = 'block';
 }
 
@@ -90,19 +76,31 @@ document.getElementById('loginForm').addEventListener('submit', async (e)=>{
   const pass = document.getElementById('pass').value || '';
 
   try {
-    const hashB64 = await sha256Base64(pass);
-    if (user === USER_ALLOWED && hashB64 === PASS_SHA256_B64) {
-      // "Cria sessão" (falso login)
-      const payload = { user, ts: Date.now() };
-      localStorage.setItem(TOKEN_KEY, JSON.stringify(payload));
-      // Redireciona
-      location.href = "admin.html";
+    const r = await fetch(`${API_BASE}/login_admin.php`, {
+      method: 'POST',
+      credentials: 'include',              // MUITO IMPORTANTE: envia/recebe cookie da sessão PHP
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user, pass }) // ex.: Admin / SenhaForte123 (no PHP)
+    });
+
+    if (!r.ok) {
+      const data = await r.json().catch(()=>({}));
+      showError((data && data.error) ? `Erro: ${data.error}` : 'Usuário ou senha inválidos.');
+      return;
+    }
+
+    const data = await r.json();
+    if (data.ok) {
+      // marca “logado” no front só para permitir o redirect;
+      // a proteção REAL está no servidor (cookies + session).
+      localStorage.setItem(TOKEN_KEY, JSON.stringify({ user, ts: Date.now() }));
+      location.href = "admin.html";        // ou "admin-sessoes.html" se preferir
     } else {
       showError('Usuário ou senha inválidos.');
     }
-  } catch(err){
+  } catch (err) {
     console.error(err);
-    showError('Falha ao processar login no navegador.');
+    showError('Falha ao contatar o servidor.');
   }
 });
 </script>
