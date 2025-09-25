@@ -150,14 +150,21 @@
           </div>
 
           <!-- Área de seleção -->
-          <div id="drop" class="card-panel">
-            <i class="material-icons" style="font-size:40px">cloud_upload</i>
-            <p class="muted" style="margin:6px 0 16px">Arraste e solte aqui, ou</p>
-            <input id="files" type="file" multiple
-                   accept=".jpg,.jpeg,.png,.pdf,.tif,.tiff,.heic"
-                   class="hidden">
-            <button id="btnPick" class="btn waves-effect">Selecionar arquivos</button>
+          <div id="drop" class="card-panel center-align" style="padding: 30px;">
+            <i class="material-icons large" style="font-size:60px;color:#0b3b78">cloud_upload</i>
+            <p class="muted" style="margin:12px 0 20px;font-size:16px;">
+              Arraste e solte suas redações aqui <br> ou clique no botão abaixo:
+            </p>
+            
+            <!-- Input escondido -->
+            <input id="files" type="file" multiple accept=".jpg,.jpeg" style="display:none;">
+            
+            <!-- Botão estilizado -->
+            <button id="btnPick" class="btn waves-effect waves-light">
+              Selecionar arquivos
+            </button>
           </div>
+
 
           <!-- Lista de uploads -->
           <ul id="list" class="collection" style="max-height:360px; overflow:auto"></ul>
@@ -177,7 +184,7 @@
         <div class="card-content">
           <span class="card-title">Como funciona</span>
           <ul class="browser-default">
-            <li>O sistema valida resolução (ex.: ≥300 dpi). Se reprovado, o arquivo não é enviado.</li>
+            <li>O sistema valida resolução (300 dpi). Se reprovado, o arquivo não é enviado.</li>
             <li>Se aprovado, o arquivo é salvo no Google Drive e registrado na tabela LOG.</li>
           </ul>
         </div>
@@ -191,7 +198,6 @@
   
 
 <script>
-
 let queue = []; // {file, li, bar, msg, key, status}
 const enviados = new Set();                         // [+] novo
 function keyOf(f){ return `${f.name}|${f.size}|${f.lastModified}`; } // [+] novo
