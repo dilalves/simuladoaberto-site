@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Login - Correção de Redações</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Materialize -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+  <link rel="icon" type="image/x-icon" href="https://www.curso-objetivo.br/assets/img/favicon.ico" />
+  <style>
+    :root{
+      --bg:#f7f8fb; --card:#ffffff; --line:#e9edf3; --ink:#0f172a; --muted:#6b7280; --primary:#0b3b78; --accent:#2563eb;
+      --aside-w: 260px;       /* largura do menu lateral */
+      --topbar-h: 64px;       /* altura do topo */
+    }
+
+    header.topbar{
+      position: fixed; top: 0; left: 0; right: 0; height: var(--topbar-h); z-index: 20;
+      background: var(--primary); color:#fff; display:flex; align-items:center;
+      padding: 12px 24px; padding-left: 0; box-shadow:0 2px 10px rgba(16,24,40,.12);
+    }
+    header.topbar > .topbar{ background: transparent !important; box-shadow: none !important; }
+    header.topbar .container{ max-width: none; width: 100%; margin: 0; padding: 0; }
+    header.topbar h5{ margin: 0; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  body{font-family:system-ui,Arial;padding:24px;background:#f6f7fb}
+  .card{max-width:420px;margin:56px auto;background:#fff;border-radius:12px;padding:24px;box-shadow:0 10px 30px rgba(0,0,0,.06)}
+  /* inputs continuam largos */
+  input{
+    width:95%;
+    padding:12px;
+    border-radius:8px;
+    border:1px solid #ddd;
+    margin-top:8px;
+  }
+
+  /* botão menor e centralizado */
+  #btn{
+    width:160px;            /* ajuste o tamanho aqui */
+    padding:12px 16px;
+    border-radius:8px;
+    display:block;
+    margin:12px auto 0;     /* centraliza */
+    border:none;
+    background:#0f172a;
+    color:#fff;
+    cursor:pointer;
+  }
+  #btn:hover{ filter: brightness(1.03); }
+  #btn:disabled{ opacity:.6; cursor:default; }
+  button{background:#0f172a;border:none;color:#fff;cursor:pointer}
+  .msg{margin-top:12px;color:#b00}
+  </style>
+</head>
+<body>
+  <header class="topbar">
+      <div class="topbar blue darken-3 white-text"
+          style="display:flex; align-items:center; justify-content:space-between; padding:0 24px; width:100%;">
+        
+        <!-- Bloco ESQUERDA -->
+        <div style="display:flex; align-items:center; gap:12px;">
+          <img src="/redacaoenem/logo-mini.png" alt="Logo" style="height:28px; width:auto; margin-left:8px;">
+          <h5 class="m-0" style="margin:0; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">
+            Simulado Aberto ENEM - Redação - Correção
+          </h5>
+        </div>
+      </div>
+    </header>
+
+  <div class="page">
+    <div class="card login-card z-depth-2">
+      <div class="card-content">
+        <span class="card-title center">Entrar</span>
+        <div class="row" style="margin-bottom:0">
+          <div class="input-field col s12">
+            <input id="email" type="email" required autocomplete="username">
+            <label for="email">E-mail</label>
+          </div>
+          <div class="input-field col s12">
+            <input id="senha" type="password" required autocomplete="current-password">
+            <label for="senha">Senha</label>
+          </div>
+        </div>
+        <div class="center">
+          <button id="btnEntrar" class="btn blue waves-effect">Entrar</button>
+        </div>
+        <p id="msg" class="grey-text center" style="margin-top:12px"></p>
+      </div>
+    </div>
+  </div>
+
+<script>
+const API = 'https://api.secauxiliar.com.br';           // Hostinger (PHP)
+const SESS_KEY = 'sessao_redacao';                      // mesma chave das outras telas
+
+function setSession(obj){ localStorage.setItem(SESS_KEY, JSON.stringify(obj)); }
+
+document.addEventListener('DOMContentLoaded', () => {
+  if (window.M && M.updateTextFields) M.updateTextFields();
+
+  // Se já logado, pula pra app
+  try {
+    const s = JSON.parse(localStorage.getItem(SESS_KEY)||'{}');
+    if (s && s.token) location.href = './app.html';
+  } catch (_) {}
+
+  const btn = document.getElementById('btnEntrar');
+  btn.addEventListener('click', (e)=>{ e.preventDefault(); doLogin(btn); });
+  ['email','senha'].forEach(id=>{
+    document.getElementById(id).addEventListener('keydown', ev=>{
+      if (ev.key==='Enter'){ ev.preventDefault(); doLogin(btn); }
+    });
+  });
+});
+
+async function doLogin(btn){
+  const email = document.getElementById('email').value.trim().toLowerCase();
+  const senha = document.getElementById('senha').value;
+
+  const msgEl = document.getElementById('msg');
+  msgEl.textContent = '';
+  if (!email || !senha){
+    M.toast({html:'Preencha e-mail e senha!'}); return;
+  }
+
+  btn.classList.add('disabled');
+
+  try{
+    const res = await fetch(API + '/auth_login_prof.php', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ email, senha })
+    });
+    const data = await res.json().catch(()=> ({}));
+
+    if (!res.ok || !data.ok){
+      const map = { credenciais_invalidas: 'E-mail ou senha inválidos.' };
+      msgEl.textContent = map[data.error] || 'Falha ao entrar.';
+      btn.classList.remove('disabled');
+      return;
+    }
+
+    // Sessão "oficial" (usada nas telas novas)
+    const sess = { token: data.token, usuario: data.usuario, unidade: data.unidade };
+    setSession(sess);
+
+    // Compatibilidade com código antigo (se você ainda usa essas chaves)
+    localStorage.setItem('tok_corr', data.token);
+    localStorage.setItem('nome_corr', data.usuario?.nome || '');
+    localStorage.setItem('cod_corr',  data.unidade?.codigo || '');
+
+    location.href = './app.html';
+  } catch(err){
+    console.error(err);
+    msgEl.textContent = 'Erro de rede.';
+    btn.classList.remove('disabled');
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Painel - Correção de Redações</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
+  <link rel="icon" type="image/x-icon" href="https://www.curso-objetivo.br/assets/img/favicon.ico" />
+  <style>
+    body { background:#f7f9fc; }
+    .wrap { max-width: 1000px; margin: 24px auto; padding: 0 12px; }
+  </style>
+</head>
+<body>
+  
+  <nav class="blue darken-3">
+    <div class="nav-wrapper wrap">
+      <a class="brand-logo">Correção de Redações</a>
+      <ul class="right">
+        <li><a id="userLabel"></a></li>
+        <li><a id="btnLogout">Sair</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <div class="wrap">
+    <div class="card">
+      <div class="card-content">
+        <span class="card-title">Bem-vindo!</span>
+        <p>Olá, <b id="nome"></b> — Unidade <b id="unidade"></b></p>
+        <div class="row" style="margin-top:20px">
+          <div class="col s12 m6">
+            <a class="btn-large blue waves-effect" href="./pendentes.html">Ver redações pendentes</a>
+          </div>
+          <div class="col s12 m6">
+            <a class="btn-large blue waves-effect" href="./minhas.html">Minhas correções</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+  <script>
+    // Recupera dados da sessão salvos no login
+    const token = localStorage.getItem('tok_corr');
+    const nome = localStorage.getItem('nome_corr');
+    const unidade = localStorage.getItem('cod_corr');
+
+    if (!token) {
+      // se não tem token, volta pro login
+      location.href = './';
+    }
+
+    document.getElementById('nome').textContent = nome || '';
+    document.getElementById('unidade').textContent = unidade || '';
+    document.getElementById('userLabel').textContent = nome || '';
+
+    document.getElementById('btnLogout').onclick = () => {
+      localStorage.clear();
+      location.href = './';
+    };
+  </script>
+</body>
+</html>
