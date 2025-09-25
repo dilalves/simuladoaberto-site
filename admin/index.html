@@ -8,9 +8,15 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css"/>
   <style>
     :root{ --bg:#f7f8fb; --ink:#0f172a; --primary:#0b3b78; }
+    
     body{ background:var(--bg); color:var(--ink); }
     .card{ border-radius:16px }
     .brand{ font-weight:700; letter-spacing:.3px }
+    header.topbar{
+      position: fixed; top: 0; left: 0; right: 0; height: var(--topbar-h); z-index: 20;
+      background: var(--primary); color:#fff; display:flex; align-items:center;
+      padding: 12px 24px; padding-left: 0; box-shadow:0 2px 10px rgba(16,24,40,.12);
+    }
   </style>
 </head>
 <body class="container">
