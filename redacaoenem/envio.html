@@ -78,9 +78,7 @@
     .manual-link{ color:#b54708; font-weight:600; cursor:pointer; text-decoration:underline; }
     .crop-wrap{ width:100%; max-height:60vh; overflow:auto; background:#f8fafc; border:1px solid #e5e7eb; border-radius:10px }
     #cropImg{ max-width:100%; display:block; }
-
   </style>
-
 </head>
 
 <body>
@@ -95,7 +93,6 @@
       <li class="active"><a href="/redacaoenem/envio.html"><span class="icon material-icons">cloud_upload</span>Envio de Redações</a></li>
       <li><a href="/redacaoenem/professores.html"><span class="icon material-icons">group</span>Professores</a></li>
       <li><a href="/redacaoenem/relatorios.html"><span class="icon material-icons">bar_chart</span>Relatório</a></li>
-      <!-- <li><a href="/redacaoenem/config.html"><span class="icon material-icons">settings</span>Configurações</a></li> -->
     </ul>
   </aside>
 
@@ -103,17 +100,15 @@
   <main>
     <header class="topbar">
       <div class="topbar blue darken-3 white-text"
-          style="display:flex; align-items:center; justify-content:space-between; padding:0 24px; width:100%;">
-        
-        <!-- Bloco ESQUERDA -->
+           style="display:flex; align-items:center; justify-content:space-between; padding:0 24px; width:100%;">
+        <!-- ESQUERDA -->
         <div style="display:flex; align-items:center; gap:12px;">
           <img src="/redacaoenem/logo-mini.png" alt="Logo" style="height:28px; width:auto; margin-left:8px;">
           <h5 class="m-0" style="margin:0; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">
             Simulado Aberto ENEM - Redação – <span id="unitLabel">—</span>
           </h5>
         </div>
-
-        <!-- Bloco DIREITA -->
+        <!-- DIREITA -->
         <div style="display:flex; gap:8px; align-items:center">
           <a id="btnLogout" class="btn-flat waves-effect white-text" href="#!" onclick="logout()">
             <i class="material-icons left">exit_to_app</i>Sair
@@ -155,16 +150,10 @@
             <p class="muted" style="margin:12px 0 20px;font-size:16px;">
               Arraste e solte suas redações aqui <br> ou clique no botão abaixo:
             </p>
-            
-            <!-- Input escondido -->
-            <input id="files" type="file" multiple accept=".jpg,.jpeg" style="display:none;">
-            
-            <!-- Botão estilizado -->
-            <button id="btnPick" class="btn waves-effect waves-light">
-              Selecionar arquivos
-            </button>
-          </div>
 
+            <input id="files" type="file" multiple accept=".jpg,.jpeg" style="display:none;">
+            <button id="btnPick" class="btn waves-effect waves-light">Selecionar arquivos</button>
+          </div>
 
           <!-- Lista de uploads -->
           <ul id="list" class="collection" style="max-height:360px; overflow:auto"></ul>
@@ -179,7 +168,6 @@
         </div>
       </div>
 
-      <!-- Dicas -->
       <div class="card" style="margin-top:14px">
         <div class="card-content">
           <span class="card-title">Como funciona</span>
@@ -195,47 +183,36 @@
 
 <input type="hidden" name="ts" id="ts">
 
-  
-
 <script>
-// ==== Lotes e concorrência (oculto ao usuário) ====
-const CONCURRENCY_DEFAULT = 4;   // quantos arquivos sobem em paralelo
-const BATCH_SIZE_DEFAULT  = 15;  // quantos arquivos por lote
-const MAX_RETRIES         = 3;   // reenvios por arquivo, se der pico de erro
-const BASE_BACKOFF        = 500; // ms (exponential backoff)
+/* ===== Configuração invisível ao usuário (lotes/concorrência) ===== */
+const CONCURRENCY_DEFAULT = 4;   // uploads paralelos
+const BATCH_SIZE_DEFAULT  = 15;  // arquivos por lote
+const MAX_RETRIES         = 3;   // tentativas em erro transitório
+const BASE_BACKOFF        = 500; // ms (0.5s,1s,2s,...)
 
 let queue = []; // {file, li, bar, msg, key, status}
-const enviados = new Set();                         // [+] novo
-function keyOf(f){ return `${f.name}|${f.size}|${f.lastModified}`; } // [+] novo
+const enviados = new Set();
+function keyOf(f){ return `${f.name}|${f.size}|${f.lastModified}`; }
+function dbg(...a){ try{ console.debug('[upload]', ...a); }catch(_){} }
 
-function purgeEnviadosDaTela(){                     // [+] novo
-  // remove da UI e da fila tudo que já está com status 'enviado'
-  for (const it of queue.filter(x => x.status === 'enviado')){
-    it.li?.remove();
-  }
+function purgeEnviadosDaTela(){
+  for (const it of queue.filter(x => x.status === 'enviado')) it.li?.remove();
   queue = queue.filter(x => x.status !== 'enviado');
 }
 
-
-/* ===================== SESSÃO / CONTEXTO (igual ao professores.html) ===================== */
+/* ===== Sessão / contexto ===== */
 const API_BASE   = 'https://api.secauxiliar.com.br/';
 const LOGIN_URL  = '/redacaoenem/index.html';
 const SESS_KEY   = 'sessao_redacao';
-function novoTimestamp(){
-  const d = new Date();
-  return d.toTimeString().slice(0,8).replace(/:/g,''); // HHMMSS
-}
-document.getElementById('ts').value = novoTimestamp(); // inicial
 
-// 🔹 Controle do lote atual
+function novoTimestamp(){ const d=new Date(); return d.toTimeString().slice(0,8).replace(/:/g,''); }
+document.getElementById('ts').value = novoTimestamp();
+
 let currentBatchId = null;
 function startNewBatch(){
-  document.getElementById('ts').value = novoTimestamp(); // renova HHMMSS
+  document.getElementById('ts').value = novoTimestamp();
   currentBatchId = `L${Date.now()}_${Math.random().toString(36).slice(2,8)}`;
 }
-
-
-
 
 function getSession(){ try{ return JSON.parse(localStorage.getItem(SESS_KEY) || '{}'); }catch(_){ return {}; } }
 function setSession(s){ localStorage.setItem(SESS_KEY, JSON.stringify(s||{})); }
@@ -246,14 +223,10 @@ function redirectToLogin(){
   location.replace(`${LOGIN_URL}?next=${next}`);
 }
 
-/** fetch com fallback (.php), headers de auth e tratamento de erro */
 async function apiFetch(pathNoPhp, { method='GET', headers={}, body, cache='no-store' } = {}){
   const baseHeaders = { Accept:'application/json', ...authHeaders(), ...headers };
-  // Só seta Content-Type quando for JSON body
   const opts = { method, cache, headers: baseHeaders, body };
-  if (body && typeof body === 'string' && !baseHeaders['Content-Type']) {
-    baseHeaders['Content-Type'] = 'application/json';
-  }
+  if (body && typeof body === 'string' && !baseHeaders['Content-Type']) baseHeaders['Content-Type'] = 'application/json';
 
   let res;
   try { res = await fetch(`${API_BASE}${pathNoPhp}`, opts); } catch(_){ res = null; }
@@ -279,10 +252,8 @@ function setUnitHeader(unit){
   else el.textContent = '—';
 }
 
-/** Carrega contexto do usuário/unidade via /auth_me.php (mesma lógica do professores) */
 async function carregarContexto(){
   const data = await apiFetch('/auth_me.php');
-  // Fallback caso o backend retorne {user:{...}} em vez de {usuario, unidade}
   if (data?.user && !data?.usuario && !data?.unidade) {
     const u = data.user;
     data.usuario = { nome: u.nome || u.login || 'Usuário' };
@@ -291,30 +262,26 @@ async function carregarContexto(){
   setSession({ ...getSession(), ...data });
   setUnitHeader(data.unidade);
 
-  // Preenche e oculta o input de unidade se veio do login
   const codInput = document.getElementById('codUnd');
   if (codInput && data?.unidade?.codigo) {
     codInput.value = data.unidade.codigo;
-    codInput.setAttribute('readonly', 'readonly');
-    codInput.closest('.row')?.classList.add('hide'); // opcional: esconder
+    codInput.setAttribute('readonly','readonly');
+    codInput.closest('.row')?.classList.add('hide');
   }
   return data;
 }
 
-/* ===================== UPLOAD (fila, barra e respostas) ===================== */
+/* ===== Upload (fila, barra, lotes) ===== */
 document.addEventListener('DOMContentLoaded', async () => {
-  // Materialize
   window.M && M.AutoInit();
 
-  // exige login
   if (!getToken()) return redirectToLogin();
 
-  // carrega contexto (topo + codUnd)
   try { await carregarContexto(); }
   catch(e){ if (String(e.message).includes('UNAUTHORIZED')) return redirectToLogin(); }
 
   const API_UPLOAD = 'https://api.secauxiliar.com.br/upload.php'; // endpoint PHP
-  const ACCEPT_EXT = ['jpg','jpeg']; // validação extra no front (se quiser permitir mais, ajuste)
+  const ACCEPT_EXT = ['jpg','jpeg'];
 
   const btnPick  = document.getElementById('btnPick');
   const input    = document.getElementById('files');
@@ -324,18 +291,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   const statusEl = document.getElementById('status');
   const codUndEl = document.getElementById('codUnd');
 
-  //let queue = []; // {file, li, bar, msg}
-
-  // ===== BOTÃO "Selecionar arquivos":
   btnPick.addEventListener('click', () => {
     purgeEnviadosDaTela();
-    startNewBatch();          // 🔄 novo lote
+    startNewBatch();
     input.click();
   });
 
   drop.addEventListener('drop',(e)=>{
+    e.preventDefault(); e.stopPropagation();
     drop.classList.remove('drag');
-    startNewBatch();          // 🔄 novo lote
+    startNewBatch();
     addFiles(e.dataTransfer.files);
   });
 
@@ -346,18 +311,18 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
   drop.addEventListener('dragenter',() => drop.classList.add('drag'));
   drop.addEventListener('dragleave',() => drop.classList.remove('drag'));
-  
+
   function addFiles(fileList){
-    purgeEnviadosDaTela();                            // [+] novo: também limpa ao trocar seleção
+    purgeEnviadosDaTela();
     [...fileList].forEach(file => {
       const ext = (file.name.split('.').pop() || '').toLowerCase();
       if (!ACCEPT_EXT.includes(ext)) {
         window.M && M.toast ? M.toast({html:`Tipo não permitido: ${ext}`}) : alert(`Tipo não permitido: ${ext}`);
         return;
       }
-      const key = keyOf(file);                        // [+] novo
-      if (enviados.has(key)) return;                  // [+] não reexibe o que já foi enviado
-      if (queue.some(q => q.key === key)) return;     // evita duplicado na fila
+      const key = keyOf(file);
+      if (enviados.has(key)) return;
+      if (queue.some(q => q.key === key)) return;
 
       const li = document.createElement('li');
       li.className = 'collection-item';
@@ -380,61 +345,74 @@ document.addEventListener('DOMContentLoaded', async () => {
       li.querySelector('[data-remove]').onclick = () => {
         queue = queue.filter(q => q.li !== li);
         li.remove();
-        updateSendButton();  
+        updateSendButton();
       };
-      queue.push({file, li, bar, msg, key, status:'pendente'});  // [+] status + key
+      queue.push({file, li, bar, msg, key, status:'pendente'});
+      dbg('addFiles: push', {name:file.name, size:file.size, key});
     });
-    // permite reescolher o mesmo arquivo depois
-    input.value = '';                                  // [+] novo
+    input.value = '';
+    dbg('addFiles: total na fila', queue.length);
     updateSendButton();
   }
 
   btnSend.addEventListener('click', async (e) => {
-  e.preventDefault();
-  const codUnd = (codUndEl.value || '').trim();
-  if (!codUnd) { M?.toast ? M.toast({html:'Informe o código da unidade'}) : alert('Informe o código da unidade'); return; }
+    e.preventDefault();
+    const codUnd = (codUndEl.value || '').trim();
+    if (!codUnd) { M?.toast ? M.toast({html:'Informe o código da unidade'}) : alert('Informe o código da unidade'); return; }
 
-  const pendentes = queue.filter(it => it.status === 'pendente');
-  if (!pendentes.length){
-    M?.toast ? M.toast({html:'Nada a enviar: todos os itens desta lista já foram enviados.'}) : alert('Nada a enviar.');
+    const pendentes = queue.filter(it => it.status === 'pendente');
+    dbg('btnSend: queue total', queue.length);
+    dbg('btnSend: pendentes', pendentes.length);
+
+    if (!pendentes.length){
+      statusEl.textContent = 'Nada a enviar.';
+      M?.toast && M.toast({html:'Nada a enviar (fila vazia).'});
+      updateSendButton();
+      return;
+    }
+
+    btnSend.disabled = true;
+
+    const batchId = currentBatchId || (currentBatchId = `L${Date.now()}_${Math.random().toString(36).slice(2,8)}`);
+
+    let seq = 1;
+    for (const it of pendentes) it._seq = seq++;
+
+    const batches = chunkArray(pendentes, BATCH_SIZE_DEFAULT);
+
+    let done = 0;
+    for (let b = 0; b < batches.length; b++){
+      const lote = batches[b];
+      dbg(`iniciando lote ${b+1}/${batches.length}`, {tamanho: lote.length});
+      statusEl.textContent = `Enviando… lote ${b+1}/${batches.length} (${lote.length} arquivos)`;
+
+      await runWithConcurrency(
+        lote.map(x => ({ item: x })),
+        CONCURRENCY_DEFAULT,
+        async ({ item }) => {
+          try{
+            await sendWithRetry(item, codUnd, batchId, API_UPLOAD);
+            done++;
+            statusEl.textContent = `Enviando… lote ${b+1}/${batches.length} (${lote.length} arquivos) — concluídos: ${done}/${pendentes.length}`;
+          } catch(err){
+            dbg('worker erro síncrono', err);
+            item.msg.textContent = 'Falha inesperada';
+            item.li.classList.add('red-text');
+            item.status = 'erro';
+          }
+        }
+      );
+
+      dbg(`lote ${b+1} finalizado`);
+    }
+
+    statusEl.textContent = 'Envio concluído.';
     updateSendButton();
-    return;
-  }
+  });
 
-  btnSend.disabled = true;
-
-  // mantém o mesmo batchId para toda esta submissão (como já era)
-  const batchId = currentBatchId || (currentBatchId = `L${Date.now()}_${Math.random().toString(36).slice(2,8)}`);
-
-  // numeração sequencial estável para todos os pendentes (independe da ordem de conclusão)
-  let seq = 1;
-  for (const it of pendentes) it._seq = seq++;
-
-  // divide em lotes "internos" (usuário não vê)
-  const batches = chunkArray(pendentes, BATCH_SIZE_DEFAULT);
-
-  let done = 0;
-  for (let b = 0; b < batches.length; b++){
-    const lote = batches[b];
-    statusEl.textContent = `Enviando… lote ${b+1}/${batches.length} (${lote.length} arquivos)`;
-
-    // roda este lote com concorrência limitada
-    await runWithConcurrency(lote.map(x => ({ item: x })), CONCURRENCY_DEFAULT, async ({ item }) => {
-      // cada item mantém sua barra/linha como já está
-      await sendWithRetry(item, codUnd, batchId); // envolve o sendOne com retries
-      done++;
-      // feedback sutil no status
-      statusEl.textContent = `Enviando… lote ${b+1}/${batches.length} (${lote.length} arquivos) — concluídos: ${done}/${pendentes.length}`;
-    });
-  }
-
-  statusEl.textContent = 'Envio concluído.';
-  updateSendButton();
-});
-
-
-
-  function sendOne(item, codUnd, batchId){
+  /* ====== Funções de envio ====== */
+  function sendOne(item, codUnd, batchId, API_UPLOAD){
+    dbg('sendOne start', {name: item.file?.name, size: item.file?.size});
     return new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
       xhr.open('POST', API_UPLOAD, true);
@@ -444,17 +422,15 @@ document.addEventListener('DOMContentLoaded', async () => {
       form.append('file',   item.file);
       form.append('codUnd', codUnd);
 
-      const ts = document.getElementById('ts').value; // do lote atual
+      const ts = document.getElementById('ts').value;
       form.append('ts',      ts);
       form.append('batchId', batchId);
       form.append('seq',     String(item._seq));
 
-      // Progresso da barra do item
       xhr.upload.onprogress = (e) => {
         if (e.lengthComputable) item.bar.style.width = ((e.loaded/e.total)*100).toFixed(0) + '%';
       };
 
-      // Erros de rede/timeout => retryable
       xhr.onerror   = () => { item.msg.textContent = 'Erro de rede'; reject({ retryable:true,  message:'NETWORK_ERROR' }); };
       xhr.ontimeout = () => { item.msg.textContent = 'Timeout';     reject({ retryable:true,  message:'TIMEOUT' }); };
 
@@ -465,7 +441,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         const ok2xx = xhr.status >= 200 && xhr.status < 300;
 
         if (ok2xx && (resp.ok === true || resp.ok === 1 || resp.ok === '1')) {
-          // SUCESSO
           item.msg.textContent = 'OK: ' + (resp.data?.nome_final || 'enviado');
           item.bar.style.width = '100%';
           item.li.classList.add('teal-text');
@@ -476,7 +451,6 @@ document.addEventListener('DOMContentLoaded', async () => {
           return;
         }
 
-        // 422 = resolução reprovada (não reintenta)
         if (xhr.status === 422) {
           const det = resp?.details ? ` (${resp.details})` : '';
           item.msg.textContent = 'Resolução reprovada' + det;
@@ -486,14 +460,12 @@ document.addEventListener('DOMContentLoaded', async () => {
           return;
         }
 
-        // 429/5xx = erro transitório (reintentar)
         if ([429,500,502,503,504].includes(xhr.status)) {
           item.msg.textContent = `Servidor ocupado (${xhr.status}). Tentaremos de novo…`;
           reject({ retryable:true, message:'RETRYABLE_HTTP_'+xhr.status });
           return;
         }
 
-        // Demais 4xx = erro lógico (não reintenta)
         const msg = resp?.message || xhr.statusText || ('HTTP '+xhr.status);
         item.msg.textContent = 'Erro: ' + msg;
         item.li.classList.add('red-text');
@@ -501,25 +473,80 @@ document.addEventListener('DOMContentLoaded', async () => {
         reject({ retryable:false, message: msg });
       };
 
+      dbg('xhr.open POST', API_UPLOAD);
       xhr.send(form);
     });
   }
-  updateSendButton();
+
+  async function sendWithRetry(item, codUnd, batchId, API_UPLOAD){
+    let attempt = 0;
+    while (true){
+      try {
+        const res = await sendOne(item, codUnd, batchId, API_UPLOAD);
+        return res; // sucesso OU erro não-retryable (422) encerra aqui
+      } catch (e) {
+        attempt++;
+        const retryable = !!e?.retryable;
+        if (!retryable || attempt > MAX_RETRIES) {
+          if (retryable && attempt > MAX_RETRIES) {
+            item.msg.textContent = 'Erro após várias tentativas';
+            item.li.classList.add('red-text');
+          }
+          item.status = 'erro';
+          return;
+        }
+        const wait = BASE_BACKOFF * Math.pow(2, attempt - 1); // 0.5s, 1s, 2s, 4s...
+        item.msg.textContent = `Reintentando (${attempt}/${MAX_RETRIES}) em ${(wait/1000).toFixed(1)}s…`;
+        await sleep(wait);
+      }
+    }
+  }
+
+  /* ===== Utilitários ===== */
+  function updateSendButton(){
+    const pendentes = queue.filter(it => it.status === 'pendente').length;
+    const btn = document.getElementById('btnSend');
+    btn.disabled = pendentes === 0;
+  }
+
+  function chunkArray(arr, size){
+    const out = [];
+    for (let i=0; i<arr.length; i+=size) out.push(arr.slice(i, i+size));
+    return out;
+  }
+
+  async function runWithConcurrency(items, poolSize, workerFn){
+    return new Promise((resolve) => {
+      let inFlight = 0, i = 0, done = 0;
+      const next = () => {
+        while (inFlight < poolSize && i < items.length) {
+          const x = items[i++];
+          inFlight++;
+          dbg('dispatch worker', {i, inFlight});
+          Promise.resolve()
+            .then(() => workerFn(x))
+            .catch((e) => { dbg('worker catch', e); })
+            .finally(() => {
+              inFlight--;
+              done++;
+              if (done === items.length) resolve();
+              else next();
+            });
+        }
+        if (items.length === 0) resolve();
+      };
+      next();
+    });
+  }
+
+  function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
 });
 
-function updateSendButton(){
-  const pendentes = queue.filter(it => it.status === 'pendente').length;
-  const btn = document.getElementById('btnSend');
-  btn.disabled = pendentes === 0;
-  // opcional: mostrar quantidade no rótulo
-  // btn.innerHTML = `<i class="material-icons left">send</i> Enviar${pendentes ? ` (${pendentes})` : ''}`;
-}
-
+/* ===== Logout util ===== */
 function wipeSession(){
   try {
     localStorage.removeItem(SESS_KEY);
-    localStorage.removeItem('token');        // compat
-    // limpa caches do navegador (se houver)
+    localStorage.removeItem('token');
     if (window.caches && caches.keys) {
       caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
     }
@@ -528,66 +555,8 @@ function wipeSession(){
 
 function logout(){
   wipeSession();
-  // volta para a tela de login
   location.replace('/redacaoenem/index.html');
 }
-
-function chunkArray(arr, size){
-  const out = [];
-  for (let i=0; i<arr.length; i+=size) out.push(arr.slice(i, i+size));
-  return out;
-}
-
-async function runWithConcurrency(items, poolSize, workerFn){
-  return new Promise((resolve) => {
-    let inFlight = 0, i = 0, done = 0;
-    const next = () => {
-      while (inFlight < poolSize && i < items.length) {
-        const x = items[i++];
-        inFlight++;
-        workerFn(x)
-          .catch(() => {})           // erro já será refletido na linha do item
-          .finally(() => {
-            inFlight--;
-            done++;
-            if (done === items.length) resolve();
-            else next();
-          });
-      }
-    };
-    next();
-  });
-}
-
-function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
-
-// envolve o sendOne com retries + backoff exponencial
-async function sendWithRetry(item, codUnd, batchId){
-  let attempt = 0;
-  while (true){
-    try {
-      const res = await sendOne(item, codUnd, batchId);
-      // sucesso OU erro não-retryable encerram aqui
-      return res;
-    } catch (e) {
-      attempt++;
-      const retryable = !!e?.retryable;
-      if (!retryable || attempt > MAX_RETRIES) {
-        if (retryable && attempt > MAX_RETRIES) {
-          item.msg.textContent = 'Erro após várias tentativas';
-          item.li.classList.add('red-text');
-        }
-        item.status = 'erro';
-        return;
-      }
-      const wait = BASE_BACKOFF * Math.pow(2, attempt - 1); // 0.5s, 1s, 2s, 4s...
-      item.msg.textContent = `Reintentando (${attempt}/${MAX_RETRIES}) em ${(wait/1000).toFixed(1)}s…`;
-      await sleep(wait);
-    }
-  }
-}
-
-
 </script>
 </body>
 </html>
