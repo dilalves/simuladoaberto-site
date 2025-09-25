@@ -435,45 +435,66 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 
   function sendOne(item, codUnd, batchId){
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
+      xhr.open('POST', API_UPLOAD, true);
+      xhr.timeout = 120000;
+
       const form = new FormData();
       form.append('file',   item.file);
       form.append('codUnd', codUnd);
 
-      const ts = document.getElementById('ts').value;   // vem do lote atual
+      const ts = document.getElementById('ts').value;
       form.append('ts',      ts);
-      form.append('batchId', batchId);                  // 🔹 novo
-      form.append('seq',     String(item._seq));        // 🔹 novo (_1, _2, ...)
-
-      xhr.open('POST', API_UPLOAD, true);
+      form.append('batchId', batchId);
+      form.append('seq',     String(item._seq));
 
       xhr.upload.onprogress = (e) => {
-        if (e.lengthComputable) item.bar.style.width = ((e.loaded/e.total)*100).toFixed(0) + '%';
+        if (e.lengthComputable) {
+          item.bar.style.width = ((e.loaded/e.total)*100).toFixed(0) + '%';
+        }
       };
 
-      xhr.onreadystatechange = () => {
-        if (xhr.readyState !== 4) return;
+      xhr.onerror   = () => { item.msg.textContent = 'Erro de rede'; reject({retryable:true, message:'NETWORK_ERROR'}); };
+      xhr.ontimeout = () => { item.msg.textContent = 'Timeout';     reject({retryable:true, message:'TIMEOUT'}); };
 
+      xhr.onload = () => {
         let resp = {};
         try { resp = JSON.parse(xhr.responseText || '{}'); } catch(_){}
 
-        if (xhr.status >= 200 && xhr.status < 300 && resp.ok) {
+        const ok2xx = xhr.status >= 200 && xhr.status < 300;
+
+        if (ok2xx && (resp.ok === true || resp.ok === 1 || resp.ok === '1')) {
           item.msg.textContent = 'OK: ' + (resp.data?.nome_final || 'enviado');
           item.bar.style.width = '100%';
           item.li.classList.add('teal-text');
           item.status = 'enviado';
           enviados.add(item.key);
           updateSendButton();
-        } else if (xhr.status === 422) {
-          const det = resp.details ? ` (${resp.details})` : '';
+          resolve({ok:true});
+          return;
+        }
+
+        if (xhr.status === 422) {
+          const det = resp?.details ? ` (${resp.details})` : '';
           item.msg.textContent = 'Resolução reprovada' + det;
           item.li.classList.add('red-text');
-        } else {
-          item.msg.textContent = 'Erro: ' + (resp.message || ('HTTP '+xhr.status));
-          item.li.classList.add('red-text');
+          item.status = 'erro';
+          resolve({ok:false, retryable:false}); // não faz retry
+          return;
         }
-        resolve();
+
+        if ([429,500,502,503,504].includes(xhr.status)) {
+          item.msg.textContent = `Servidor ocupado (${xhr.status}). Tentaremos de novo…`;
+          reject({retryable:true, message:'RETRYABLE_HTTP_'+xhr.status});
+          return;
+        }
+
+        const msg = resp?.message || xhr.statusText || ('HTTP '+xhr.status);
+        item.msg.textContent = 'Erro: ' + msg;
+        item.li.classList.add('red-text');
+        item.status = 'erro';
+        reject({retryable:false, message:msg});
       };
 
       xhr.send(form);
@@ -541,23 +562,26 @@ async function sendWithRetry(item, codUnd, batchId){
   let attempt = 0;
   while (true){
     try {
-      await sendOne(item, codUnd, batchId);
-      return; // sucesso
+      const res = await sendOne(item, codUnd, batchId);
+      // sucesso OU erro não-retryable (ex.: 422) encerram aqui
+      return res;
     } catch (e) {
       attempt++;
-      if (attempt > MAX_RETRIES) {
-        // marca na UI como erro (sendOne já deve ter sinalizado algo)
-        item.msg.textContent = `Erro após várias tentativas`;
-        item.li.classList.add('red-text');
+      const retryable = !!e?.retryable;
+      if (!retryable || attempt > MAX_RETRIES) {
+        if (retryable && attempt > MAX_RETRIES) {
+          item.msg.textContent = 'Erro após várias tentativas';
+          item.li.classList.add('red-text');
+        }
+        item.status = 'erro';
         return;
       }
-      const wait = BASE_BACKOFF * Math.pow(2, attempt - 1); // 0.5s, 1s, 2s...
+      const wait = BASE_BACKOFF * Math.pow(2, attempt - 1); // 0.5s, 1s, 2s, 4s...
       item.msg.textContent = `Reintentando (${attempt}/${MAX_RETRIES}) em ${(wait/1000).toFixed(1)}s…`;
       await sleep(wait);
     }
   }
 }
-
 
 </script>
 </body>
