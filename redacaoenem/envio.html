@@ -438,25 +438,25 @@ document.addEventListener('DOMContentLoaded', async () => {
     return new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
       xhr.open('POST', API_UPLOAD, true);
-      xhr.timeout = 120000;
+      xhr.timeout = 120000; // 120s
 
       const form = new FormData();
       form.append('file',   item.file);
       form.append('codUnd', codUnd);
 
-      const ts = document.getElementById('ts').value;
+      const ts = document.getElementById('ts').value; // do lote atual
       form.append('ts',      ts);
       form.append('batchId', batchId);
       form.append('seq',     String(item._seq));
 
+      // Progresso da barra do item
       xhr.upload.onprogress = (e) => {
-        if (e.lengthComputable) {
-          item.bar.style.width = ((e.loaded/e.total)*100).toFixed(0) + '%';
-        }
+        if (e.lengthComputable) item.bar.style.width = ((e.loaded/e.total)*100).toFixed(0) + '%';
       };
 
-      xhr.onerror   = () => { item.msg.textContent = 'Erro de rede'; reject({retryable:true, message:'NETWORK_ERROR'}); };
-      xhr.ontimeout = () => { item.msg.textContent = 'Timeout';     reject({retryable:true, message:'TIMEOUT'}); };
+      // Erros de rede/timeout => retryable
+      xhr.onerror   = () => { item.msg.textContent = 'Erro de rede'; reject({ retryable:true,  message:'NETWORK_ERROR' }); };
+      xhr.ontimeout = () => { item.msg.textContent = 'Timeout';     reject({ retryable:true,  message:'TIMEOUT' }); };
 
       xhr.onload = () => {
         let resp = {};
@@ -465,36 +465,40 @@ document.addEventListener('DOMContentLoaded', async () => {
         const ok2xx = xhr.status >= 200 && xhr.status < 300;
 
         if (ok2xx && (resp.ok === true || resp.ok === 1 || resp.ok === '1')) {
+          // SUCESSO
           item.msg.textContent = 'OK: ' + (resp.data?.nome_final || 'enviado');
           item.bar.style.width = '100%';
           item.li.classList.add('teal-text');
           item.status = 'enviado';
           enviados.add(item.key);
           updateSendButton();
-          resolve({ok:true});
+          resolve({ ok:true });
           return;
         }
 
+        // 422 = resolução reprovada (não reintenta)
         if (xhr.status === 422) {
           const det = resp?.details ? ` (${resp.details})` : '';
           item.msg.textContent = 'Resolução reprovada' + det;
           item.li.classList.add('red-text');
           item.status = 'erro';
-          resolve({ok:false, retryable:false}); // não faz retry
+          resolve({ ok:false, retryable:false });
           return;
         }
 
+        // 429/5xx = erro transitório (reintentar)
         if ([429,500,502,503,504].includes(xhr.status)) {
           item.msg.textContent = `Servidor ocupado (${xhr.status}). Tentaremos de novo…`;
-          reject({retryable:true, message:'RETRYABLE_HTTP_'+xhr.status});
+          reject({ retryable:true, message:'RETRYABLE_HTTP_'+xhr.status });
           return;
         }
 
+        // Demais 4xx = erro lógico (não reintenta)
         const msg = resp?.message || xhr.statusText || ('HTTP '+xhr.status);
         item.msg.textContent = 'Erro: ' + msg;
         item.li.classList.add('red-text');
         item.status = 'erro';
-        reject({retryable:false, message:msg});
+        reject({ retryable:false, message: msg });
       };
 
       xhr.send(form);
@@ -563,7 +567,7 @@ async function sendWithRetry(item, codUnd, batchId){
   while (true){
     try {
       const res = await sendOne(item, codUnd, batchId);
-      // sucesso OU erro não-retryable (ex.: 422) encerram aqui
+      // sucesso OU erro não-retryable encerram aqui
       return res;
     } catch (e) {
       attempt++;
@@ -582,6 +586,7 @@ async function sendWithRetry(item, codUnd, batchId){
     }
   }
 }
+
 
 </script>
 </body>
