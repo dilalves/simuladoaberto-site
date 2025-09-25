@@ -198,12 +198,6 @@
   
 
 <script>
-// ==== Lotes e concorrência (oculto ao usuário) ====
-const CONCURRENCY_DEFAULT = 4;   // quantos arquivos sobem em paralelo
-const BATCH_SIZE_DEFAULT  = 15;  // quantos arquivos por lote
-const MAX_RETRIES         = 3;   // reenvios por arquivo, se der pico de erro
-const BASE_BACKOFF        = 500; // ms (exponential backoff)
-
 let queue = []; // {file, li, bar, msg, key, status}
 const enviados = new Set();                         // [+] novo
 function keyOf(f){ return `${f.name}|${f.size}|${f.lastModified}`; } // [+] novo
@@ -390,48 +384,32 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   btnSend.addEventListener('click', async (e) => {
-  e.preventDefault();
-  const codUnd = (codUndEl.value || '').trim();
-  if (!codUnd) { M?.toast ? M.toast({html:'Informe o código da unidade'}) : alert('Informe o código da unidade'); return; }
+    e.preventDefault();
+    const codUnd = (codUndEl.value || '').trim();
+    if (!codUnd) { M?.toast ? M.toast({html:'Informe o código da unidade'}) : alert('Informe o código da unidade'); return; }
 
-  const pendentes = queue.filter(it => it.status === 'pendente');
-  if (!pendentes.length){
-    M?.toast ? M.toast({html:'Nada a enviar: todos os itens desta lista já foram enviados.'}) : alert('Nada a enviar.');
-    updateSendButton();
-    return;
-  }
+    const pendentes = queue.filter(it => it.status === 'pendente');
+    if (!pendentes.length){
+      M?.toast ? M.toast({html:'Nada a enviar: todos os itens desta lista já foram enviados.'}) : alert('Nada a enviar.');
+      updateSendButton();
+      return;
+    }
 
-  btnSend.disabled = true;
+    btnSend.disabled = true;
+    statusEl.textContent = 'Enviando…';
 
-  // mantém o mesmo batchId para toda esta submissão (como já era)
-  const batchId = currentBatchId || (currentBatchId = `L${Date.now()}_${Math.random().toString(36).slice(2,8)}`);
+    // (se você já tem batchId, mantenha)
+    const batchId = currentBatchId || (currentBatchId = `L${Date.now()}_${Math.random().toString(36).slice(2,8)}`);
+    let seq = 1;
+    for (const it of pendentes) it._seq = seq++;
 
-  // numeração sequencial estável para todos os pendentes (independe da ordem de conclusão)
-  let seq = 1;
-  for (const it of pendentes) it._seq = seq++;
+    for (const item of pendentes) {
+      try { await sendOne(item, codUnd, batchId); } catch(e){ console.error(e); }
+    }
 
-  // divide em lotes "internos" (usuário não vê)
-  const batches = chunkArray(pendentes, BATCH_SIZE_DEFAULT);
-
-  let done = 0;
-  for (let b = 0; b < batches.length; b++){
-    const lote = batches[b];
-    statusEl.textContent = `Enviando… lote ${b+1}/${batches.length} (${lote.length} arquivos)`;
-
-    // roda este lote com concorrência limitada
-    await runWithConcurrency(lote.map(x => ({ item: x })), CONCURRENCY_DEFAULT, async ({ item }) => {
-      // cada item mantém sua barra/linha como já está
-      await sendWithRetry(item, codUnd, batchId); // envolve o sendOne com retries
-      done++;
-      // feedback sutil no status
-      statusEl.textContent = `Enviando… lote ${b+1}/${batches.length} (${lote.length} arquivos) — concluídos: ${done}/${pendentes.length}`;
-    });
-  }
-
-  statusEl.textContent = 'Envio concluído.';
-  updateSendButton();
-});
-
+    statusEl.textContent = 'Envio concluído.';
+    updateSendButton(); // vai ficar desabilitado se não sobrar pendente
+  });
 
 
   function sendOne(item, codUnd, batchId){
@@ -505,57 +483,6 @@ function logout(){
   wipeSession();
   // volta para a tela de login
   location.replace('/redacaoenem/index.html');
-}
-
-function chunkArray(arr, size){
-  const out = [];
-  for (let i=0; i<arr.length; i+=size) out.push(arr.slice(i, i+size));
-  return out;
-}
-
-async function runWithConcurrency(items, poolSize, workerFn){
-  return new Promise((resolve) => {
-    let inFlight = 0, i = 0, done = 0;
-    const next = () => {
-      while (inFlight < poolSize && i < items.length) {
-        const x = items[i++];
-        inFlight++;
-        workerFn(x)
-          .catch(() => {})           // erro já será refletido na linha do item
-          .finally(() => {
-            inFlight--;
-            done++;
-            if (done === items.length) resolve();
-            else next();
-          });
-      }
-    };
-    next();
-  });
-}
-
-function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
-
-// envolve o sendOne com retries + backoff exponencial
-async function sendWithRetry(item, codUnd, batchId){
-  let attempt = 0;
-  while (true){
-    try {
-      await sendOne(item, codUnd, batchId);
-      return; // sucesso
-    } catch (e) {
-      attempt++;
-      if (attempt > MAX_RETRIES) {
-        // marca na UI como erro (sendOne já deve ter sinalizado algo)
-        item.msg.textContent = `Erro após várias tentativas`;
-        item.li.classList.add('red-text');
-        return;
-      }
-      const wait = BASE_BACKOFF * Math.pow(2, attempt - 1); // 0.5s, 1s, 2s...
-      item.msg.textContent = `Reintentando (${attempt}/${MAX_RETRIES}) em ${(wait/1000).toFixed(1)}s…`;
-      await sleep(wait);
-    }
-  }
 }
 
 
