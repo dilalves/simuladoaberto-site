@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Manual — Envio & Correção | Simulado Aberto</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <style>
+    :root{
+      --brand:#0b3b78; --accent:#2563eb; --ink:#0f172a; --muted:#6b7280; --bg:#f7f8fb;
+    }
+    html,body{background:var(--bg);color:var(--ink)}
+    header.hero{background:linear-gradient(135deg,var(--brand),#0b3b78 60%, #153e90)}
+    header.hero .brand-logo{display:flex;align-items:center;gap:12px}
+    .logo-circle{width:40px;height:40px;border-radius:50%;background:#fff1;border:2px solid #fff3;display:grid;place-items:center}
+    .chip.light{background:#e8f0fe;color:#174ea6}
+    .toc-wrapper{position:sticky;top:24px}
+    .card{border-radius:16px}
+    .step{display:flex;gap:16px}
+    .step .num{flex:0 0 36px;height:36px;border-radius:50%;background:#e3f2fd;display:grid;place-items:center;font-weight:700}
+    .scrollspy{scroll-margin-top:96px}
+    .callout{background:#fffbe6;border-left:6px solid #ffd54f;padding:12px 16px;border-radius:8px}
+    .hero-title{letter-spacing:.2px}
+    .floating-tools{position:fixed;right:16px;bottom:16px;z-index:10}
+    .floating-tools .btn{border-radius:999px}
+    .img-frame{border:1px dashed #cbd5e1;border-radius:12px;display:block;overflow:hidden}
+    .kbd{border:1px solid #cbd5e1;border-bottom-width:3px;padding:.1rem .4rem;border-radius:6px;background:#fff;font-family:ui-monospace,Consolas,monospace}
+    footer{color:var(--muted)}
+    /* animações simples */
+    [data-reveal]{opacity:0;transform:translateY(8px);transition:.5s ease}
+    [data-reveal].visible{opacity:1;transform:none}
+  </style>
+</head>
+<body>
+  <!-- HERO / HEADER -->
+  <header class="hero white-text">
+    <div class="container">
+      <div class="row" style="margin-bottom:0">
+        <div class="col s12" style="padding:24px 0 8px">
+          <div class="brand-logo">
+            <div class="logo-circle"><i class="material-icons white-text">rate_review</i></div>
+            <div>
+              <h4 class="hero-title" style="margin:0">Manual — Envio de Redações (Unidades) & Correção (Professores)</h4>
+              <div class="chip light">Simulado Aberto</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row" style="margin-bottom:24px">
+        <div class="col s12 m9 white-text">
+          <p class="flow-text" style="margin-top:0">Guia rápido e ilustrado para acessar, corrigir e finalizar avaliações com segurança.</p>
+        </div>
+        <div class="col s12 m3 right-align">
+          <a href="#" class="btn waves-effect white blue-text text-darken-4" onclick="window.print()"><i class="material-icons left">print</i>Imprimir</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="container" style="margin-top:24px;margin-bottom:64px">
+    <div class="row">
+      <!-- TOC -->
+      <aside class="col l3 hide-on-med-and-down">
+        <div class="toc-wrapper">
+          <ul class="collection with-header z-depth-1" id="toc">
+            <li class="collection-header"><h6 style="margin:0">Conteúdo</h6></li>
+            <li class="collection-item"><a href="#acesso" class="blue-text text-darken-3">1. Acesso (Unidades & Professores)</a></li>
+            <li class="collection-item"><a href="#painel" class="blue-text text-darken-3">2. Painel (Unidade)</a></li>
+            <li class="collection-item"><a href="#envio" class="blue-text text-darken-3">3. Envio de Redações</a></li>
+            <li class="collection-item"><a href="#regras" class="blue-text text-darken-3">4. Regras de Envio</a></li>
+            <li class="collection-item"><a href="#processamento" class="blue-text text-darken-3">5. Processamento Automático (DPI/OMR)</a></li>
+            <li class="collection-item"><a href="#acompanhamento" class="blue-text text-darken-3">6. Acompanhamento & Tratamento Manual</a></li>
+            <li class="collection-item"><a href="#cadastroprof" class="blue-text text-darken-3">7. Cadastro de Professores</a></li>
+            <li class="collection-item"><a href="#correcao" class="blue-text text-darken-3">8. Correção (Professores)</a></li>
+            <li class="collection-item"><a href="#historico" class="blue-text text-darken-3">9. Histórico</a></li>
+            <li class="collection-item"><a href="#erros" class="blue-text text-darken-3">10. Erros & Mensagens</a></li>
+            <li class="collection-item"><a href="#boaspraticas" class="blue-text text-darken-3">Boas práticas</a></li>
+            <li class="collection-item"><a href="#faq" class="blue-text text-darken-3">FAQ</a></li>
+            <li class="collection-item"><a href="#suporte" class="blue-text text-darken-3">Suporte</a></li>
+          </ul>
+        </div>
+      </aside>
+
+      <!-- CONTENT -->
+      <section class="col s12 l9">
+        <!-- 1. Acesso -->
+        <div id="acesso" class="section scrollspy" data-reveal>
+          <h5>1. Acesso ao sistema (Unidades & Professores)</h5>
+          <div class="card">
+            <div class="card-content">
+              <div class="row">
+                <div class="col s12 m6">
+                  <h6><i class="material-icons tiny">login</i> Unidades</h6>
+                  <p>Acesse: <b>https://simuladoaberto.com/redacaoenem</b></p>
+                  <ul class="browser-default">
+                    <li>Código da Unidade (4 dígitos) + Senha.</li>
+                    <li>Ao entrar, a sessão expira automaticamente por inatividade.</li>
+                    <li>Se encerrar a sessão em um dispositivo, o outro libera o acesso.</li>
+                  </ul>
+                </div>
+                <div class="col s12 m6">
+                  <h6><i class="material-icons tiny">how_to_reg</i> Professores Corretores</h6>
+                  <p>Acesse: <b>https://simuladoaberto.com/correcao</b></p>
+                  <ul class="browser-default">
+                    <li>Use o login criado via convite da unidade.</li>
+                    <li>Se esqueceu a senha, solicite à coordenação.</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Painel Unidade -->
+        <div id="painel" class="section scrollspy" data-reveal>
+          <h5>2. Painel da Unidade</h5>
+          <div class="card"><div class="card-content">
+            <ul class="browser-default">
+              <li><b>Enviar Redação</b>: abre o fluxo de upload.</li>
+              <li><b>Conferir Envio</b>: lista de redações enviadas, com filtros.</li>
+              <li><b>Indicadores</b>: Enviadas, Tratamento Manual, Recusadas, Finalizadas.</li>
+            </ul>
+            <div class="img-frame z-depth-1" style="margin-top:12px"><img class="responsive-img" src="painel-unidade.png" alt="Painel da unidade"></div>
+          </div></div>
+        </div>
+
+        <!-- 3. Envio de Redações -->
+        <div id="envio" class="section scrollspy" data-reveal>
+          <h5>3. Envio de Redações</h5>
+          <div class="card"><div class="card-content">
+            <p>Área central com ícone de nuvem para <b>arrastar & soltar</b> arquivos ou <b>Selecionar arquivos</b>.</p>
+            <ol>
+              <li>Arraste arquivos <span class="kbd">.jpg</span>/<span class="kbd">.jpeg</span> ou clique em <span class="kbd">Selecionar arquivos</span>.</li>
+              <li>Clique em <span class="kbd">ENVIAR</span> e aguarde o processamento.</li>
+              <li>Não feche nem recarregue a página durante o envio.</li>
+            </ol>
+            <div class="img-frame z-depth-1" style="margin-top:12px"><img class="responsive-img" src="upload-placeholder.png" alt="Área de envio"></div>
+          </div></div>
+        </div>
+
+        <!-- 4. Regras de Envio -->
+        <div id="regras" class="section scrollspy" data-reveal>
+          <h5>4. Regras de Envio</h5>
+          <div class="card"><div class="card-content">
+            <ul class="browser-default">
+              <li><b>Formato aceito:</b> apenas <span class="kbd">.jpg</span> ou <span class="kbd">.jpeg</span>.</li>
+              <li>Outros formatos são recusados automaticamente.</li>
+            </ul>
+          </div></div>
+        </div>
+
+        <!-- 5. Processamento Automático -->
+        <div id="processamento" class="section scrollspy" data-reveal>
+          <h5>5. Processamento Automático (DPI & OMR)</h5>
+          <div class="card"><div class="card-content">
+            <p>Após o upload:</p>
+            <ul class="browser-default">
+              <li>O envio é registrado no <b>LOG</b> de redações e salvo na pasta.</li>
+              <li>Disparo automático de <b>DPI</b> e <b>OMR</b> para identificar a <b>inscrição</b>.</li>
+              <li>Se não for possível identificar (baixa qualidade/formato inválido), o status vai para <b>TRATAMENTO MANUAL</b>.</li>
+            </ul>
+          </div></div>
+        </div>
+
+        <!-- 6. Acompanhamento & Tratamento Manual -->
+        <div id="acompanhamento" class="section scrollspy" data-reveal>
+          <h5>6. Acompanhamento & Tratamento Manual</h5>
+          <div class="card"><div class="card-content">
+            <p>Na lista, visualize:</p>
+            <ul class="browser-default">
+              <li><b>Nome do arquivo</b>, <b>Data/Hora</b> e <b>Status</b> (Enviada, Pendente/OMR, Tratamento Manual, Finalizada).</li>
+            </ul>
+            <div class="callout" style="margin:12px 0"><b>Atenção:</b> itens em <b>TRATAMENTO MANUAL</b> devem ser validados ou recusados pela unidade para seguir para correção.</div>
+            <ol>
+              <li>Clique em <span class="kbd">TRATAMENTO MANUAL</span> para abrir a imagem.</li>
+              <li>Digite a <b>inscrição</b> e clique em <span class="kbd">SALVAR</span>; se ilegível, use <span class="kbd">RECUSAR</span>.</li>
+              <li>Ao salvar, o status muda para <b>AGUARDANDO CORREÇÃO</b> e entra na fila do professor.</li>
+            </ol>
+            <div class="img-frame z-depth-1" style="margin-top:12px"><img class="responsive-img" src="tratamento-manual.png" alt="Tratamento manual"></div>
+          </div></div>
+        </div>
+
+        <!-- 7. Cadastro de Professores -->
+        <div id="cadastroprof" class="section scrollspy" data-reveal>
+          <h5>7. Cadastro de Professores</h5>
+          <div class="card"><div class="card-content">
+            <ol>
+              <li>Acesse <span class="kbd">CADASTRAR PROFESSOR</span>.</li>
+              <li>Informe <b>nome</b> e <b>e-mail</b> e clique em <span class="kbd">SALVAR</span>.</li>
+              <li>Na lista, clique em <span class="kbd">CONVIDAR</span> para que o professor defina sua senha.</li>
+            </ol>
+          </div></div>
+        </div>
+
+        <!-- 8. Correção (Professores) -->
+        <div id="correcao" class="section scrollspy" data-reveal>
+          <h5>8. Tela de Correção (ENEM — C1 a C5)</h5>
+          <div class="card">
+            <div class="card-content">
+              <p>No painel de correção, cada redação pendente aparece com a imagem exibida.</p>
+              <div class="row" style="margin-top:8px">
+                <div class="col s12 m6">
+                  <ul class="collection">
+                    <li class="collection-item"><b>C1</b>: norma padrão.</li>
+                    <li class="collection-item"><b>C2</b>: compreensão da proposta e repertório.</li>
+                    <li class="collection-item"><b>C3</b>: seleção/organização de argumentos.</li>
+                    <li class="collection-item"><b>C4</b>: coesão e coerência.</li>
+                    <li class="collection-item"><b>C5</b>: proposta de intervenção.</li>
+                  </ul>
+                  <p>Cada competência recebe <b>0–200</b> pontos; o sistema calcula a <b>nota final (0–1000)</b>.</p>
+                </div>
+                <div class="col s12 m6">
+                  <div class="img-frame z-depth-1">
+                    <img class="responsive-img" src="correcao-placeholder.png" alt="Interface de correção com competências" />
+                  </div>
+                </div>
+              </div>
+              <div class="callout" style="margin-top:8px">
+                <b>Dica:</b> use <span class="kbd">Salvar</span> para não perder progresso e <span class="kbd">Enviar</span> para finalizar.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 9. Histórico -->
+        <div id="historico" class="section scrollspy" data-reveal>
+          <h5>9. Histórico de Correções</h5>
+          <div class="card"><div class="card-content">
+            <p>Consulte redações finalizadas com <b>data</b> e <b>nota</b>. Reabertura depende das permissões.</p>
+          </div></div>
+        </div>
+
+        <!-- 10. Erros & Mensagens -->
+        <div id="erros" class="section scrollspy" data-reveal>
+          <h5>10. Erros & Mensagens Comuns</h5>
+          <div class="card"><div class="card-content">
+            <ul class="browser-default">
+              <li><b>Sessão expirada</b>: faça login novamente.</li>
+              <li><b>Formato inválido</b>: envie apenas <span class="kbd">.jpg</span>/<span class="kbd">.jpeg</span>.</li>
+              <li><b>Imagem recusada</b>: DPI abaixo do mínimo ou problema na leitura.</li>
+            </ul>
+          </div></div>
+        </div>
+
+        <!-- 11. Boas práticas -->
+        <div id="boaspraticas" class="section scrollspy" data-reveal>
+          <h5>Boas práticas</h5>
+          <div class="card">
+            <div class="card-content">
+              <ul class="browser-default">
+                <li>Ambiente silencioso e conexão estável.</li>
+                <li>Use <b>Salvar</b> ao pausar.</li>
+                <li>Revise o total antes de enviar.</li>
+                <li>Não compartilhe login e senha.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- FAQ -->
+        <div id="faq" class="section scrollspy" data-reveal>
+          <h5>Perguntas frequentes</h5>
+          <ul class="collapsible z-depth-1">
+            <li>
+              <div class="collapsible-header"><i class="material-icons">help_outline</i>Esqueci minha senha. E agora?</div>
+              <div class="collapsible-body"><span>Solicite redefinição à coordenação da unidade.</span></div>
+            </li>
+            <li>
+              <div class="collapsible-header"><i class="material-icons">help_outline</i>Quais formatos são aceitos?</div>
+              <div class="collapsible-body"><span>Apenas <b>.jpg</b> e <b>.jpeg</b>.</span></div>
+            </li>
+            <li>
+              <div class="collapsible-header"><i class="material-icons">help_outline</i>O que fazer com imagens "Tratamento Manual"?</div>
+              <div class="collapsible-body"><span>Abra, digite a inscrição e salve; se ilegível, recuse.</span></div>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Suporte -->
+        <div id="suporte" class="section scrollspy" data-reveal>
+          <h5>Suporte</h5>
+          <div class="card">
+            <div class="card-content">
+              <p>Dúvidas técnicas? Fale com a coordenação ou suporte do Simulado Aberto.</p>
+              <ul class="browser-default">
+                <li>E-mail: <a href="mailto:adilson@objetivo.br">adilson@objetivo.br</a></li>
+                <li>Telefone: <a href="tel:+551131703865">(11) 3170-3865</a> / <a href="tel:+5511996737944">(11) 99673-7944</a></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+      </section>
+    </div>
+  </main>
+
+  <div class="floating-tools">
+    <a class="btn btn-large waves-effect blue" href="#acesso"><i class="material-icons left">arrow_upward</i>Topo</a>
+  </div>
+
+  <footer class="center-align" style="padding:24px 8px 48px">
+    <div>© Simulado Aberto — Manual do Professor • Atualizado em <span id="updated"></span></div>
+  </footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function(){
+      // scrollspy e collapsible
+      var elems = document.querySelectorAll('.scrollspy');
+      M.ScrollSpy.init(elems, { throttle: 30 });
+      M.Collapsible.init(document.querySelectorAll('.collapsible'));
+
+      // data de atualização
+      const d = new Date();
+      document.getElementById('updated').textContent = d.toLocaleDateString('pt-BR');
+
+      // animação de entrada simples
+      const obs = new IntersectionObserver((entries)=>{
+        for (const e of entries){ if (e.isIntersecting) e.target.classList.add('visible'); }
+      }, {threshold:.1});
+      document.querySelectorAll('[data-reveal]').forEach(el=>obs.observe(el));
+    });
+  </script>
+</body>
+</html>
