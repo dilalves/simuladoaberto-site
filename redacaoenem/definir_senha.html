@@ -70,22 +70,35 @@
   const API = 'https://api.secauxiliar.com.br/';
   function getParam(n){ return new URL(location.href).searchParams.get(n) || '' }
 
-  async function setSenha(){
-    const token = getParam('tok');
-    const senha = document.getElementById('senha').value.trim();
-    if (!token || !senha) {
-      document.getElementById('msg').textContent='Dados incompletos.';
-      return;
-    }
-    const res = await fetch(API+'/corretores_set_password.php', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ token, senha })
-    });
-    const data = await res.json();
-    document.getElementById('msg').textContent = data.ok
-      ? 'Senha definida com sucesso. Você já pode acessar o painel.'
-      : (data.error||'Falha');
+  async function setSenha() {
+  const token = getParam('tok');
+  const senha = document.getElementById('senha').value.trim();
+  if (!token || !senha) {
+    document.getElementById('msg').textContent = 'Dados incompletos.';
+    return;
   }
+  const res = await fetch(API + '/corretores_set_password.php', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token, senha })
+  });
+  const data = await res.json();
+
+  if (data.ok) {
+    document.getElementById('msg').innerHTML = `
+      ✅ Senha definida com sucesso.<br>
+      Acesse: <a href="https://www.simuladoaberto.com/correcao" target="_blank">
+        www.simuladoaberto.com/correcao
+      </a><br>
+      📘 <a href="https://www.simuladoaberto.com/correcao/manual_correcao.pdf" target="_blank">
+        Baixe o manual de instruções para correção dos textos
+      </a>
+    `;
+  } else {
+    document.getElementById('msg').textContent = data.error || 'Falha';
+  }
+}
+
   </script>
 </body>
 </html>
