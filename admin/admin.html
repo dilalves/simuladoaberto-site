@@ -90,7 +90,18 @@
       </a>
       <ul id="dd-relatorios" class="dropdown-content">
         <li><a href="#" id="go-rel-unidades-conveniadas">Unidades conveniadas</a></li>
-        <li><a href="#" id="go-rel-simulados">Simulados</a></li>
+        <!-- Gatilho do submenu de Simulados -->
+        <li>
+          <a href="#!" class="dropdown-trigger" data-target="dd-rel-simulados" style="display:flex;align-items:center;justify-content:space-between">
+            Simulados
+            <i class="material-icons" style="font-size:18px;margin-left:6px">chevron_right</i>
+          </a>
+        </li>
+      </ul>
+      <!-- Submenu: Relatórios > Simulados -->
+      <ul id="dd-rel-simulados" class="dropdown-content">
+        <li><a href="relatorios/enem-agosto-2025.html" id="go-rel-enem-ago-2025">ENEM Agosto 2025</a></li>
+        <!-- No futuro você pode adicionar outros simulados aqui -->
       </ul>
     </div>
   </main>
@@ -101,13 +112,19 @@
   <script>
     // Init dropdowns
     document.addEventListener('DOMContentLoaded', function() {
-      const elems = document.querySelectorAll('.dropdown-trigger');
-      M.Dropdown.init(elems, {
+      // dropdown principal (Cadastros / Sessões / Relatórios)
+      M.Dropdown.init(document.querySelectorAll('.dropdown-trigger'), {
         alignment: 'left',
         coverTrigger: false,
-        constrainWidth: false
+        constrainWidth: false,
+        hover: true,           // abre ao passar o mouse
+        closeOnClick: false    // mantém aberto para acessar o submenu
       });
+
+      // OBS: Como usamos a mesma classe .dropdown-trigger para o submenu,
+      // a chamada acima já cobre o dd-rel-simulados também.
     });
+
 
     // Rotas futuras (por enquanto apenas placeholders):
     const nav = (path) => {
@@ -122,7 +139,9 @@
     document.getElementById('go-sessoes-professores')       .addEventListener('click', ()=>nav('sessoes-professores.html'));
 
     document.getElementById('go-rel-unidades-conveniadas')  .addEventListener('click', ()=>nav('relatorios-unidades-conveniadas.html'));
-    document.getElementById('go-rel-simulados')             .addEventListener('click', ()=>nav('relatorios-simulados.html'));
+
+    document.getElementById('go-rel-enem-ago-2025')   ?.addEventListener('click', (e)=>{ e.preventDefault(); location.href = 'relatorios/enem-agosto-2025.html'; });
+
 
     // Logout
     document.getElementById('btnLogout').addEventListener('click', ()=>{

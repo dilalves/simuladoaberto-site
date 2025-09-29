@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Relatório • Enem Agosto 2025</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <style>
+    header.page {background:#0b3b78;color:#fff;padding:16px 20px;margin-bottom:12px}
+    .muted{color:#6b7280}
+    .kpis .card{border-radius:14px}
+    .table-wrap{overflow:auto; max-height: 65vh}
+    table.striped thead th{position:sticky; top:0; background:#fff; z-index:1}
+    .search-row{display:grid;grid-template-columns: 220px 180px 1fr 130px;gap:8px}
+    @media(max-width: 800px){ .search-row{grid-template-columns:1fr} }
+    .chip.filter{background:#e3f2fd}
+  </style>
+</head>
+<body class="grey lighten-4">
+
+  <header class="page">
+    <h5 style="margin:0">Relatórios → Simulados → <b>ENEM Agosto 2025</b></h5>
+    <span class="muted">Pesquisa por unidade, inscrição ou nome do aluno</span>
+  </header>
+
+  <div class="container">
+    <!-- Filtros -->
+    <div class="card">
+      <div class="card-content">
+        <span class="card-title" style="font-size:18px">Filtros</span>
+        <div class="search-row">
+          <div>
+            <label for="f_unidade" class="muted">Unidade</label>
+            <input id="f_unidade" type="text" placeholder="Ex.: 1501, Paulista, Curso">
+          </div>
+          <div>
+            <label for="f_inscricao" class="muted">Inscrição</label>
+            <input id="f_inscricao" type="text" placeholder="Ex.: 00012345">
+          </div>
+          <div>
+            <label for="f_nome" class="muted">Nome</label>
+            <input id="f_nome" type="text" placeholder="Ex.: Maria Silva">
+          </div>
+          <div style="display:flex;gap:8px;align-items:flex-end">
+            <a id="btnBuscar" class="btn waves-effect"><i class="material-icons left">search</i>Buscar</a>
+            <a id="btnLimpar" class="btn-flat waves-effect">Limpar</a>
+          </div>
+        </div>
+
+        <div id="chips" style="margin-top:8px"></div>
+      </div>
+    </div>
+
+    <!-- KPIs -->
+    <div class="row kpis">
+      <div class="col s12 m3">
+        <div class="card center">
+          <div class="card-content">
+            <div class="muted">Total de registros</div>
+            <h5 id="kpiTotal">—</h5>
+          </div>
+        </div>
+      </div>
+      <div class="col s12 m3">
+        <div class="card center">
+          <div class="card-content">
+            <div class="muted">Média Redação</div>
+            <h5 id="kpiMedia">—</h5>
+          </div>
+        </div>
+      </div>
+      <div class="col s12 m3">
+        <div class="card center">
+          <div class="card-content">
+            <div class="muted">Corrigidas</div>
+            <h5 id="kpiCorrigidas">—</h5>
+          </div>
+        </div>
+      </div>
+      <div class="col s12 m3">
+        <div class="card center">
+          <div class="card-content">
+            <div class="muted">Pendentes/Trat.</div>
+            <h5 id="kpiPendentes">—</h5>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabela -->
+    <div class="card">
+      <div class="card-content">
+        <div style="display:flex;gap:8px;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span class="card-title" style="font-size:18px">Resultados</span>
+          <div>
+            <a id="btnCSV" class="btn-small waves-effect"><i class="material-icons left">file_download</i>Exportar CSV</a>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table class="striped">
+            <thead>
+              <tr>
+                <th>Unidade</th>
+                <th>Inscrição</th>
+                <th>Nome</th>
+                <th>Total</th>
+                <th>C1</th><th>C2</th><th>C3</th><th>C4</th><th>C5</th>
+                <th>Status</th>
+                <th>Imagem</th>
+                <th>Data/Hora</th>
+              </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+
+        <!-- Paginação -->
+        <div class="section" style="display:flex;gap:8px;justify-content:flex-end;align-items:center">
+          <span class="muted">Pág.</span>
+          <a class="btn-flat" id="pgPrev"><i class="material-icons">chevron_left</i></a>
+          <span id="pgInfo">—</span>
+          <a class="btn-flat" id="pgNext"><i class="material-icons">chevron_right</i></a>
+
+          <div class="input-field" style="width:120px;margin:0">
+            <select id="pageSize">
+              <option value="10">10</option>
+              <option selected value="20">20</option>
+              <option value="50">50</option>
+              <option value="100">100</option>
+            </select>
+            <label>Por página</label>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+  <script>
+    // =================== CONFIG ===================
+    const API_URL = 'https://api.secauxiliar.com.br/relatorio_enem_agosto_2025.php';
+
+    // =================== STATE ====================
+    let state = {
+      unidade:'', inscricao:'', nome:'',
+      page:1, pageSize:20,
+      total:0, rows:[]
+    };
+
+    // =================== HELPERS ==================
+    const $ = sel => document.querySelector(sel);
+    const fmt = n => (n==null || isNaN(n)) ? '—' : String(n);
+    const esc = s => (s||'').replace(/[&<>"]/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[m]));
+    function debounce(fn,ms){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),ms); }; }
+
+    function renderChips(){
+      const el = $('#chips');
+      el.innerHTML = '';
+      [['Unidade',state.unidade,'unidade'],['Inscrição',state.inscricao,'inscricao'],['Nome',state.nome,'nome']]
+        .filter(([,v])=>v)
+        .forEach(([label,val,key])=>{
+          const chip = document.createElement('div');
+          chip.className = 'chip filter';
+          chip.innerHTML = esc(label+': '+val) + ' <i class="close material-icons" data-key="'+key+'">close</i>';
+          el.appendChild(chip);
+        });
+      el.querySelectorAll('.close').forEach(i=>{
+        i.addEventListener('click',()=>{
+          state[i.dataset.key]='';
+          syncInputs();
+          buscar(1);
+        });
+      });
+    }
+
+    function syncInputs(){
+      $('#f_unidade').value = state.unidade;
+      $('#f_inscricao').value = state.inscricao;
+      $('#f_nome').value = state.nome;
+    }
+
+    function calcKPIs(rows,total){
+      // média simples do total; contagens por status
+      let soma=0, n=0, corrigidas=0, pend=0;
+      rows.forEach(r=>{
+        if (Number.isFinite(+r.red_total)){ soma += +r.red_total; n++; }
+        const st = (r.status||'').toLowerCase();
+        if (st.includes('corrigida')) corrigidas++;
+        if (st.includes('pendente') || st.includes('trat')) pend++;
+      });
+      $('#kpiTotal').textContent = fmt(total);
+      $('#kpiMedia').textContent = n? (soma/n).toFixed(1): '—';
+      $('#kpiCorrigidas').textContent = corrigidas;
+      $('#kpiPendentes').textContent = pend;
+    }
+
+    function renderTable(rows){
+      const tb = $('#tbody');
+      tb.innerHTML = rows.map(r=>`
+        <tr>
+          <td>${esc(r.unidade)}</td>
+          <td>${esc(r.inscricao)}</td>
+          <td>${esc(r.nome)}</td>
+          <td><b>${fmt(r.red_total)}</b></td>
+          <td>${fmt(r.c1)}</td><td>${fmt(r.c2)}</td><td>${fmt(r.c3)}</td><td>${fmt(r.c4)}</td><td>${fmt(r.c5)}</td>
+          <td>${esc(r.status||'')}</td>
+          <td>${r.img_link ? `<a href="${esc(r.img_link)}" target="_blank" class="btn-flat waves-effect">abrir</a>`:'—'}</td>
+          <td>${esc(r.data_hora||'')}</td>
+        </tr>
+      `).join('');
+    }
+
+    function renderPager(){
+      $('#pgInfo').textContent = `${state.page}`;
+    }
+
+    async function buscar(p=1){
+      state.page = p;
+      const payload = {
+        unidade: state.unidade.trim(),
+        inscricao: state.inscricao.trim(),
+        nome: state.nome.trim(),
+        page: state.page,
+        pageSize: state.pageSize
+      };
+      $('#tbody').innerHTML = `<tr><td colspan="12">Carregando...</td></tr>`;
+      try{
+        const res = await fetch(API_URL, {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify(payload)
+        });
+        const j = await res.json();
+        if(!j.ok) throw new Error(j.error||'Falha ao carregar');
+        state.total = +j.total||0;
+        state.rows  = j.rows||[];
+        renderTable(state.rows);
+        renderPager();
+        renderChips();
+        calcKPIs(state.rows, state.total);
+      }catch(e){
+        $('#tbody').innerHTML = `<tr><td colspan="12">Erro: ${esc(e.message)}</td></tr>`;
+      }
+    }
+
+    function exportCSV(){
+      const cols = ['Unidade','Inscrição','Nome','Total','C1','C2','C3','C4','C5','Status','Imagem','DataHora'];
+      const lines = [cols.join(';')];
+      state.rows.forEach(r=>{
+        const row = [
+          r.unidade, r.inscricao, r.nome, r.red_total,
+          r.c1, r.c2, r.c3, r.c4, r.c5,
+          r.status, r.img_link, r.data_hora
+        ].map(v => (v==null?'':String(v)).replace(/;/g,','));
+        lines.push(row.join(';'));
+      });
+      const blob = new Blob([lines.join('\n')], {type:'text/csv;charset=utf-8'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `relatorio_enem_agosto_2025_p${state.page}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // =================== INIT =====================
+    document.addEventListener('DOMContentLoaded', ()=>{
+      M.FormSelect.init($('#pageSize').parentElement.querySelectorAll('select'));
+      // eventos
+      $('#btnBuscar').addEventListener('click', ()=>buscar(1));
+      $('#btnLimpar').addEventListener('click', ()=>{
+        state.unidade=state.inscricao=state.nome='';
+        syncInputs(); renderChips(); buscar(1);
+      });
+      $('#f_unidade').addEventListener('input', debounce(e=>{ state.unidade=e.target.value; },300));
+      $('#f_inscricao').addEventListener('input', debounce(e=>{ state.inscricao=e.target.value; },300));
+      $('#f_nome').addEventListener('input', debounce(e=>{ state.nome=e.target.value; },300));
+      $('#pgPrev').addEventListener('click', ()=>{ if(state.page>1) buscar(state.page-1); });
+      $('#pgNext').addEventListener('click', ()=>{ const max = Math.ceil(state.total/state.pageSize)||1; if(state.page<max) buscar(state.page+1); });
+      $('#pageSize').addEventListener('change', e=>{ state.pageSize=+e.target.value||20; buscar(1); });
+      $('#btnCSV').addEventListener('click', exportCSV);
+      // primeira busca
+      buscar(1);
+    });
+  </script>
+</body>
+</html>
