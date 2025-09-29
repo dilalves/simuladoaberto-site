@@ -1,0 +1,367 @@
+ <!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin • LOG de Uploads</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <style>
+    header.page{background:#0b3b78;color:#fff;padding:16px 20px;margin-bottom:12px}
+    .muted{color:#6b7280}
+    .kpis .card{border-radius:14px}
+    .table-wrap{overflow:auto; max-height: 65vh}
+    table.striped thead th{position:sticky; top:0; background:#fff; z-index:1; white-space:nowrap}
+    .search-row{display:grid;grid-template-columns: 150px 180px 1fr 170px;gap:8px}
+    .chip.filter{background:#e3f2fd}
+    .nowrap{white-space:nowrap}
+  </style>
+</head>
+<body class="grey lighten-4">
+
+  <header class="page">
+    <h5 style="margin:0">Administrativo → <b>LOG de Uploads</b></h5>
+    <span class="muted">Filtrar • Exportar • Editar • Excluir (envia para lixeira e remove do LOG)</span>
+  </header>
+
+  <div class="container">
+    <!-- Filtros -->
+    <div class="card">
+      <div class="card-content">
+        <span class="card-title" style="font-size:18px">Filtros</span>
+        <div class="search-row">
+          <div>
+            <label for="f_codund" class="muted">Código da unidade (codund)</label>
+            <input id="f_codund" type="text" placeholder="Ex.: 1501">
+          </div>
+          <div>
+            <label for="f_inscricao" class="muted">Inscrição</label>
+            <input id="f_inscricao" type="text" placeholder="Ex.: 00012345">
+          </div>
+          <div>
+            <label for="f_nomearq" class="muted">Nome do arquivo recebido</label>
+            <input id="f_nomearq" type="text" placeholder="Ex.: IMG_1234.jpg">
+          </div>
+          <div style="display:flex;gap:8px;align-items:flex-end">
+            <a id="btnBuscar" class="btn waves-effect"><i class="material-icons left">search</i>Buscar</a>
+            <a id="btnLimpar" class="btn-flat waves-effect">Limpar</a>
+          </div>
+        </div>
+        <div id="chips" style="margin-top:8px"></div>
+      </div>
+    </div>
+
+    <!-- KPIs simples -->
+    <div class="row kpis">
+      <div class="col s12 m3"><div class="card center"><div class="card-content"><div class="muted">Total</div><h5 id="kpiTotal">—</h5></div></div></div>
+      <div class="col s12 m3"><div class="card center"><div class="card-content"><div class="muted">Pendentes (OMR_STATUS)</div><h5 id="kpiPend">—</h5></div></div></div>
+      <div class="col s12 m3"><div class="card center"><div class="card-content"><div class="muted">Com link</div><h5 id="kpiComLink">—</h5></div></div></div>
+      <div class="col s12 m3"><div class="card center"><div class="card-content"><div class="muted">Sem link</div><h5 id="kpiSemLink">—</h5></div></div></div>
+    </div>
+
+    <!-- Tabela -->
+    <div class="card">
+      <div class="card-content">
+        <div style="display:flex;gap:8px;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span class="card-title" style="font-size:18px">LOG</span>
+          <div class="nowrap">
+            <a id="btnCSV" class="btn-small waves-effect"><i class="material-icons left">file_download</i>Exportar CSV</a>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table class="striped">
+            <thead>
+              <tr>
+                <th class="nowrap">Ações</th>
+                <th>ID</th>
+                <th>codund</th>
+                <th>inscricao</th>
+                <th>link_arquivo</th>
+                <th>nome_arquivo_recebido</th>
+                <th>omr_status</th>
+                <th class="nowrap">criado_em</th>
+              </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+
+        <!-- Paginação -->
+        <div class="section" style="display:flex;gap:8px;justify-content:flex-end;align-items:center">
+          <span class="muted">Pág.</span>
+          <a class="btn-flat" id="pgPrev"><i class="material-icons">chevron_left</i></a>
+          <span id="pgInfo">—</span>
+          <a class="btn-flat" id="pgNext"><i class="material-icons">chevron_right</i></a>
+
+          <div class="input-field" style="width:120px;margin:0">
+            <select id="pageSize">
+              <option value="10">10</option>
+              <option selected value="20">20</option>
+              <option value="50">50</option>
+              <option value="100">100</option>
+            </select>
+            <label>Por página</label>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de edição -->
+  <div id="modalEdit" class="modal">
+    <div class="modal-content">
+      <h5>Edição do registro (LOG)</h5>
+      <div class="row" id="editForm"></div>
+    </div>
+    <div class="modal-footer">
+      <a href="#!" class="modal-close btn-flat">Cancelar</a>
+      <a href="#!" id="btnSalvar" class="btn">Salvar alterações</a>
+    </div>
+  </div>
+
+  <!-- Modal de confirmação de exclusão -->
+  <div id="modalDel" class="modal">
+    <div class="modal-content">
+      <h5>Excluir imagem e remover do LOG?</h5>
+      <p class="muted" id="delInfo"></p>
+    </div>
+    <div class="modal-footer">
+      <a href="#!" class="modal-close btn-flat">Cancelar</a>
+      <a href="#!" id="btnConfirmDel" class="btn red">Excluir</a>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+  <script>
+    // ============== CONFIG ==============
+    const API_LIST = 'https://api.secauxiliar.com.br/log_list.php';
+    const API_UPD  = 'https://api.secauxiliar.com.br/log_update.php';
+    const API_DEL  = 'https://api.secauxiliar.com.br/log_delete.php'; // deve mover p/ lixeira (Drive) e deletar linha
+
+    // ============== STATE ===============
+    let state = {
+      codund:'', inscricao:'', nomearq:'',
+      page:1, pageSize:20, total:0, rows:[],
+      editRow:null, delRow:null
+    };
+
+    // ============== HELPERS =============
+    const $ = s => document.querySelector(s);
+    const esc = s => (s==null?'':String(s)).replace(/[&<>"]/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[m]));
+    const fmt = v => (v==null || v==='') ? '—' : String(v);
+    function debounce(fn,ms){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),ms); }; }
+    function toast(t){ M.toast({text:t, displayLength:2200}); }
+
+    const inputsSpec = ['codund','inscricao','link_arquivo','nome_arquivo_recebido','omr_status'];
+
+    function renderChips(){
+      const el = $('#chips'); el.innerHTML = '';
+      [['codund',state.codund],['inscrição',state.inscricao],['arquivo',state.nomearq]]
+        .filter(([,v])=>v).forEach(([label,val])=>{
+          const chip = document.createElement('div');
+          chip.className = 'chip filter';
+          chip.innerHTML = esc(label+': '+val)+' <i class="close material-icons" data-val="'+label+'">close</i>';
+          el.appendChild(chip);
+        });
+      el.querySelectorAll('.close').forEach(i=>i.addEventListener('click',()=>{
+        const k = i.dataset.val;
+        if(k==='codund') state.codund='';
+        if(k==='inscrição') state.inscricao='';
+        if(k==='arquivo') state.nomearq='';
+        syncInputs(); buscar(1);
+      }));
+    }
+    function syncInputs(){
+      $('#f_codund').value = state.codund;
+      $('#f_inscricao').value = state.inscricao;
+      $('#f_nomearq').value = state.nomearq;
+    }
+
+    function calcKPIs(rows,total){
+      let pend=0, com=0, sem=0;
+      rows.forEach(r=>{
+        if((r.omr_status||'').toUpperCase()==='PENDENTE') pend++;
+        if((r.link_arquivo||'').trim()) com++; else sem++;
+      });
+      $('#kpiTotal').textContent = total || rows.length || '—';
+      $('#kpiPend').textContent = pend;
+      $('#kpiComLink').textContent = com;
+      $('#kpiSemLink').textContent = sem;
+    }
+
+    function renderTable(rows){
+      const tb = $('#tbody');
+      tb.innerHTML = rows.map((r,idx)=>`
+        <tr>
+          <td class="nowrap">
+            <a href="#!" class="btn-flat" data-act="edit" data-idx="${idx}" title="Editar"><i class="material-icons">edit</i></a>
+            <a href="#!" class="btn-flat red-text" data-act="del" data-idx="${idx}" title="Excluir"><i class="material-icons">delete</i></a>
+          </td>
+          <td>${r.id}</td>
+          <td>${esc(r.codund)}</td>
+          <td>${esc(r.inscricao)}</td>
+          <td>${r.link_arquivo ? `<a href="${esc(r.link_arquivo)}" target="_blank">abrir</a>` : '—'}</td>
+          <td title="${esc(r.nome_arquivo_recebido||'')}">${esc((r.nome_arquivo_recebido||'').slice(0,80))}${(r.nome_arquivo_recebido||'').length>80?'…':''}</td>
+          <td>${esc(r.omr_status)}</td>
+          <td>${esc(r.criado_em||'')}</td>
+        </tr>
+      `).join('');
+
+      tb.querySelectorAll('[data-act="edit"]').forEach(a=>{
+        a.addEventListener('click',()=>openEdit(state.rows[+a.dataset.idx]));
+      });
+      tb.querySelectorAll('[data-act="del"]').forEach(a=>{
+        a.addEventListener('click',()=>openDelete(state.rows[+a.dataset.idx]));
+      });
+    }
+
+    function renderPager(){
+      const max = Math.max(1, Math.ceil((state.total||0)/state.pageSize));
+      $('#pgInfo').textContent = `${state.page} / ${max}`;
+    }
+
+    async function buscar(p=1){
+      state.page = p;
+      const payload = {
+        codund: state.codund.trim(),
+        inscricao: state.inscricao.trim(),
+        nome_arquivo_recebido: state.nomearq.trim(),
+        page: state.page,
+        pageSize: state.pageSize
+      };
+      $('#tbody').innerHTML = `<tr><td colspan="8">Carregando...</td></tr>`;
+      try{
+        const res = await fetch(API_LIST, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+        const txt = await res.text();
+        let j; try{ j = JSON.parse(txt); }catch(_){
+          const clean = txt.replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim();
+          throw new Error(clean.slice(0,400)||'Resposta inválida do servidor.');
+        }
+        if(!j.ok) throw new Error(j.error||'Falha ao carregar');
+        state.total = +j.total||0;
+        state.rows  = Array.isArray(j.rows) ? j.rows : [];
+        renderTable(state.rows);
+        renderPager();
+        renderChips();
+        calcKPIs(state.rows, state.total);
+      }catch(e){
+        $('#tbody').innerHTML = `<tr><td colspan="8">Erro: ${esc(e.message)}</td></tr>`;
+        $('#kpiTotal').textContent = $('#kpiPend').textContent = $('#kpiComLink').textContent = $('#kpiSemLink').textContent = '—';
+      }
+    }
+
+    function exportCSV(){
+      const cols = ['id','codund','inscricao','link_arquivo','nome_arquivo_recebido','omr_status','criado_em'];
+      const lines = [cols.join(';')];
+      state.rows.forEach(r=>{
+        const row = cols.map(k => (r[k]==null?'':String(r[k])).replace(/;/g,','));
+        lines.push(row.join(';'));
+      });
+      const blob = new Blob([lines.join('\n')], {type:'text/csv;charset=utf-8'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = `log_uploads_p${state.page}.csv`; a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // ===== Edição =====
+    function openEdit(row){
+      state.editRow = row;
+      const form = $('#editForm'); form.innerHTML = '';
+      inputsSpec.forEach(key=>{
+        const val = row[key] ?? '';
+        const col = document.createElement('div');
+        col.className = 'input-field col s12 m6';
+        const id = 'f_'+key;
+        const label = key.toUpperCase();
+        const isLong = key==='link_arquivo' || key==='nome_arquivo_recebido';
+        col.innerHTML = isLong
+          ? `<textarea id="${id}" class="materialize-textarea" data-key="${key}">${esc(val)}</textarea><label for="${id}">${label}</label>`
+          : `<input id="${id}" type="text" value="${esc(val)}" data-key="${key}"/><label for="${id}">${label}</label>`;
+        form.appendChild(col);
+      });
+      M.updateTextFields();
+      (M.Modal.getInstance($('#modalEdit')) || M.Modal.init($('#modalEdit'), {dismissible:true})).open();
+    }
+
+    async function salvarEdicao(){
+      if(!state.editRow){ toast('Sem registro'); return; }
+      const data = {};
+      inputsSpec.forEach(key=>{
+        const el = document.querySelector(`[data-key="${key}"]`);
+        if (el) data[key] = el.value.trim();
+      });
+      const payload = { id: state.editRow.id, data };
+      try{
+        $('#btnSalvar').classList.add('disabled');
+        const r = await fetch(API_UPD, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+        const j = await r.json();
+        if(!j.ok) throw new Error(j.error||'Falha ao salvar');
+        toast('Alterações salvas!');
+        M.Modal.getInstance($('#modalEdit')).close();
+        buscar(state.page);
+      }catch(e){
+        toast('Erro: '+e.message);
+      }finally{
+        $('#btnSalvar').classList.remove('disabled');
+      }
+    }
+
+    // ===== Exclusão =====
+    function openDelete(row){
+      state.delRow = row;
+      $('#delInfo').innerHTML = `
+        <b>ID:</b> ${row.id} &nbsp; <b>codund:</b> ${esc(row.codund)}<br>
+        <b>inscricao:</b> ${esc(row.inscricao)}<br>
+        <b>arquivo:</b> ${esc(row.nome_arquivo_recebido||'')}<br>
+        <span class="muted">Isto deve enviar o arquivo do Drive para a lixeira (usando FILE_ID/LINK_ARQUIVO) e remover a linha do LOG.</span>
+      `;
+      (M.Modal.getInstance($('#modalDel')) || M.Modal.init($('#modalDel'), {dismissible:true})).open();
+    }
+
+    async function confirmarExclusao(){
+      if(!state.delRow){ return; }
+      try{
+        $('#btnConfirmDel').classList.add('disabled');
+        const r = await fetch(API_DEL, {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({
+            id: state.delRow.id,
+            nome_arquivo_recebido: state.delRow.nome_arquivo_recebido, // útil para fluxos que localizam pelo nome
+            link_arquivo: state.delRow.link_arquivo
+          })
+        });
+        const j = await r.json();
+        if(!j.ok) throw new Error(j.error||'Falha ao excluir');
+        toast('Excluído!');
+        M.Modal.getInstance($('#modalDel')).close();
+        buscar(state.page);
+      }catch(e){
+        toast('Erro: '+e.message);
+      }finally{
+        $('#btnConfirmDel').classList.remove('disabled');
+      }
+    }
+
+    // ============== INIT =================
+    document.addEventListener('DOMContentLoaded', ()=>{
+      M.FormSelect.init(document.querySelectorAll('select'));
+      M.Modal.init(document.querySelectorAll('.modal'));
+      $('#btnBuscar').addEventListener('click', ()=>buscar(1));
+      $('#btnLimpar').addEventListener('click', ()=>{ state.codund=state.inscricao=state.nomearq=''; syncInputs(); renderChips(); buscar(1); });
+      $('#f_codund').addEventListener('input', debounce(e=>{ state.codund=e.target.value; },300));
+      $('#f_inscricao').addEventListener('input', debounce(e=>{ state.inscricao=e.target.value; },300));
+      $('#f_nomearq').addEventListener('input', debounce(e=>{ state.nomearq=e.target.value; },300));
+      $('#pgPrev').addEventListener('click', ()=>{ if(state.page>1) buscar(state.page-1); });
+      $('#pgNext').addEventListener('click', ()=>{ const max = Math.ceil(state.total/state.pageSize)||1; if(state.page<max) buscar(state.page+1); });
+      $('#pageSize').addEventListener('change', e=>{ state.pageSize=+e.target.value||20; buscar(1); });
+      $('#btnCSV').addEventListener('click', exportCSV);
+      $('#btnSalvar').addEventListener('click', salvarEdicao);
+      $('#btnConfirmDel').addEventListener('click', confirmarExclusao);
+      buscar(1);
+    });
+  </script>
+</body>
+</html>
