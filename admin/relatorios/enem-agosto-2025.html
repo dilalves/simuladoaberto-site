@@ -11,17 +11,18 @@
     .muted{color:#6b7280}
     .kpis .card{border-radius:14px}
     .table-wrap{overflow:auto; max-height: 65vh}
-    table.striped thead th{position:sticky; top:0; background:#fff; z-index:1}
-    .search-row{display:grid;grid-template-columns: 220px 180px 1fr 130px;gap:8px}
-    @media(max-width: 800px){ .search-row{grid-template-columns:1fr} }
+    table.striped thead th{position:sticky; top:0; background:#fff; z-index:1; white-space:nowrap}
+    .search-row{display:grid;grid-template-columns: 220px 180px 1fr 140px;gap:8px}
+    @media(max-width: 1100px){ .table-wrap{max-height:none} }
     .chip.filter{background:#e3f2fd}
+    .nowrap{white-space:nowrap}
   </style>
 </head>
 <body class="grey lighten-4">
 
   <header class="page">
     <h5 style="margin:0">Relatórios → Simulados → <b>ENEM Agosto 2025</b></h5>
-    <span class="muted">Pesquisa por unidade, inscrição ou nome do aluno</span>
+    <span class="muted">Pesquisa por unidade, inscrição ou nome do aluno • Exportar • Editar</span>
   </header>
 
   <div class="container">
@@ -47,45 +48,16 @@
             <a id="btnLimpar" class="btn-flat waves-effect">Limpar</a>
           </div>
         </div>
-
         <div id="chips" style="margin-top:8px"></div>
       </div>
     </div>
 
-    <!-- KPIs -->
+    <!-- KPIs simples (média das quatro áreas) -->
     <div class="row kpis">
-      <div class="col s12 m3">
-        <div class="card center">
-          <div class="card-content">
-            <div class="muted">Total de registros</div>
-            <h5 id="kpiTotal">—</h5>
-          </div>
-        </div>
-      </div>
-      <div class="col s12 m3">
-        <div class="card center">
-          <div class="card-content">
-            <div class="muted">Média Redação</div>
-            <h5 id="kpiMedia">—</h5>
-          </div>
-        </div>
-      </div>
-      <div class="col s12 m3">
-        <div class="card center">
-          <div class="card-content">
-            <div class="muted">Corrigidas</div>
-            <h5 id="kpiCorrigidas">—</h5>
-          </div>
-        </div>
-      </div>
-      <div class="col s12 m3">
-        <div class="card center">
-          <div class="card-content">
-            <div class="muted">Pendentes/Trat.</div>
-            <h5 id="kpiPendentes">—</h5>
-          </div>
-        </div>
-      </div>
+      <div class="col s12 m3"><div class="card center"><div class="card-content"><div class="muted">Total</div><h5 id="kpiTotal">—</h5></div></div></div>
+      <div class="col s12 m3"><div class="card center"><div class="card-content"><div class="muted">Média (4 áreas)</div><h5 id="kpiMedia">—</h5></div></div></div>
+      <div class="col s12 m3"><div class="card center"><div class="card-content"><div class="muted">Com link</div><h5 id="kpiComLink">—</h5></div></div></div>
+      <div class="col s12 m3"><div class="card center"><div class="card-content"><div class="muted">Sem link</div><h5 id="kpiSemLink">—</h5></div></div></div>
     </div>
 
     <!-- Tabela -->
@@ -93,7 +65,7 @@
       <div class="card-content">
         <div style="display:flex;gap:8px;justify-content:space-between;align-items:center;margin-bottom:8px">
           <span class="card-title" style="font-size:18px">Resultados</span>
-          <div>
+          <div class="nowrap">
             <a id="btnCSV" class="btn-small waves-effect"><i class="material-icons left">file_download</i>Exportar CSV</a>
           </div>
         </div>
@@ -102,14 +74,22 @@
           <table class="striped">
             <thead>
               <tr>
-                <th>Unidade</th>
+                <th class="nowrap">Ações</th>
                 <th>Inscrição</th>
+                <th>CPF</th>
                 <th>Nome</th>
-                <th>Total</th>
-                <th>C1</th><th>C2</th><th>C3</th><th>C4</th><th>C5</th>
-                <th>Status</th>
-                <th>Imagem</th>
-                <th>Data/Hora</th>
+                <th>Linguagens</th>
+                <th>Humanas</th>
+                <th>Natureza</th>
+                <th>Matemática</th>
+                <th>RC1</th><th>RC2</th><th>RC3</th><th>RC4</th><th>RC5</th>
+                <th>Redação</th>
+                <th>CLS_G</th>
+                <th>CLS_U</th>
+                <th>Unidade</th>
+                <th>UND_PROVA</th>
+                <th>Link Arquivo</th>
+                <th>Atualizado em</th>
               </tr>
             </thead>
             <tbody id="tbody"></tbody>
@@ -133,80 +113,109 @@
             <label>Por página</label>
           </div>
         </div>
-
       </div>
+    </div>
+  </div>
+
+  <!-- Modal de edição -->
+  <div id="modalEdit" class="modal">
+    <div class="modal-content">
+      <h5>Edição do registro</h5>
+      <div class="row" id="editForm">
+        <!-- inputs são gerados via JS para simplificar -->
+      </div>
+    </div>
+    <div class="modal-footer">
+      <a href="#!" class="modal-close btn-flat">Cancelar</a>
+      <a href="#!" id="btnSalvar" class="btn">Salvar alterações</a>
     </div>
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
   <script>
     // =================== CONFIG ===================
-    const API_URL = 'https://api.secauxiliar.com.br/relatorio_enem_agosto_2025.php';
+    const API_LIST = 'https://api.secauxiliar.com.br/relatorio_enem_agosto_2025.php';
+    const API_UPD  = 'https://api.secauxiliar.com.br/enem_agosto_2025_update.php';
 
     // =================== STATE ====================
-    let state = { unidade:'', inscricao:'', nome:'', page:1, pageSize:20, total:0, rows:[] };
+    let state = { unidade:'', inscricao:'', nome:'', page:1, pageSize:20, total:0, rows:[], editRow:null };
 
     // =================== HELPERS ==================
     const $ = sel => document.querySelector(sel);
-    const fmt = n => (n==null || isNaN(n)) ? '—' : String(n);
-    const esc = s => (s||'').replace(/[&<>"]/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[m]));
+    const fmt = v => (v==null || v==='') ? '—' : String(v);
+    const esc = s => (s==null?'':String(s)).replace(/[&<>"]/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[m]));
     function debounce(fn,ms){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),ms); }; }
+    const inputsSpec = [
+      'inscricao','cpf','nome','linguagem','humanas','natureza','matematica',
+      'rc1','rc2','rc3','rc4','rc5','redacao','cls_g','cls_u','unidade','und_prova','link_arquivo'
+    ];
+
+    function toast(t){ M.toast({text:t, displayLength:2000}); }
 
     function renderChips(){
-      const el = $('#chips');
-      el.innerHTML = '';
+      const el = $('#chips'); el.innerHTML = '';
       [['Unidade',state.unidade,'unidade'],['Inscrição',state.inscricao,'inscricao'],['Nome',state.nome,'nome']]
-        .filter(([,v])=>v)
-        .forEach(([label,val,key])=>{
+        .filter(([,v])=>v).forEach(([label,val,key])=>{
           const chip = document.createElement('div');
           chip.className = 'chip filter';
-          chip.innerHTML = esc(label+': '+val) + ' <i class="close material-icons" data-key="'+key+'">close</i>';
+          chip.innerHTML = esc(label+': '+val)+' <i class="close material-icons" data-key="'+key+'">close</i>';
           el.appendChild(chip);
         });
-      el.querySelectorAll('.close').forEach(i=>{
-        i.addEventListener('click',()=>{
-          state[i.dataset.key]='';
-          syncInputs();
-          buscar(1);
-        });
-      });
+      el.querySelectorAll('.close').forEach(i=>i.addEventListener('click',()=>{
+        state[i.dataset.key]=''; syncInputs(); buscar(1);
+      }));
     }
-
-    function syncInputs(){
-      $('#f_unidade').value = state.unidade;
-      $('#f_inscricao').value = state.inscricao;
-      $('#f_nome').value = state.nome;
-    }
+    function syncInputs(){ $('#f_unidade').value=state.unidade; $('#f_inscricao').value=state.inscricao; $('#f_nome').value=state.nome; }
 
     function calcKPIs(rows,total){
-      let soma=0, n=0, corrigidas=0, pend=0;
+      let soma=0, n=0, com=0, sem=0;
       rows.forEach(r=>{
-        const t = +r.red_total;
-        if (Number.isFinite(t)){ soma += t; n++; }
-        const st = (r.status||'').toLowerCase();
-        if (st.includes('corrigida')) corrigidas++;
-        if (st.includes('pendente') || st.includes('trat')) pend++;
+        const a = ['linguagem','humanas','natureza','matematica'].map(k=>+r[k]).filter(Number.isFinite);
+        if (a.length){ soma += a.reduce((x,y)=>x+y,0)/a.length; n++; }
+        if ((r.link_arquivo||'').trim()) com++; else sem++;
       });
-      $('#kpiTotal').textContent = fmt(total);
-      $('#kpiMedia').textContent = n? (soma/n).toFixed(1): '—';
-      $('#kpiCorrigidas').textContent = fmt(corrigidas);
-      $('#kpiPendentes').textContent = fmt(pend);
+      $('#kpiTotal').textContent = total || rows.length || '—';
+      $('#kpiMedia').textContent = n ? (soma/n).toFixed(1) : '—';
+      $('#kpiComLink').textContent = com;
+      $('#kpiSemLink').textContent = sem;
     }
 
     function renderTable(rows){
       const tb = $('#tbody');
-      tb.innerHTML = rows.map(r=>`
+      tb.innerHTML = rows.map((r,idx)=>`
         <tr>
-          <td>${esc(r.unidade)}</td>
+          <td class="nowrap">
+            <a href="#!" class="btn-flat" data-act="edit" data-idx="${idx}"><i class="material-icons">edit</i></a>
+          </td>
           <td>${esc(r.inscricao)}</td>
+          <td>${esc(r.cpf)}</td>
           <td>${esc(r.nome)}</td>
-          <td><b>${fmt(r.red_total)}</b></td>
-          <td>${fmt(r.c1)}</td><td>${fmt(r.c2)}</td><td>${fmt(r.c3)}</td><td>${fmt(r.c4)}</td><td>${fmt(r.c5)}</td>
-          <td>${esc(r.status||'')}</td>
-          <td>${r.img_link ? `<a href="${esc(r.img_link)}" target="_blank" class="btn-flat waves-effect">abrir</a>`:'—'}</td>
-          <td>${esc(r.data_hora||'')}</td>
+          <td>${fmt(r.linguagem)}</td>
+          <td>${fmt(r.humanas)}</td>
+          <td>${fmt(r.natureza)}</td>
+          <td>${fmt(r.matematica)}</td>
+          <td>${fmt(r.rc1)}</td>
+          <td>${fmt(r.rc2)}</td>
+          <td>${fmt(r.rc3)}</td>
+          <td>${fmt(r.rc4)}</td>
+          <td>${fmt(r.rc5)}</td>
+          <td>${fmt(r.redacao)}</td>
+          <td>${esc(r.cls_g)}</td>
+          <td>${esc(r.cls_u)}</td>
+          <td>${esc(r.unidade)}</td>
+          <td>${esc(r.und_prova)}</td>
+          <td>${r.link_arquivo ? `<a href="${esc(r.link_arquivo)}" target="_blank">abrir</a>` : '—'}</td>
+          <td>${esc(r.atualizado_em||'')}</td>
         </tr>
       `).join('');
+
+      // bind editar
+      tb.querySelectorAll('[data-act="edit"]').forEach(a=>{
+        a.addEventListener('click',()=>{
+          const row = state.rows[+a.dataset.idx];
+          openEdit(row);
+        });
+      });
     }
 
     function renderPager(){
@@ -222,24 +231,15 @@
         page: state.page,
         pageSize: state.pageSize
       };
-      $('#tbody').innerHTML = `<tr><td colspan="12">Carregando...</td></tr>`;
+      $('#tbody').innerHTML = `<tr><td colspan="20">Carregando...</td></tr>`;
       try{
-        const res = await fetch(API_URL, {
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
-          body: JSON.stringify(payload)
-        });
-
-        // Fallback: tenta JSON; se vier HTML/erro, mostra mensagem limpa
-        const text = await res.text();
-        let j;
-        try { j = JSON.parse(text); }
-        catch(_) {
-          const clean = text.replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim();
-          throw new Error(clean.slice(0, 400) || 'Resposta inválida do servidor.');
+        const res = await fetch(API_LIST, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+        const txt = await res.text();
+        let j; try{ j = JSON.parse(txt); }catch(_){
+          const clean = txt.replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim();
+          throw new Error(clean.slice(0,400)||'Resposta inválida do servidor.');
         }
-
-        if(!j.ok) throw new Error(j.error || 'Falha ao carregar');
+        if(!j.ok) throw new Error(j.error||'Falha ao carregar');
         state.total = +j.total||0;
         state.rows  = Array.isArray(j.rows) ? j.rows : [];
         renderTable(state.rows);
@@ -247,43 +247,78 @@
         renderChips();
         calcKPIs(state.rows, state.total);
       }catch(e){
-        $('#tbody').innerHTML = `<tr><td colspan="12">Erro: ${esc(e.message)}</td></tr>`;
-        // zera KPIs quando falhar
-        $('#kpiTotal').textContent = '—';
-        $('#kpiMedia').textContent = '—';
-        $('#kpiCorrigidas').textContent = '—';
-        $('#kpiPendentes').textContent = '—';
+        $('#tbody').innerHTML = `<tr><td colspan="20">Erro: ${esc(e.message)}</td></tr>`;
+        $('#kpiTotal').textContent = $('#kpiMedia').textContent = $('#kpiComLink').textContent = $('#kpiSemLink').textContent = '—';
       }
     }
 
     function exportCSV(){
-      const cols = ['Unidade','Inscrição','Nome','Total','C1','C2','C3','C4','C5','Status','Imagem','DataHora'];
+      const cols = ['Inscrição','CPF','Nome','Linguagens','Humanas','Natureza','Matemática','RC1','RC2','RC3','RC4','RC5','Redação','CLS_G','CLS_U','Unidade','UND_PROVA','Link_Arquivo','Atualizado_em'];
       const lines = [cols.join(';')];
       state.rows.forEach(r=>{
         const row = [
-          r.unidade, r.inscricao, r.nome, r.red_total,
-          r.c1, r.c2, r.c3, r.c4, r.c5,
-          r.status, r.img_link, r.data_hora
+          r.inscricao,r.cpf,r.nome,r.linguagem,r.humanas,r.natureza,r.matematica,
+          r.rc1,r.rc2,r.rc3,r.rc4,r.rc5,r.redacao,r.cls_g,r.cls_u,r.unidade,r.und_prova,r.link_arquivo,r.atualizado_em
         ].map(v => (v==null?'':String(v)).replace(/;/g,','));
         lines.push(row.join(';'));
       });
       const blob = new Blob([lines.join('\n')], {type:'text/csv;charset=utf-8'});
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = url;
-      a.download = `relatorio_enem_agosto_2025_p${state.page}.csv`;
-      a.click();
+      a.href = url; a.download = `relatorio_enem_agosto_2025_p${state.page}.csv`; a.click();
       URL.revokeObjectURL(url);
+    }
+
+    // ====== Modal Edição ======
+    function openEdit(row){
+      state.editRow = row;
+      const form = $('#editForm'); form.innerHTML = '';
+      inputsSpec.forEach(key=>{
+        const val = row[key] ?? '';
+        const col = document.createElement('div');
+        col.className = 'input-field col s12 m6';
+        const id = 'f_'+key;
+        const label = key.toUpperCase();
+        const isLong = key==='link_arquivo';
+        col.innerHTML = isLong
+          ? `<textarea id="${id}" class="materialize-textarea" data-key="${key}">${esc(val)}</textarea><label for="${id}">${label}</label>`
+          : `<input id="${id}" type="text" value="${esc(val)}" data-key="${key}"/><label for="${id}">${label}</label>`;
+        form.appendChild(col);
+      });
+      M.updateTextFields();
+      const modal = M.Modal.getInstance($('#modalEdit')) || M.Modal.init($('#modalEdit'), {dismissible:true});
+      modal.open();
+    }
+
+    async function salvarEdicao(){
+      if(!state.editRow){ toast('Sem registro'); return; }
+      const data = {};
+      inputsSpec.forEach(key=>{
+        const el = document.querySelector(`[data-key="${key}"]`);
+        if (el) data[key] = el.value.trim();
+      });
+      const payload = { id: state.editRow.id, data };
+      try{
+        $('#btnSalvar').classList.add('disabled');
+        const r = await fetch(API_UPD, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+        const j = await r.json();
+        if(!j.ok) throw new Error(j.error||'Falha ao salvar');
+        toast('Alterações salvas!');
+        M.Modal.getInstance($('#modalEdit')).close();
+        buscar(state.page);
+      }catch(e){
+        toast('Erro: '+e.message);
+      }finally{
+        $('#btnSalvar').classList.remove('disabled');
+      }
     }
 
     // =================== INIT =====================
     document.addEventListener('DOMContentLoaded', ()=>{
       M.FormSelect.init(document.querySelectorAll('select'));
+      M.Modal.init(document.querySelectorAll('.modal'));
       $('#btnBuscar').addEventListener('click', ()=>buscar(1));
-      $('#btnLimpar').addEventListener('click', ()=>{
-        state.unidade=state.inscricao=state.nome='';
-        syncInputs(); renderChips(); buscar(1);
-      });
+      $('#btnLimpar').addEventListener('click', ()=>{ state.unidade=state.inscricao=state.nome=''; syncInputs(); renderChips(); buscar(1); });
       $('#f_unidade').addEventListener('input', debounce(e=>{ state.unidade=e.target.value; },300));
       $('#f_inscricao').addEventListener('input', debounce(e=>{ state.inscricao=e.target.value; },300));
       $('#f_nome').addEventListener('input', debounce(e=>{ state.nome=e.target.value; },300));
@@ -291,6 +326,7 @@
       $('#pgNext').addEventListener('click', ()=>{ const max = Math.ceil(state.total/state.pageSize)||1; if(state.page<max) buscar(state.page+1); });
       $('#pageSize').addEventListener('change', e=>{ state.pageSize=+e.target.value||20; buscar(1); });
       $('#btnCSV').addEventListener('click', exportCSV);
+      $('#btnSalvar').addEventListener('click', salvarEdicao);
       buscar(1);
     });
   </script>
