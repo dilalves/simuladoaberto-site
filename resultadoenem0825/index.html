@@ -224,7 +224,7 @@
   <script>
   /* ===== CONFIG BÁSICA ===== */
   //const ENDPOINT = 'https://script.google.com/macros/s/AKfycbwradbKRivZtlC3TAWqqPuIsC1UoM6Lgh53FRsM0Z9GryRZ6EcPAXP6NVj_3KqNwJw3/exec';
-  const ENDPOINT = 'https://api.secauxiliar.com.br/enem_resultado.php'
+  const ENDPOINT = 'https://api.secauxiliar.com.br/psq_resultado_enem_0825.php'
   const TEMPLATE_URL = 'https://raw.githubusercontent.com/dilalves/simuladoaberto-site/main/resultadoenem0825/RESULTADO_PADRAO_0825.pdf';
 
   let ultimoResultado = null;
@@ -296,7 +296,8 @@
     setText('n_CLS_U', C.cls_u ?? j.cls_u ?? '-');
 
     // bloco Redação + Competências
-    document.getElementById('out_red_total').textContent = val(R.total);
+    //document.getElementById('out_red_total').textContent = val(R.total);    ***** linha comentada para teste. inseri a mensagem na linha abaixo
+    document.getElementById('out_red_total').textContent = val(R.total) + " — " + msgRedacao(R.total);
     const comps = [R.c1,R.c2,R.c3,R.c4,R.c5].filter(x=>x!=null).join(' / ') || '-';
     document.getElementById('out_red_comp').textContent  = comps;
     document.getElementById('blocoRedacao').style.display = 'block';
