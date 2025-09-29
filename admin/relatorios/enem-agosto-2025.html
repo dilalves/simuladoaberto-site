@@ -144,11 +144,7 @@
     const API_URL = 'https://api.secauxiliar.com.br/relatorio_enem_agosto_2025.php';
 
     // =================== STATE ====================
-    let state = {
-      unidade:'', inscricao:'', nome:'',
-      page:1, pageSize:20,
-      total:0, rows:[]
-    };
+    let state = { unidade:'', inscricao:'', nome:'', page:1, pageSize:20, total:0, rows:[] };
 
     // =================== HELPERS ==================
     const $ = sel => document.querySelector(sel);
@@ -183,18 +179,18 @@
     }
 
     function calcKPIs(rows,total){
-      // média simples do total; contagens por status
       let soma=0, n=0, corrigidas=0, pend=0;
       rows.forEach(r=>{
-        if (Number.isFinite(+r.red_total)){ soma += +r.red_total; n++; }
+        const t = +r.red_total;
+        if (Number.isFinite(t)){ soma += t; n++; }
         const st = (r.status||'').toLowerCase();
         if (st.includes('corrigida')) corrigidas++;
         if (st.includes('pendente') || st.includes('trat')) pend++;
       });
       $('#kpiTotal').textContent = fmt(total);
       $('#kpiMedia').textContent = n? (soma/n).toFixed(1): '—';
-      $('#kpiCorrigidas').textContent = corrigidas;
-      $('#kpiPendentes').textContent = pend;
+      $('#kpiCorrigidas').textContent = fmt(corrigidas);
+      $('#kpiPendentes').textContent = fmt(pend);
     }
 
     function renderTable(rows){
@@ -233,16 +229,30 @@
           headers:{'Content-Type':'application/json'},
           body: JSON.stringify(payload)
         });
-        const j = await res.json();
-        if(!j.ok) throw new Error(j.error||'Falha ao carregar');
+
+        // Fallback: tenta JSON; se vier HTML/erro, mostra mensagem limpa
+        const text = await res.text();
+        let j;
+        try { j = JSON.parse(text); }
+        catch(_) {
+          const clean = text.replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim();
+          throw new Error(clean.slice(0, 400) || 'Resposta inválida do servidor.');
+        }
+
+        if(!j.ok) throw new Error(j.error || 'Falha ao carregar');
         state.total = +j.total||0;
-        state.rows  = j.rows||[];
+        state.rows  = Array.isArray(j.rows) ? j.rows : [];
         renderTable(state.rows);
         renderPager();
         renderChips();
         calcKPIs(state.rows, state.total);
       }catch(e){
         $('#tbody').innerHTML = `<tr><td colspan="12">Erro: ${esc(e.message)}</td></tr>`;
+        // zera KPIs quando falhar
+        $('#kpiTotal').textContent = '—';
+        $('#kpiMedia').textContent = '—';
+        $('#kpiCorrigidas').textContent = '—';
+        $('#kpiPendentes').textContent = '—';
       }
     }
 
@@ -268,8 +278,7 @@
 
     // =================== INIT =====================
     document.addEventListener('DOMContentLoaded', ()=>{
-      M.FormSelect.init($('#pageSize').parentElement.querySelectorAll('select'));
-      // eventos
+      M.FormSelect.init(document.querySelectorAll('select'));
       $('#btnBuscar').addEventListener('click', ()=>buscar(1));
       $('#btnLimpar').addEventListener('click', ()=>{
         state.unidade=state.inscricao=state.nome='';
@@ -282,7 +291,6 @@
       $('#pgNext').addEventListener('click', ()=>{ const max = Math.ceil(state.total/state.pageSize)||1; if(state.page<max) buscar(state.page+1); });
       $('#pageSize').addEventListener('change', e=>{ state.pageSize=+e.target.value||20; buscar(1); });
       $('#btnCSV').addEventListener('click', exportCSV);
-      // primeira busca
       buscar(1);
     });
   </script>
