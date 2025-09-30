@@ -650,6 +650,56 @@ function logout(){
   </div>
 </div>
 
+<script>
+// ========== LISTENER GLOBAL PARA "Tentar OMR" ==========
+document.addEventListener('DOMContentLoaded', () => {
+  const tbody = document.getElementById('tbody');
+
+  tbody.addEventListener('click', async (ev) => {
+    const btn = ev.target.closest('.omr-retry');
+    if (!btn) return;
+
+    const fileId = btn.dataset.fileId;
+    const link   = btn.dataset.link;
+    const id     = btn.dataset.id;
+
+    if (!fileId || !link) {
+      M.toast({ html: 'Dados incompletos para reprocessar.' });
+      return;
+    }
+
+    btn.classList.add('disabled');
+    try {
+      const payload = {
+        file_id: fileId,
+        link_down: link,
+        callback_url: 'https://api.secauxiliar.com.br/omr-callback.php'
+      };
+
+      const res = await fetch('https://api-omr.onrender.com/omr_job', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+        const txt = await res.text();
+        throw new Error(txt || 'Erro no reenvio OMR');
+      }
+
+      M.toast({ html: 'OMR reenviado com sucesso!' });
+
+    } catch (e) {
+      console.error(e);
+      M.toast({ html: 'Falha ao reprocessar: ' + (e.message || 'Erro') });
+    } finally {
+      btn.classList.remove('disabled');
+    }
+  });
+});
+</script>
+
+
 
 
 </body>
