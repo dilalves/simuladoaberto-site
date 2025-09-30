@@ -669,6 +669,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     btn.classList.add('disabled');
+
     try {
       const payload = {
         file_id: fileId,
@@ -687,7 +688,12 @@ document.addEventListener('DOMContentLoaded', () => {
         throw new Error(txt || 'Erro no reenvio OMR');
       }
 
-      M.toast({ html: 'OMR reenviado com sucesso!' });
+      const data = await res.json();
+      if (data.ok) {
+        M.toast({ html: 'OMR reenviado com sucesso!' });
+      } else {
+        throw new Error(data?.error || 'Erro no retorno da API');
+      }
 
     } catch (e) {
       console.error(e);
@@ -698,8 +704,6 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 </script>
-
-
 
 
 </body>
