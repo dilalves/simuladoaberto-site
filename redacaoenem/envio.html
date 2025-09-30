@@ -157,7 +157,7 @@
             </p>
             
             <!-- Input escondido -->
-            <input id="files" type="file" multiple accept=".jpg,.jpeg" style="display:none;">
+            <input id="files" type="file" multiple accept=".jpg,.jpeg,.tif,.tiff" style="display:none;">
             
             <!-- Botão estilizado -->
             <button id="btnPick" class="btn waves-effect waves-light">
@@ -308,7 +308,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   catch(e){ if (String(e.message).includes('UNAUTHORIZED')) return redirectToLogin(); }
 
   const API_UPLOAD = 'https://api.secauxiliar.com.br/upload.php'; // endpoint PHP
-  const ACCEPT_EXT = ['jpg','jpeg']; // validação extra no front (se quiser permitir mais, ajuste)
+  const ACCEPT_EXT = ['jpg','jpeg','tif','tiff']; //aceita tif - solicitação de Nhandeara (nãot tem outra opção lá)
 
   const btnPick  = document.getElementById('btnPick');
   const input    = document.getElementById('files');
