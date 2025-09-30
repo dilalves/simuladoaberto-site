@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<!-- Conferir Envio • Redação Online -->
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link rel="icon" type="image/x-icon" href="https://www.curso-objetivo.br/assets/img/favicon.ico" />
+  
+  <title>Conferir Envio • Redação Online</title>
+
+  <!-- Materialize -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+
+  <!-- Google Icons -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+  <!-- Cropper.js (para marcar a região visualmente) -->
+  <link  rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css">
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
+
+
+  <style>
+    :root{
+      --bg:#f7f8fb; --card:#ffffff; --line:#e9edf3; --ink:#0f172a; --muted:#6b7280; --primary:#0b3b78; --accent:#2563eb;
+      --aside-w: 260px;       /* largura do menu lateral */
+      --topbar-h: 64px;       /* altura do topo */
+    }
+
+    html,body{height:100%}
+    body{background:var(--bg); color:var(--ink)}
+
+    /* ===== Layout ===== */
+    .app{ display:grid; grid-template-columns: var(--aside-w) 1fr; min-height:100vh; }
+
+    /* 🔒 Topo azul: full-width, fixo e alinhado ao lado do menu */
+    header.topbar{
+      position: fixed; top: 0; left: 0; right: 0; height: var(--topbar-h); z-index: 20;
+      background: var(--primary); color:#fff; display:flex; align-items:center;
+      padding: 12px 24px; padding-left: 0; box-shadow:0 2px 10px rgba(16,24,40,.12);
+    }
+    header.topbar > .topbar{ background: transparent !important; box-shadow: none !important; }
+    header.topbar .container{ max-width: none; width: 100%; margin: 0; padding: 0; }
+    header.topbar h5{ margin: 0; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    /* 🔒 Sidebar fixa/rolável abaixo do topo */
+    aside{
+      background:#fff; border-right:1px solid var(--line); position: sticky; top: var(--topbar-h);
+      height: calc(100vh - var(--topbar-h)); overflow: auto; align-self: start; z-index: 6;
+    }
+
+    /* Conteúdo principal (empurrado abaixo do topo fixo) */
+    main{ display:flex; flex-direction:column; padding-top: calc(var(--topbar-h) + 8px); }
+
+    /* utilitários/estilo */
+    .page{padding:24px}
+    .muted{color:var(--muted)}
+    .card{border-radius:14px; box-shadow:0 6px 18px rgba(16,24,40,.06)}
+    .card-title{font-weight:600}
+    .table-wrapper{overflow:auto; border:1px solid var(--line); border-radius:10px; background:#fff}
+    table.striped>tbody>tr:nth-child(odd){background:#fafbff}
+    th{white-space:nowrap}
+    td{vertical-align:middle}
+
+    .chip-status{border-radius:999px; padding:2px 10px; font-weight:600; font-size:12px; display:inline-block}
+    .ok{background:#e7f8ef; color:#127c46}
+    .err{background:#fdecec; color:#b42318}
+    .pend{background:#fff7e6; color:#b54708}
+
+    .search-row{display:grid; grid-template-columns: 1fr 160px 140px; gap:12px}
+
+    @media (max-width: 992px){
+      .app{ grid-template-columns: 1fr; }
+      header.topbar{ padding-left: 16px; }
+      .search-row{ grid-template-columns: 1fr; }
+    }
+
+    /* menu lateral */
+    .menu{list-style:none; padding:0; margin:0}
+    .menu a{display:block; padding:12px 16px; color:#111827}
+    .menu a:hover{background:#f4f6fb}
+    .menu .active>a{background:#eef3ff; font-weight:600}
+    .menu .icon{font-size:20px; vertical-align:middle; margin-right:8px; color:#64748b}
+
+    .manual-link{ color:#b54708; font-weight:600; cursor:pointer; text-decoration:underline; }
+    .crop-wrap{ width:100%; max-height:60vh; overflow:auto; background:#f8fafc; border:1px solid #e5e7eb; border-radius:10px }
+    #cropImg{ max-width:100%; display:block; }
+
+  </style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== Sidebar ===== -->
+  <aside>
+    <div class="center" style="padding:18px 0 8px">
+      <span class="title" style="font-weight:700;color:#0b3b78">Redação</span>
+    </div>
+    <ul class="menu">
+      <li><a href="/redacaoenem/painel.html"><span class="icon material-icons">dashboard</span>Início</a></li>
+      <li><a href="/redacaoenem/envio.html"><span class="icon material-icons">cloud_upload</span>Envio de Redações</a></li>
+      <li class="active"><a href="/redacaoenem/conferir-envio.html"><span class="icon material-icons">assignment_turned_in</span>Conferir Envios</a></li>
+      <li><a href="/redacaoenem/professores.html"><span class="icon material-icons">group</span>Professores</a></li>
+      <li><a href="/redacaoenem/relatorios.html"><span class="icon material-icons">bar_chart</span>Relatórios</a></li>
+      <!-- <li><a href="/redacaoenem/config.html"><span class="icon material-icons">settings</span>Configurações</a></li> -->
+    </ul>
+  </aside>
+
+  <!-- ===== Main ===== -->
+  <main>
+    <header class="topbar">
+      <div class="topbar blue darken-3 white-text"
+          style="display:flex; align-items:center; justify-content:space-between; padding:0 24px; width:100%;">
+        
+        <!-- Bloco ESQUERDA -->
+        <div style="display:flex; align-items:center; gap:12px;">
+          <img src="/redacaoenem/logo-mini.png" alt="Logo" style="height:28px; width:auto; margin-left:8px;">
+          <h5 class="m-0" style="margin:0; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">
+            Simulado Aberto ENEM - Redação – <span id="unitLabel">—</span>
+          </h5>
+        </div>
+
+        <!-- Bloco DIREITA -->
+        <div style="display:flex; gap:8px; align-items:center">
+          <a id="btnLogout" class="btn-flat waves-effect white-text" href="#!" onclick="logout()">
+            <i class="material-icons left">exit_to_app</i>Sair
+          </a>
+        </div>
+      </div>
+    </header>
+
+    <section class="page">
+      <!-- Breadcrumb -->
+      <div class="row" style="margin-bottom:0">
+        <div class="col s12">
+          <a href="/redacaoenem/painel.html" class="breadcrumb">Dashboard</a>
+          <a href="#" class="breadcrumb">Conferir Envios</a>
+        </div>
+      </div>
+
+      <!-- Filtros / ações -->
+      <div class="card" style="margin-top:8px">
+        <div class="card-content">
+          <span class="card-title">Conferir envios da unidade</span>
+          <div class="row" style="margin-top:10px">
+            <div class="col s12">
+              <div class="search-row">
+                <div class="input-field" style="margin-top:0">
+                  <i class="material-icons prefix">search</i>
+                  <input id="q" type="text" placeholder="Buscar por inscrição ou nome do arquivo…">
+                </div>
+                <div class="input-field" style="margin-top:0">
+                  <select id="statusFilter">
+                    <option value="">Todos os status</option>
+                    <option value="PENDENTE">PENDENTE</option>
+                    <option value="TRATAMENTO MANUAL">TRATAMENTO MANUAL</option>
+                    <option value="AGUARDANDO CORREÇÃO">AGUARDANDO CORREÇÃO</option>
+                    <option value="FINALIZADA">FINALIZADA</option>
+                    <option value="RECUSADA">RECUSADA</option>
+                  </select>
+                  <label>Status</label>
+                </div>
+                <div class="right-align" style="align-self:center">
+                  <a id="btnRefresh" class="btn waves-effect"><i class="material-icons left">refresh</i>Atualizar</a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tabela -->
+          <div class="table-wrapper">
+            <table class="striped highlight responsive-table">
+              <thead>
+                <tr>
+                  <th style="min-width:120px">Inscrição</th>
+                  <th>Nome recebido</th>
+                  <th>Nome final</th>
+                  <th style="min-width:120px">Link</th>
+                  <th style="min-width:90px">RES_DPI</th>
+                  <th style="min-width:120px">OMR_STATUS</th>
+                </tr>
+              </thead>
+              <tbody id="tbody"></tbody>
+            </table>
+          </div>
+
+          <!-- paginação / total -->
+          <div class="row" style="margin-top:8px">
+            <div class="col s12 m6"><span id="totalInfo" class="muted"></span></div>
+            <div class="col s12 m6 right-align">
+              <a id="prev" class="btn-flat"><i class="material-icons left">chevron_left</i>Anterior</a>
+              <a id="next" class="btn-flat">Próxima<i class="material-icons right">chevron_right</i></a>
+              <a id="btnCsv" class="btn blue darken-2 waves-effect"><i class="material-icons left">file_download</i>CSV</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+/* ===================== SESSÃO / CONTEXTO ===================== */
+const API_BASE   = 'https://api.secauxiliar.com.br/';
+const API_UPLOAD   = 'https://api.secauxiliar.com.br/upload.php';
+const API_CONFERIR = 'https://api.secauxiliar.com.br/logs_list.php'; 
+const API_ATUALIZA = 'https://api.secauxiliar.com.br/update_inscricao.php';
+const LOGIN_URL  = '/redacaoenem/index.html';
+const SESS_KEY   = 'sessao_redacao';
+function getSession(){ try{ return JSON.parse(localStorage.getItem(SESS_KEY) || '{}'); }catch(_){ return {}; } }
+function setSession(s){ localStorage.setItem(SESS_KEY, JSON.stringify(s||{})); }
+function getToken(){ const s=getSession(); return (s && s.token) || localStorage.getItem('token') || ''; }
+function authHeaders(){ const t=getToken(); return t ? { 'Authorization':'Bearer '+t } : {}; }
+function redirectToLogin(){ const next = encodeURIComponent(location.pathname+location.search+location.hash); location.replace(`${LOGIN_URL}?next=${next}`); }
+async function apiFetch(pathOrUrl, { method='GET', headers={}, body, cache='no-store' } = {}) {
+  const baseHeaders = { Accept:'application/json', ...authHeaders(), ...headers };
+  const opts = { method, cache, headers: baseHeaders, body };
+  if (body && typeof body === 'string' && !baseHeaders['Content-Type']) baseHeaders['Content-Type'] = 'application/json';
+
+  const isAbsolute = /^https?:\/\//i.test(pathOrUrl);
+  const primaryUrl = isAbsolute ? pathOrUrl : `${API_BASE}${pathOrUrl}`;
+
+  let res = null;
+  try { res = await fetch(primaryUrl, opts); } catch (_) {}
+
+  // apenas tenta fallback .php quando NÃO for URL absoluta
+  if ((!res || res.status === 404) && !isAbsolute) {
+    const withPhp = pathOrUrl.endsWith('.php') ? pathOrUrl : pathOrUrl + '.php';
+    try { res = await fetch(`${API_BASE}${withPhp}`, opts); } catch(_) {}
+  }
+
+  if (!res) throw new Error('NETWORK_FAIL');
+  if (res.status === 401 || res.status === 403) throw new Error('UNAUTHORIZED');
+  if (!res.ok) {
+    const txt = await res.text().catch(()=> '');
+    throw new Error(`API_${res.status}: ${txt || res.statusText}`);
+  }
+  return res.json();
+}
+function setUnitHeader(unit){
+  const el = document.getElementById('unitLabel');
+  if (!el) return;
+  if (unit?.codigo && unit?.nome) el.textContent = `${unit.codigo} - ${unit.nome}`;
+  else if (unit?.codigo) el.textContent = unit.codigo;
+  else if (unit?.nome) el.textContent = unit.nome; else el.textContent = '—';
+}
+async function carregarContexto(){
+  const data = await apiFetch('/auth_me.php');
+  if (data?.user && !data?.usuario && !data?.unidade) {
+    const u = data.user; data.usuario = { nome: u.nome || u.login || 'Usuário' }; data.unidade = { codigo: u.login || '', nome: u.unidade || '' };
+  }
+  setSession({ ...getSession(), ...data });
+  setUnitHeader(data.unidade);
+  return data;
+}
+
+/* ===================== LISTAGEM ===================== */
+let PAGE = 1, PAGE_SIZE = 25, TOTAL = 0, LAST_ITEMS = [];
+const tbody = document.getElementById('tbody');
+const info  = document.getElementById('totalInfo');
+
+function badgeStatus(v){
+  const val = (v||'').toString().toUpperCase();
+  if (['OK','APROVADO','APROVADA'].includes(val)) return `<span class="chip-status ok">OK</span>`;
+  if (['REPROVADO','ERRO','FALHA'].includes(val))   return `<span class="chip-status err">${v}</span>`;
+  if (!val || val==='PENDENTE')                      return `<span class="chip-status pend">Pendente</span>`;
+  return `<span class="chip-status">${v}</span>`;
+}
+
+function linkCell(url){
+  if (!url) return '<span class="muted">—</span>';
+  const safe = String(url).replace(/"/g,'&quot;');
+  return `<a href="${safe}" target="_blank" rel="noopener">Abrir</a>`;
+}
+
+function render(rows){
+  LAST_ITEMS = rows || [];
+  tbody.innerHTML = rows.map(r => {
+    const link   = r.LINK_ARQUIVO || r.link_arquivo;
+    const imgUrl = guessImageUrl(r);
+    const status = (r.OMR_STATUS || r.status_omr || r.status || '').toString().toUpperCase();
+    const statusCell = status.includes('TRATAMENTO MANUAL')
+    ? `
+        <div>
+        <a href="#!" class="manual-link"
+            data-id="${r.id||''}"
+            data-img="${imgUrl||''}"
+            data-nome="${r.nome_arquivo_recebido||r.nome_arquivo_final||''}"
+            data-inscricao="${r.inscricao||''}">TRATAMENTO MANUAL</a><br>
+        <a href="#!" class="btn-flat tiny omr-retry blue-text text-darken-2"
+            data-id="${r.id||''}"
+            data-file-id="${r.FILE_ID||r.file_id||''}"
+            data-link="${r.LINK_ARQUIVO||r.link_arquivo||''}">
+            <i class="material-icons tiny left">refresh</i>Tentar OMR
+        </a>
+        </div>
+        `
+    : badgeStatus(status);
+
+
+    return `
+      <tr data-id="${r.id||''}">
+        <td>${r.inscricao || ''}</td>
+        <td title="${r.nome_arquivo_recebido||''}">${r.nome_arquivo_recebido || ''}</td>
+        <td title="${r.nome_arquivo_final||''}">${r.nome_arquivo_final || ''}</td>
+        <td>${linkCell(link)}</td>
+        <td>${r.RES_DPI ?? ''}</td>
+        <td>${statusCell}</td>
+      </tr>`;
+  }).join('');
+}
+
+
+
+async function load(){
+  const sess = getSession();
+  const codUnd = sess?.unidade?.codigo || '';
+  const q      = (document.getElementById('q').value||'').trim();
+  const status = document.getElementById('statusFilter').value;
+
+  // Back-end esperado: POST /logs_list com {codUnd, q, status, page, pageSize}
+  const payload = { codUnd, q, status, page: PAGE, pageSize: PAGE_SIZE };
+  const data = await apiFetch(API_CONFERIR, { method:'POST', body: JSON.stringify(payload) });
+
+  // Aceita formatos: {ok, data:{items,total}} ou {items,total} ou array simples
+  let items = [];
+  if (Array.isArray(data)) { items = data; TOTAL = data.length; }
+  else if (Array.isArray(data?.data?.items)) { items = data.data.items; TOTAL = Number(data.data.total||items.length)||items.length; }
+  else if (Array.isArray(data?.items)) { items = data.items; TOTAL = Number(data.total||items.length)||items.length; }
+  else if (Array.isArray(data?.data)) { items = data.data; TOTAL = items.length; }
+  else { items = []; TOTAL = 0; }
+
+  render(items);
+  info.textContent = TOTAL ? `Mostrando página ${PAGE} • ${items.length} itens • Total: ${TOTAL}` : 'Nenhum registro.';
+}
+
+function debounce(fn, ms){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), ms); }; }
+
+/* ===================== CSV ===================== */
+function toCsvValue(v){ if (v==null) return ''; const s = String(v).replace(/"/g,'""'); return /[";,\n]/.test(s) ? '"'+s+'"' : s; }
+function exportCsv(){
+  const hdr = ['inscricao','nome_arquivo_recebido','nome_arquivo_final','LINK_ARQUIVO','RES_DPI','OMR_STATUS'];
+  const lines = [hdr.join(';')];
+  LAST_ITEMS.forEach(r=>{
+    const row = [r.inscricao||r.matricula||'', r.nome_arquivo_recebido||'', r.nome_arquivo_final||'', r.LINK_ARQUIVO||r.link_arquivo||'', (r.RES_DPI ?? r.RES_DEPI ?? r.DPI ?? ''), (r.OMR_STATUS||r.status_omr||r.status||'')];
+    lines.push(row.map(toCsvValue).join(';'));
+  });
+  const blob = new Blob(["\uFEFF"+lines.join('\n')], {type:'text/csv;charset=utf-8;'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'conferencia_envios.csv';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+/* ===================== BOOT ===================== */
+document.addEventListener('DOMContentLoaded', async ()=>{
+  window.M && M.AutoInit();
+  if (!getToken()) return redirectToLogin();
+  try { await carregarContexto(); } catch(e){ if (String(e.message).includes('UNAUTHORIZED')) return redirectToLogin(); }
+
+  document.getElementById('btnRefresh').addEventListener('click', ()=> load());
+  document.getElementById('q').addEventListener('input', debounce(()=>{ PAGE=1; load(); }, 300));
+  document.getElementById('statusFilter').addEventListener('change', ()=>{ PAGE=1; load(); });
+  document.getElementById('btnCsv').addEventListener('click', exportCsv);
+  document.getElementById('prev').addEventListener('click', ()=>{ if (PAGE>1){ PAGE--; load(); }});
+  document.getElementById('next').addEventListener('click', ()=>{ PAGE++; load(); });
+
+  load();
+});
+
+
+let modalManual, cropper, currentRecord = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+  modalManual = M.Modal.init(document.getElementById('modalManual'), { dismissible:true });
+
+  // Abre modal ao clicar no "TRATAMENTO MANUAL"
+  tbody.addEventListener('click', (ev) => {
+    const a = ev.target.closest('.manual-link');
+    if (!a) return;
+
+    // 1) capturar os dados do registro clicado
+    const tr = a.closest('tr');                       // fallback
+    const rowId = a.dataset.id || tr?.dataset.id || '';  // <— garante o id
+    currentRecord = {
+      id:        a.dataset.id || '',
+      img:       a.dataset.img || '',           // URL direta da imagem
+      nome:      a.dataset.nome || '',
+      inscricao: a.dataset.inscricao || ''
+    };
+
+    document.getElementById('modalManual').dataset.id = rowId;
+
+
+    // 2) preencher campos do modal
+    document.getElementById('mm-arquivo').textContent = currentRecord.nome || '(sem nome)';
+    const input = document.getElementById('mm-inscricao');
+    input.value = currentRecord.inscricao || '';
+    M.updateTextFields();
+
+    // 3) carregar imagem e iniciar cropper
+    const img = document.getElementById('cropImg');
+    img.src = currentRecord.img;
+    img.onload = () => {
+    try { cropper && cropper.destroy(); } catch (_) {}
+
+    cropper = new Cropper(img, {
+        viewMode: 1,
+        responsive: true,
+        background: false,
+        autoCrop: true,
+        autoCropArea: 1,        // cria o crop imediatamente
+        movable: true,
+        zoomable: true,
+        rotatable: false,
+
+        // 🔥 assim que o cropper estiver pronto, jogamos a caixa pro rodapé
+        ready() {
+        const { naturalWidth: w, naturalHeight: h } = cropper.getImageData();
+        const frac = 0.24;                    // porcentagem de altura do recorte (24%)
+        const boxH = Math.max(120, Math.round(h * frac));  // altura mínima p/ não ficar mto pequeno
+        const boxY = Math.max(0, h - boxH);   // encosta no rodapé
+        cropper.setData({ x: 0, y: boxY, width: w, height: boxH });
+        }
+    });
+        // Botão "Tentar OMR novamente"
+        tbody.addEventListener('click', async (ev) => {
+            const btn = ev.target.closest('.omr-retry');
+            if (!btn) return;
+
+            const fileId = btn.dataset.fileId;
+            const link   = btn.dataset.link;
+            const id     = btn.dataset.id;
+
+            if (!fileId || !link) {
+            M.toast({ html: 'Dados incompletos para reprocessar.' });
+            return;
+            }
+
+            btn.classList.add('disabled');
+            try {
+            const payload = {
+                file_id: fileId,
+                link_down: link,
+                callback_url: 'https://api.secauxiliar.com.br/omr-callback.php'
+            };
+
+            const res = await fetch('https://api-omr.onrender.com/omr_job', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!res.ok) {
+                const txt = await res.text();
+                throw new Error(txt || 'Erro no reenvio OMR');
+            }
+
+            M.toast({ html: 'OMR reenviado com sucesso!' });
+
+            } catch (e) {
+            console.error(e);
+            M.toast({ html: 'Falha ao reprocessar: ' + (e.message || 'Erro') });
+            } finally {
+            btn.classList.remove('disabled');
+            }
+        });
+    };
+
+    img.onerror = () => {
+      try { cropper && cropper.destroy(); } catch(_) {}
+      cropper = null;
+      M.toast({ html: 'Não foi possível carregar a imagem.' });
+    };
+
+    modalManual.open();
+  });
+
+  // 4) salvar
+  document.getElementById('mm-salvar').addEventListener('click', async () => {
+    if (!currentRecord) return;
+    const btn   = document.getElementById('mm-salvar');
+    const inscr = (document.getElementById('mm-inscricao').value || '').trim();
+    if (!inscr) { M.toast({html:'Informe a inscrição'}); return; }
+
+    let crop = null;
+    try {
+      if (cropper) {
+        const d = cropper.getData(true);
+        crop = { x:Math.round(d.x), y:Math.round(d.y), width:Math.round(d.width), height:Math.round(d.height) };
+      }
+    } catch (_) {}
+
+    btn.classList.add('disabled');
+    try {
+      const res = await apiFetch(API_ATUALIZA, { method:'POST', body: JSON.stringify({ id: currentRecord.id, inscricao: inscr, crop }) });
+      if (!res.ok) throw new Error(res.message || 'Falha ao atualizar');
+
+      // reflete na UI
+      const row = LAST_ITEMS.find(x => String(x.id||'') === String(currentRecord.id||''));
+      if (row) { row.inscricao = inscr; row.OMR_STATUS = 'AGUARDANDO CORREÇÃO'; }
+      render(LAST_ITEMS);
+      modalManual.close();
+      M.toast({ html: 'Inscrição atualizada!' });
+    } catch (e) {
+      console.error(e);
+      M.toast({ html: 'Erro ao salvar: ' + (e.message || '') });
+    } finally {
+      btn.classList.remove('disabled');
+    }
+  });
+
+  //5) RECUSAR IMAGEM INUTILIZADA
+    document.getElementById('mm-recusar')?.addEventListener('click', () => {
+      const id = Number(
+        (currentRecord && currentRecord.id) ||
+        document.getElementById('modalManual').dataset.id ||
+        0
+      );
+      if (!id) { M.toast({html:'ID inválido'}); return; }
+
+      confirmDialog({
+        title: 'Recusar imagem?',
+        text:  'Isto marcará o registro como RECUSADO e ele não irá para correção. Deseja continuar?',
+        okText:'Sim, recusar',
+        okClass:'red darken-1',
+        onOk: async () => {
+          try {
+            const res = await fetch('https://api.secauxiliar.com.br/recusar_imagem.php', {
+              method:'POST',
+              headers:{ 'Content-Type':'application/json', ...authHeaders() },
+              body: JSON.stringify({ id })
+            });
+            const data = await res.json().catch(()=> ({}));
+            if (!res.ok || !data?.ok) throw new Error(data?.error || 'Falha');
+
+            M.toast({ html:'Imagem recusada.' });
+            M.Modal.getInstance(document.getElementById('modalManual'))?.close();
+            await load(); // recarrega a lista
+          } catch (e) {
+            console.error(e);
+            M.toast({ html:'Não foi possível recusar.' });
+          }
+        }
+      });
+    });
+
+
+});
+
+
+
+//MOSTRAR IMAGEM NO MODAL PARA CONFERÊNCIA DE INSCRIÇÃO
+function driveImgFromId(id, opts = 'view') { // 'view' | 'thumb'
+  if (!id) return '';
+  return opts === 'thumb'
+    ? `https://drive.google.com/thumbnail?id=${id}&sz=w1600`
+    : `https://drive.google.com/uc?export=view&id=${id}`;
+}
+
+function guessImageUrl(row){
+  const id = row.FILE_ID || row.file_id;
+  if (id) return driveImgFromId(id, 'thumb'); // preferir quando vier do backend
+
+  const link = row.LINK_ARQUIVO || row.link_arquivo || '';
+  try {
+    const m = link.match(/\/file\/d\/([^/]+)/);
+    const found = (m && m[1]) || new URL(link).searchParams.get('id') || '';
+    return found ? driveImgFromId(found, 'thumb') : link; // fallback
+  } catch (_) {
+    return link;
+  }
+}
+
+function confirmDialog({ title='Confirmar', text='Tem certeza?', okText='Confirmar', okClass='red', onOk }){
+  const el = document.getElementById('confirmModal');
+  document.getElementById('confirmTitle').textContent = title;
+  document.getElementById('confirmText').textContent  = text;
+
+  const okBtn = document.getElementById('confirmOk');
+  okBtn.textContent = okText;
+  okBtn.className   = 'modal-close btn ' + okClass;
+
+  const handler = () => onOk && onOk();
+  okBtn.addEventListener('click', handler, { once:true });
+
+  (M.Modal.getInstance(el) || M.Modal.init(el, {dismissible:true})).open();
+}
+
+function wipeSession(){
+  try {
+    localStorage.removeItem(SESS_KEY);
+    localStorage.removeItem('token');        // compat
+    // limpa caches do navegador (se houver)
+    if (window.caches && caches.keys) {
+      caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
+    }
+  } catch(_) {}
+}
+
+function logout(){
+  wipeSession();
+  // volta para a tela de login
+  location.replace('/redacaoenem/index.html');
+}
+
+</script>
+
+<!-- Modal: Tratamento Manual - O USUÁRIO DEVE INSERI A INSCRIÇÃO MANUALMENTE OU RECUSAR A IMAGEM-->
+<div id="modalManual" class="modal modal-fixed-footer">
+  <div class="modal-content">
+    <h5>Tratamento manual da inscrição</h5>
+    <p class="muted" id="mm-arquivo"></p>
+
+    <div class="row" style="margin-top:10px">
+      <div class="col s12">
+        <div class="crop-wrap">
+          <img id="cropImg" alt="Pré-visualização do arquivo">
+        </div>
+        <small class="muted">Arraste/redimensione a área apenas para referência visual do local da inscrição.</small>
+      </div>
+    </div>
+
+    <div class="row" style="margin-top:8px">
+      <div class="input-field col s12 m6">
+        <input id="mm-inscricao" type="text" placeholder="Digite a inscrição">
+        <label for="mm-inscricao" class="active">Inscrição</label>
+        <span class="helper-text">Insira o número cerreto de inscrição.</span>
+      </div>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <!-- Botões -->
+    <a href="#!" class="modal-close btn-flat">Cancelar</a>
+    <a id="mm-recusar" href="#!" class="btn red darken-1 waves-effect">Recusar</a>
+    <a id="mm-salvar" href="#!" class="btn blue darken-2 waves-effect">Salvar</a>
+  </div>
+</div>
+
+
+<!-- Modal de confirmação genérico -->
+<div id="confirmModal" class="modal">
+  <div class="modal-content">
+    <h6 id="confirmTitle" style="margin:0 0 8px">Confirmar ação</h6>
+    <p id="confirmText">Tem certeza?</p>
+  </div>
+  <div class="modal-footer">
+    <a href="#!" class="modal-close btn-flat">Cancelar</a>
+    <a id="confirmOk" href="#!" class="modal-close btn red">Confirmar</a>
+  </div>
+</div>
+
+
+
+</body>
+</html>
