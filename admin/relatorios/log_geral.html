@@ -52,12 +52,42 @@
     </div>
 
     <!-- KPIs simples -->
+    <!-- KPIs (ADM) -->
     <div class="row kpis">
-      <div class="col s12 m3"><div class="card center"><div class="card-content"><div class="muted">Total</div><h5 id="kpiTotal">—</h5></div></div></div>
-      <div class="col s12 m3"><div class="card center"><div class="card-content"><div class="muted">Pendentes (OMR_STATUS)</div><h5 id="kpiPend">—</h5></div></div></div>
-      <div class="col s12 m3"><div class="card center"><div class="card-content"><div class="muted">Com link</div><h5 id="kpiComLink">—</h5></div></div></div>
-      <div class="col s12 m3"><div class="card center"><div class="card-content"><div class="muted">Sem link</div><h5 id="kpiSemLink">—</h5></div></div></div>
+      <div class="col s12 m3">
+        <div class="card center">
+          <div class="card-content">
+            <div class="muted">Enviadas</div>
+            <h5 id="kpiEnviadas">—</h5>
+          </div>
+        </div>
+      </div>
+      <div class="col s12 m3">
+        <div class="card center">
+          <div class="card-content">
+            <div class="muted">Corrigidas</div>
+            <h5 id="kpiCorrigidas">—</h5>
+          </div>
+        </div>
+      </div>
+      <div class="col s12 m3">
+        <div class="card center">
+          <div class="card-content">
+            <div class="muted">Recusadas</div>
+            <h5 id="kpiRecusadas">—</h5>
+          </div>
+        </div>
+      </div>
+      <div class="col s12 m3">
+        <div class="card center">
+          <div class="card-content">
+            <div class="muted">Tratamento manual</div>
+            <h5 id="kpiTratamento">—</h5>
+          </div>
+        </div>
+      </div>
     </div>
+
 
     <!-- Tabela -->
     <div class="card">
@@ -178,17 +208,40 @@
       $('#f_nomearq').value = state.nomearq;
     }
 
-    function calcKPIs(rows,total){
-      let pend=0, com=0, sem=0;
-      rows.forEach(r=>{
-        if((r.omr_status||'').toUpperCase()==='PENDENTE') pend++;
-        if((r.link_arquivo||'').trim()) com++; else sem++;
-      });
-      $('#kpiTotal').textContent = total || rows.length || '—';
-      $('#kpiPend').textContent = pend;
-      $('#kpiComLink').textContent = com;
-      $('#kpiSemLink').textContent = sem;
+   function normalizeStatus(v){
+      const s = (v || '').toString().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().trim();
+      // Mapeamento flexível para cobrir variações que já vi no fluxo:
+      // - Corrigidas: CORRIGIDA, FINALIZADA, CONCLUIDA, CONCLUIDO, FINALIZADO
+      // - Recusadas: RECUSADA, RECUSADO, REPROVADA, REPROVADO
+      // - Tratamento: TRATAMENTO, TRATAMENTO_MANUAL, MANUAL, PENDENTE_TRATAMENTO
+      if (/(CORRIGID|FINALIZAD|CONCLUID)/.test(s)) return 'CORRIGIDA';
+      if (/(RECUS|REPROV)/.test(s)) return 'RECUSADA';
+      if (/(TRAT|MANUAL)/.test(s)) return 'TRATAMENTO';
+      return s || 'DESCONHECIDO';
     }
+
+    function calcKPIs(rows, total){
+      // Enviadas = total de registros retornados (ou total global quando a API retornar)
+      const enviadas = total || rows.length || 0;
+
+      let corrigidas = 0;
+      let recusadas  = 0;
+      let tratamento = 0;
+
+      for (const r of rows){
+        const st = normalizeStatus(r.omr_status);
+        if (st === 'CORRIGIDA') corrigidas++;
+        else if (st === 'RECUSADA') recusadas++;
+        else if (st === 'TRATAMENTO') tratamento++;
+      }
+
+      // Preenche os KPIs
+      document.getElementById('kpiEnviadas').textContent   = enviadas;
+      document.getElementById('kpiCorrigidas').textContent = corrigidas;
+      document.getElementById('kpiRecusadas').textContent  = recusadas;
+      document.getElementById('kpiTratamento').textContent = tratamento;
+    }
+
 
     function renderTable(rows){
       const tb = $('#tbody');
