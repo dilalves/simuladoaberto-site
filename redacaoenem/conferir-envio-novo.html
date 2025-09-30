@@ -439,10 +439,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
             btn.classList.add('disabled');
             try {
+                
+            const directLink = `https://drive.google.com/uc?export=download&id=${fileId}`;
+
             const payload = {
-                file_id: fileId,
-                link_down: link,
-                callback_url: 'https://api.secauxiliar.com.br/omr-callback.php'
+            file_id: fileId,
+            link_down: directLink,
+            callback_url: 'https://api.secauxiliar.com.br/omr-callback.php'
             };
 
             const res = await fetch('https://api-omr.onrender.com/omr_job', {
