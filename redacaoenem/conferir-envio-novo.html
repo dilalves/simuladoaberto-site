@@ -470,11 +470,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 const dados = await refresh.json();
 
                 if (dados && dados.inscricao && dados.omr_status === 'AGUARDANDO CORREÇÃO') {
-                  btn.closest('tr').querySelector('.status-cell').innerHTML =
-                    `<span class="blue lighten-5 blue-text text-darken-4" style="padding:2px 6px;border-radius:6px">
-                      AGUARDANDO CORREÇÃO<br>
-                      <small><b>${dados.inscricao}</b></small>
+                  const row = btn.closest('tr');
+                  row.querySelector('.status-col').innerHTML = `
+                    <span class="chip-status blue lighten-5 blue-text text-darken-4">
+                      AGUARDANDO CORREÇÃO
                     </span>`;
+                  const cell = row.querySelector('td');
+                  if (cell) cell.textContent = dados.inscricao || '—';
                 }
               } catch (refreshErr) {
                 console.warn('Erro ao atualizar status após callback:', refreshErr);
