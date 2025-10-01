@@ -689,7 +689,6 @@ async function tentarOMR(btn, fileId){
     callback_url: 'https://api.secauxiliar.com.br/omr-callback.php'
   };
 
-  const cell = btn.closest('td');
   const row = btn.closest('tr');
   const statusCell = row.querySelector('.status-col');
 
@@ -703,23 +702,39 @@ async function tentarOMR(btn, fileId){
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
-    const data = await r.json();
 
-    if (data.ok) {
-      statusCell.innerHTML = '<span class="chip-status blue lighten-4 blue-text text-darken-4">AGUARDANDO CORREÇÃO</span>';
-      btn.remove();
-    } else {
-      statusCell.innerHTML = '<span class="chip-status err">Erro</span>';
-      btn.innerHTML = '<i class="material-icons tiny left">refresh</i>Tentar OMR';
-      btn.disabled = false;
-      M.toast({ html: '❌ Falha ao reenviar imagem para OMR' });
+    if (!r.ok) {
+      const txt = await r.text();
+      throw new Error(txt || 'Erro no reenvio OMR');
     }
+
+    M.toast({ html: 'OMR reenviado com sucesso! Verificando…' });
+
+    // Aguarda 2 segundos e verifica novamente no banco
+    setTimeout(async () => {
+      try {
+        const id = row.dataset.id;
+        const res = await fetch(`https://api.secauxiliar.com.br/log_get_one.php?id=${id}`);
+        const dados = await res.json();
+
+        if (dados?.inscricao && dados?.omr_status === 'AGUARDANDO CORREÇÃO') {
+          statusCell.innerHTML = `<span class="chip-status blue lighten-5 blue-text text-darken-4">AGUARDANDO CORREÇÃO</span>`;
+          
+          const cellInscricao = row.querySelector('.inscricao-cell');
+          if (cellInscricao) cellInscricao.textContent = dados.inscricao || '—';
+        }
+      } catch (refreshErr) {
+        console.warn('Erro ao consultar atualização do registro:', refreshErr);
+      }
+    }, 2000);
+
   } catch (e) {
     console.error(e);
     statusCell.innerHTML = '<span class="chip-status err">Erro</span>';
     btn.innerHTML = '<i class="material-icons tiny left">refresh</i>Tentar OMR';
+    M.toast({ html: '❌ Falha ao reenviar imagem para OMR' });
+  } finally {
     btn.disabled = false;
-    M.toast({ html: '❌ Erro de rede ou na API OMR' });
   }
 }
 
