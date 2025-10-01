@@ -86,9 +86,20 @@
     .crop-wrap{ width:100%; max-height:60vh; overflow:auto; background:#f8fafc; border:1px solid #e5e7eb; border-radius:10px }
     #cropImg{ max-width:100%; display:block; }
 
+    .chip-status {
+      padding: 4px 8px;
+      border-radius: 6px;
+      display: inline-block;
+      font-size: 13px;
+    }
+
+
   </style>
 </head>
 <body>
+
+<div id="omr-progress" style="display:none; position:fixed; top:64px; left:0; right:0; background:#fffae6; color:#92400e; text-align:center; font-weight:500; padding:6px 12px; z-index:1000;"></div>
+
 <div class="app">
   <!-- ===== Sidebar ===== -->
   <aside>
@@ -279,21 +290,30 @@ function render(rows){
     const imgUrl = guessImageUrl(r);
     const status = (r.OMR_STATUS || r.status_omr || r.status || '').toString().toUpperCase();
     const statusCell = status.includes('TRATAMENTO MANUAL')
-      ? `<a href="#!" class="manual-link"
-             data-id="${r.id||''}"
-             data-img="${imgUrl||''}"
-             data-nome="${r.nome_arquivo_recebido||r.nome_arquivo_final||''}"
-             data-inscricao="${r.inscricao||''}">TRATAMENTO MANUAL</a>`
-      : badgeStatus(status);
+    ? `
+      <div>
+        <a href="#!" class="manual-link"
+          data-id="${r.id||''}"
+          data-img="${imgUrl||''}"
+          data-nome="${r.nome_arquivo_recebido||r.nome_arquivo_final||''}"
+          data-inscricao="${r.inscricao||''}">TRATAMENTO MANUAL</a><br>
+        <a href="#" class="btn-flat tiny blue-text text-darken-2"
+          onclick="tentarFilaOMR(this,'${r.FILE_ID||r.file_id}','${r.id}')">
+          <i class="material-icons tiny left">refresh</i>Tentar OMR
+        </a>
+      </div>
+    `
+    : badgeStatus(status);
+
 
     return `
       <tr data-id="${r.id||''}">
-        <td>${r.inscricao || ''}</td>
+        <td class="inscricao-cell">${r.inscricao || ''}</td>
         <td title="${r.nome_arquivo_recebido||''}">${r.nome_arquivo_recebido || ''}</td>
         <td title="${r.nome_arquivo_final||''}">${r.nome_arquivo_final || ''}</td>
         <td>${linkCell(link)}</td>
         <td>${r.RES_DPI ?? ''}</td>
-        <td>${statusCell}</td>
+        <td class="status-col">${statusCell}</td>
       </tr>`;
   }).join('');
 }
@@ -412,6 +432,78 @@ document.addEventListener('DOMContentLoaded', () => {
         cropper.setData({ x: 0, y: boxY, width: w, height: boxH });
         }
     });
+        // Botão "Tentar OMR novamente"
+        tbody.addEventListener('click', async (ev) => {
+            const btn = ev.target.closest('.omr-retry');
+            if (!btn) return;
+
+            const fileId = btn.dataset.fileId;
+            const link   = btn.dataset.link;
+            const id     = btn.dataset.id;
+
+            if (!fileId || !link) {
+            M.toast({ html: 'Dados incompletos para reprocessar.' });
+            return;
+            }
+
+            btn.classList.add('disabled');
+            try {
+
+            const directLink = `https://drive.google.com/uc?export=download&id=${fileId}`;
+
+            const payload = {
+            file_id: fileId,
+            link_down: directLink,
+            callback_url: 'https://api.secauxiliar.com.br/omr-callback.php'
+            };
+
+            const res = await fetch('https://api-omr.onrender.com/omr_job', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!res.ok) {
+              const txt = await res.text();
+              throw new Error(txt || 'Erro no reenvio OMR');
+            }
+
+            // Mostra aviso de envio
+            M.toast({ html: 'OMR reenviado com sucesso! Verificando…' });
+
+            // Marca como “Verificando…” no status (opcional visual)
+            btn.closest('tr').querySelector('.status-cell').textContent = 'Verificando…';
+
+            // Espera 2 segundos e tenta consultar novamente o status
+            setTimeout(async () => {
+              try {
+                const refresh = await fetch(`https://api.secauxiliar.com.br/log_get_one.php?id=${id}`);
+                const dados = await refresh.json();
+
+                if (dados && dados.inscricao && dados.omr_status === 'AGUARDANDO CORREÇÃO') {
+                  const row = btn.closest('tr');
+                  row.querySelector('.status-col').innerHTML = `
+                    <span class="chip-status blue lighten-5 blue-text text-darken-4">
+                      AGUARDANDO CORREÇÃO
+                    </span>`;
+                  const inscrCell = row.querySelector('.inscricao-cell');
+                  if (inscrCell) inscrCell.textContent = dados.inscricao || '—';
+                }
+              } catch (refreshErr) {
+                console.warn('Erro ao atualizar status após callback:', refreshErr);
+              }
+            }, 2000);
+
+
+            M.toast({ html: 'OMR reenviado com sucesso!' });
+
+            } catch (e) {
+            console.error(e);
+            M.toast({ html: 'Falha ao reprocessar: ' + (e.message || 'Erro') });
+            } finally {
+            btn.classList.remove('disabled');
+            }
+        });
     };
 
     img.onerror = () => {
@@ -597,6 +689,143 @@ function logout(){
   </div>
 </div>
 
+<script>
+
+
+async function tentarOMR(btn, fileId){
+  const directLink = `https://drive.google.com/uc?export=download&id=${fileId}`;
+  const payload = {
+    file_id: fileId,
+    link_down: directLink,
+    callback_url: 'https://api.secauxiliar.com.br/omr-callback.php'
+  };
+
+  const row = btn.closest('tr');
+  const statusCell = row.querySelector('.status-col');
+
+  btn.innerHTML = '⏳ ENVIANDO...';
+  btn.disabled = true;
+  statusCell.innerHTML = '<span class="orange-text">Verificando...</span>';
+
+  try {
+    const r = await fetch('https://api-omr.onrender.com/omr_job', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (!r.ok) {
+      const txt = await r.text();
+      throw new Error(txt || 'Erro no reenvio OMR');
+    }
+
+    M.toast({ html: 'OMR reenviado com sucesso! Verificando…' });
+
+    // Aguarda 2 segundos e verifica novamente no banco
+    setTimeout(async () => {
+      try {
+        const id = row.dataset.id;
+        const res = await fetch(`https://api.secauxiliar.com.br/log_get_one.php?id=${id}`);
+        const dados = await res.json();
+
+        if (dados?.inscricao && dados?.omr_status === 'AGUARDANDO CORREÇÃO') {
+          statusCell.innerHTML = `<span class="chip-status blue lighten-5 blue-text text-darken-4">AGUARDANDO CORREÇÃO</span>`;
+          
+          const cellInscricao = row.querySelector('.inscricao-cell');
+          if (cellInscricao) cellInscricao.textContent = dados.inscricao || '—';
+        }
+      } catch (refreshErr) {
+        console.warn('Erro ao consultar atualização do registro:', refreshErr);
+      }
+    }, 2000);
+
+  } catch (e) {
+    console.error(e);
+    statusCell.innerHTML = '<span class="chip-status err">Erro</span>';
+    btn.innerHTML = '<i class="material-icons tiny left">refresh</i>Tentar OMR';
+    M.toast({ html: '❌ Falha ao reenviar imagem para OMR' });
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+let filaOMR = [], OMR_EM_ANDAMENTO = false;
+const elFila = document.getElementById('omr-progress');
+
+function tentarFilaOMR(btn, fileId, id) {
+  filaOMR.push({ btn, fileId, id });
+  processarFilaOMR();
+}
+
+async function processarFilaOMR() {
+  if (OMR_EM_ANDAMENTO || filaOMR.length === 0) return;
+
+  OMR_EM_ANDAMENTO = true;
+  const { btn, fileId, id } = filaOMR.shift();
+
+  const row = btn.closest('tr');
+  const statusCell = row.querySelector('.status-col');
+  const inscrCell  = row.querySelector('.inscricao-cell');
+
+  elFila.style.display = 'block';
+  const total = filaOMR.length + 1; // 1 atual + restantes na fila
+  const atual = total - filaOMR.length;
+  elFila.textContent = `📤 Enviando (${atual} de ${total})… ID ${id}`;
+
+
+  btn.innerHTML = '⏳ Enviando…';
+  btn.disabled = true;
+  statusCell.innerHTML = '<span class="orange-text">Verificando…</span>';
+
+  try {
+    const r = await fetch('https://api-omr.onrender.com/omr_job', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        file_id: fileId,
+        link_down: `https://drive.google.com/uc?export=download&id=${fileId}`,
+        callback_url: 'https://api.secauxiliar.com.br/omr-callback.php'
+      })
+    });
+
+    if (!r.ok) throw new Error(await r.text());
+
+    M.toast({ html: '✅ OMR reenviado! Verificando…' });
+
+    setTimeout(async () => {
+      try {
+        const res = await fetch(`https://api.secauxiliar.com.br/log_get_one.php?id=${id}`);
+        const dados = await res.json();
+        if (dados?.inscricao && dados?.omr_status === 'AGUARDANDO CORREÇÃO') {
+          statusCell.innerHTML = `
+            <span class="chip-status blue lighten-5 blue-text text-darken-4">
+              AGUARDANDO CORREÇÃO<br>
+            </span>`;
+          if (inscrCell) inscrCell.textContent = dados.inscricao;
+          btn.remove();
+        }
+      } catch (e) {
+        console.warn('Erro ao buscar dados após callback:', e);
+      }
+    }, 2000);
+
+  } catch (e) {
+    statusCell.innerHTML = '<span class="chip-status err">Erro</span>';
+    btn.innerHTML = '<i class="material-icons tiny left">refresh</i>Tentar OMR';
+    M.toast({ html: '❌ Falha: ' + e.message });
+  } finally {
+    btn.disabled = false;
+    OMR_EM_ANDAMENTO = false;
+    if (filaOMR.length > 0) {
+      setTimeout(processarFilaOMR, 2500); // delay entre cada
+    } else {
+      elFila.style.display = 'none';
+    }
+  }
+}
+
+
+</script>
 
 
 </body>
