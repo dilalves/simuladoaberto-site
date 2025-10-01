@@ -453,9 +453,34 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             if (!res.ok) {
-                const txt = await res.text();
-                throw new Error(txt || 'Erro no reenvio OMR');
+              const txt = await res.text();
+              throw new Error(txt || 'Erro no reenvio OMR');
             }
+
+            // Mostra aviso de envio
+            M.toast({ html: 'OMR reenviado com sucesso! Verificando…' });
+
+            // Marca como “Verificando…” no status (opcional visual)
+            btn.closest('tr').querySelector('.status-cell').textContent = 'Verificando…';
+
+            // Espera 2 segundos e tenta consultar novamente o status
+            setTimeout(async () => {
+              try {
+                const refresh = await fetch(`https://api.secauxiliar.com.br/log_get_one.php?id=${id}`);
+                const dados = await refresh.json();
+
+                if (dados && dados.inscricao && dados.omr_status === 'AGUARDANDO CORREÇÃO') {
+                  btn.closest('tr').querySelector('.status-cell').innerHTML =
+                    `<span class="blue lighten-5 blue-text text-darken-4" style="padding:2px 6px;border-radius:6px">
+                      AGUARDANDO CORREÇÃO<br>
+                      <small><b>${dados.inscricao}</b></small>
+                    </span>`;
+                }
+              } catch (refreshErr) {
+                console.warn('Erro ao atualizar status após callback:', refreshErr);
+              }
+            }, 2000);
+
 
             M.toast({ html: 'OMR reenviado com sucesso!' });
 
