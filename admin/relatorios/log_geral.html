@@ -214,7 +214,7 @@
       // - Corrigidas: CORRIGIDA, FINALIZADA, CONCLUIDA, CONCLUIDO, FINALIZADO
       // - Recusadas: RECUSADA, RECUSADO, REPROVADA, REPROVADO
       // - Tratamento: TRATAMENTO, TRATAMENTO_MANUAL, MANUAL, PENDENTE_TRATAMENTO
-      if (/(CORRIGID|FINALIZAD|CONCLUID)/.test(s)) return 'CORRIGIDA';
+      if (/(CORRIGIDA|FINALIZADA|CONCLUIDA)/.test(s)) return 'CORRIGIDA';
       if (/(RECUS|REPROV)/.test(s)) return 'RECUSADA';
       if (/(TRAT|MANUAL)/.test(s)) return 'TRATAMENTO';
       return s || 'DESCONHECIDO';
@@ -230,14 +230,14 @@
 
       for (const r of rows){
         const st = normalizeStatus(r.omr_status);
-        if (st === 'CORRIGIDA') corrigidas++;
+        if (st === 'FINALIZADA') corrigidas++;
         else if (st === 'RECUSADA') recusadas++;
         else if (st === 'TRATAMENTO') tratamento++;
       }
 
       // Preenche os KPIs
       document.getElementById('kpiEnviadas').textContent   = enviadas;
-      document.getElementById('kpiCorrigidas').textContent = corrigidas;
+      document.getElementById('kpiCorrigidas').textContent = finalizadas;
       document.getElementById('kpiRecusadas').textContent  = recusadas;
       document.getElementById('kpiTratamento').textContent = tratamento;
     }
