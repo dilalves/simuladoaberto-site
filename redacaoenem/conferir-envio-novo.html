@@ -280,20 +280,18 @@ function render(rows){
     const status = (r.OMR_STATUS || r.status_omr || r.status || '').toString().toUpperCase();
     const statusCell = status.includes('TRATAMENTO MANUAL')
     ? `
-        <div>
+      <div>
         <a href="#!" class="manual-link"
-            data-id="${r.id||''}"
-            data-img="${imgUrl||''}"
-            data-nome="${r.nome_arquivo_recebido||r.nome_arquivo_final||''}"
-            data-inscricao="${r.inscricao||''}">TRATAMENTO MANUAL</a><br>
-        <a href="#!" class="btn-flat tiny omr-retry blue-text text-darken-2"
-            data-id="${r.id||''}"
-            data-file-id="${r.FILE_ID||r.file_id||''}"
-            data-link="${r.LINK_ARQUIVO||r.link_arquivo||''}">
-            <i class="material-icons tiny left">refresh</i>Tentar OMR
+          data-id="${r.id||''}"
+          data-img="${imgUrl||''}"
+          data-nome="${r.nome_arquivo_recebido||r.nome_arquivo_final||''}"
+          data-inscricao="${r.inscricao||''}">TRATAMENTO MANUAL</a><br>
+        <a href="#!" class="btn-flat tiny blue-text text-darken-2"
+          onclick="tentarOMR(this, '${r.FILE_ID||r.file_id||''}')">
+          <i class="material-icons tiny left">refresh</i>Tentar OMR
         </a>
-        </div>
-        `
+      </div>
+    `
     : badgeStatus(status);
 
 
@@ -304,7 +302,7 @@ function render(rows){
         <td title="${r.nome_arquivo_final||''}">${r.nome_arquivo_final || ''}</td>
         <td>${linkCell(link)}</td>
         <td>${r.RES_DPI ?? ''}</td>
-        <td>${statusCell}</td>
+        <td class="status-col">${statusCell}</td>
       </tr>`;
   }).join('');
 }
@@ -654,61 +652,50 @@ function logout(){
 </div>
 
 <script>
-// ========== LISTENER GLOBAL PARA "Tentar OMR" ==========
-document.addEventListener('DOMContentLoaded', () => {
-  const tbody = document.getElementById('tbody');
 
-  tbody.addEventListener('click', async (ev) => {
-    const btn = ev.target.closest('.omr-retry');
-    if (!btn) return;
 
-    const fileId = btn.dataset.fileId;
-    const link   = btn.dataset.link;
-    const id     = btn.dataset.id;
+async function tentarOMR(btn, fileId){
+  const directLink = `https://drive.google.com/uc?export=download&id=${fileId}`;
+  const payload = {
+    file_id: fileId,
+    link_down: directLink,
+    callback_url: 'https://api.secauxiliar.com.br/omr-callback.php'
+  };
 
-    if (!fileId || !link) {
-      M.toast({ html: 'Dados incompletos para reprocessar.' });
-      return;
+  const cell = btn.closest('td');
+  const row = btn.closest('tr');
+  const statusCell = row.querySelector('.status-col');
+
+  btn.innerHTML = '⏳ ENVIANDO...';
+  btn.disabled = true;
+  statusCell.innerHTML = '<span class="orange-text">Verificando...</span>';
+
+  try {
+    const r = await fetch('https://api-omr.onrender.com/omr_job', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await r.json();
+
+    if (data.ok) {
+      statusCell.innerHTML = '<span class="chip-status blue lighten-4 blue-text text-darken-4">AGUARDANDO CORREÇÃO</span>';
+      btn.remove();
+    } else {
+      statusCell.innerHTML = '<span class="chip-status err">Erro</span>';
+      btn.innerHTML = '<i class="material-icons tiny left">refresh</i>Tentar OMR';
+      btn.disabled = false;
+      M.toast({ html: '❌ Falha ao reenviar imagem para OMR' });
     }
+  } catch (e) {
+    console.error(e);
+    statusCell.innerHTML = '<span class="chip-status err">Erro</span>';
+    btn.innerHTML = '<i class="material-icons tiny left">refresh</i>Tentar OMR';
+    btn.disabled = false;
+    M.toast({ html: '❌ Erro de rede ou na API OMR' });
+  }
+}
 
-    btn.classList.add('disabled');
-
-    try {
-      const directLink = `https://drive.google.com/uc?export=download&id=${fileId}`;
-
-        const payload = {
-        file_id: fileId,
-        link_down: directLink,
-        callback_url: 'https://api.secauxiliar.com.br/omr-callback.php'
-        };
-
-
-      const res = await fetch('https://api-omr.onrender.com/omr_job', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-
-      if (!res.ok) {
-        const txt = await res.text();
-        throw new Error(txt || 'Erro no reenvio OMR');
-      }
-
-      const data = await res.json();
-      if (data.ok) {
-        M.toast({ html: 'OMR reenviado com sucesso!' });
-      } else {
-        throw new Error(data?.error || 'Erro no retorno da API');
-      }
-
-    } catch (e) {
-      console.error(e);
-      M.toast({ html: 'Falha ao reprocessar: ' + (e.message || 'Erro') });
-    } finally {
-      btn.classList.remove('disabled');
-    }
-  });
-});
 </script>
 
 
