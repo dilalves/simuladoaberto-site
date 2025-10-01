@@ -768,7 +768,10 @@ async function processarFilaOMR() {
   const inscrCell  = row.querySelector('.inscricao-cell');
 
   elFila.style.display = 'block';
-  elFila.textContent = `Processando reenvio (${id})… ${filaOMR.length > 0 ? `Restantes: ${filaOMR.length}` : ''}`;
+  const total = filaOMR.length + 1; // 1 atual + restantes na fila
+  const atual = total - filaOMR.length;
+  elFila.textContent = `📤 Enviando (${atual} de ${total})… ID ${id}`;
+
 
   btn.innerHTML = '⏳ Enviando…';
   btn.disabled = true;
