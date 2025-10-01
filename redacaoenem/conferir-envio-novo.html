@@ -86,6 +86,14 @@
     .crop-wrap{ width:100%; max-height:60vh; overflow:auto; background:#f8fafc; border:1px solid #e5e7eb; border-radius:10px }
     #cropImg{ max-width:100%; display:block; }
 
+    .chip-status {
+      padding: 4px 8px;
+      border-radius: 6px;
+      display: inline-block;
+      font-size: 13px;
+    }
+
+
   </style>
 </head>
 <body>
@@ -789,7 +797,6 @@ async function processarFilaOMR() {
           statusCell.innerHTML = `
             <span class="chip-status blue lighten-5 blue-text text-darken-4">
               AGUARDANDO CORREÇÃO<br>
-              <small><b>${dados.inscricao}</b></small>
             </span>`;
           if (inscrCell) inscrCell.textContent = dados.inscricao;
           btn.remove();
