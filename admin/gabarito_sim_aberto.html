@@ -59,9 +59,10 @@
 </div>
 
 <script>
+  const API_BASE = "https://api.secauxiliar.com.br/admin";
   // Gera 90 linhas automaticamente na tabela de cadastro
   const tabela = document.getElementById('tabelaQuestoes');
-  for (let i = 1; i <= 90; i++) {
+  for (let i = 1; i <= 2; i++) {
     const row = document.createElement('tr');
     row.innerHTML = `
       <td>${i}<input type="hidden" name="questao[]" value="${i}" /></td>
@@ -79,11 +80,10 @@
     const formData = new FormData(form);
 
     // Envio para seu endpoint PHP
-    const response = await fetch('cadastrar_gabarito.php', {
+    const response = await fetch(`${API_BASE}/cadastrar_gabarito.php`, {
       method: 'POST',
       body: formData
     });
-
     const resultado = await response.json();
     if (resultado.ok) {
       M.toast({ html: 'Gabarito salvo com sucesso!', classes: 'green' });
