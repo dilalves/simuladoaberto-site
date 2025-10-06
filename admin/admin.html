@@ -141,7 +141,7 @@
       e.preventDefault();
       const canonico = prompt("Informe o código da versão canônica (ex: 2500000201):");
       if (canonico && /^\d{10}$/.test(canonico)) {
-        const url = `/admin/conferir_correspondencia.php?canonico=${canonico}`;
+        const url = `https://api.secauxiliar.com.br/admin/conferir_correspondencia.php?canonico=${canonico}`;
         window.open(url, '_blank'); // abre em nova aba
       } else if (canonico !== null) {
         M.toast({ text: 'Código inválido. Tente novamente.', classes: 'red darken-2', displayLength: 3000 });
