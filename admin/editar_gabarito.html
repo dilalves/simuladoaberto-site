@@ -68,32 +68,38 @@
     const tabela = document.getElementById('tabela-gabarito');
     const btnCarregar = document.getElementById('btnCarregar');
     const form = document.getElementById('formEdicao');
+    const API_BASE = "https://api.secauxiliar.com.br/admin";
 
     btnCarregar.addEventListener('click', async () => {
       const evento = document.getElementById('evento').value.trim();
       const codigo = document.getElementById('codigo').value.trim();
       if (!evento || !codigo) return M.toast({ text: 'Preencha evento e código', classes: 'red' });
 
-      const resp = await fetch(`/admin/api/buscar_gabarito.php?evento=${evento}&canonico=${codigo}`);
-      const data = await resp.json();
-      tabela.innerHTML = '';
-      data.forEach(row => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>
-            <input type="hidden" name="questao[]" value="${row.questao}" />
-            ${row.questao}
-          </td>
-          <td><input type="text" name="disciplina[]" value="${row.disciplina}" /></td>
-          <td><input type="text" name="gabarito[]" value="${row.gabarito}" maxlength="1" style="text-transform:uppercase" /></td>
-          <td><input type="file" name="imagem[]" accept="image/*" /></td>
-          <td>
-            ${row.link ? `<a class="preview" href="${row.link}" target="_blank">Ver imagem</a>` : 'Sem imagem'}
-            <input type="hidden" name="link[]" value="${row.link || ''}" />
-          </td>
-        `;
-        tabela.appendChild(tr);
-      });
+      try {
+        const resp = await fetch(`${API_BASE}/buscar_gabarito.php?evento=${evento}&codigo=${codigo}`);
+        if (!resp.ok) throw new Error('Erro ao buscar dados');
+        const data = await resp.json();
+        tabela.innerHTML = '';
+        data.forEach(row => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>
+              <input type="hidden" name="questao[]" value="${row.questao}" />
+              ${row.questao}
+            </td>
+            <td><input type="text" name="disciplina[]" value="${row.disciplina}" /></td>
+            <td><input type="text" name="gabarito[]" value="${row.gabarito}" maxlength="1" style="text-transform:uppercase" /></td>
+            <td><input type="file" name="imagem[]" accept="image/*" /></td>
+            <td>
+              ${row.link ? `<a class="preview" href="${row.link}" target="_blank">Ver imagem</a>` : 'Sem imagem'}
+              <input type="hidden" name="link[]" value="${row.link || ''}" />
+            </td>
+          `;
+          tabela.appendChild(tr);
+        });
+      } catch (e) {
+        M.toast({ text: 'Erro ao carregar dados', classes: 'red' });
+      }
     });
 
     form.addEventListener('submit', async (e) => {
@@ -104,16 +110,20 @@
       formData.append('evento', evento);
       formData.append('codigo', codigo);
 
-      const resp = await fetch('/admin/api/editar_correspondencia.php', {
-        method: 'POST',
-        body: formData
-      });
+      try {
+        const resp = await fetch(`${API_BASE}/salvar_edicao.php`, {
+          method: 'POST',
+          body: formData
+        });
 
-      const result = await resp.json();
-      if (result.ok) {
-        M.toast({ text: 'Alterações salvas!', classes: 'green' });
-      } else {
-        M.toast({ text: result.message || 'Erro ao salvar', classes: 'red' });
+        const result = await resp.json();
+        if (result.ok) {
+          M.toast({ text: 'Alterações salvas!', classes: 'green' });
+        } else {
+          M.toast({ text: result.message || 'Erro ao salvar', classes: 'red' });
+        }
+      } catch (e) {
+        M.toast({ text: 'Erro na requisição', classes: 'red' });
       }
     });
   </script>
