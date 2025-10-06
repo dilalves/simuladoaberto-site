@@ -62,7 +62,7 @@
   const API_BASE = "https://api.secauxiliar.com.br/admin";
   // Gera 90 linhas automaticamente na tabela de cadastro
   const tabela = document.getElementById('tabelaQuestoes');
-  for (let i = 1; i <= 2; i++) {
+  for (let i = 1; i <= 90; i++) {
     const row = document.createElement('tr');
     row.innerHTML = `
       <td>${i}<input type="hidden" name="questao[]" value="${i}" /></td>
