@@ -70,6 +70,8 @@
       <ul id="dd-cadastros" class="dropdown-content">
         <li><a href="#" id="go-unidades">Unidades</a></li>
         <li><a href="#" id="go-simulados">Simulados</a></li>
+        <li><a href="#" id="go-conferir-gabarito">Gabarito Canônico – Conferência</a></li>
+
       </ul>
 
       <!-- Sessões -->
@@ -135,6 +137,16 @@
 
     document.getElementById('go-unidades')                  .addEventListener('click', ()=>nav('cadastros-unidades.html'));
     document.getElementById('go-simulados')                 .addEventListener('click', ()=>nav('cadastros-simulados.html'));
+    document.getElementById('go-conferir-gabarito')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      const canonico = prompt("Informe o código da versão canônica (ex: 2500000201):");
+      if (canonico && /^\d{10}$/.test(canonico)) {
+        const url = `/admin/conferir_correspondencia.php?canonico=${canonico}`;
+        window.open(url, '_blank'); // abre em nova aba
+      } else if (canonico !== null) {
+        M.toast({ text: 'Código inválido. Tente novamente.', classes: 'red darken-2', displayLength: 3000 });
+      }
+    });
 
     document.getElementById('go-sessoes-unidades')          .addEventListener('click', ()=>nav('sessoes-unidades.html'));
     document.getElementById('go-sessoes-professores')       .addEventListener('click', ()=>nav('sessoes-professores.html'));
