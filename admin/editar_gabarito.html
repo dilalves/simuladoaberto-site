@@ -77,28 +77,37 @@
 
       try {
         const resp = await fetch(`${API_BASE}/buscar_gabarito.php?evento=${evento}&codigo=${codigo}`);
-        if (!resp.ok) throw new Error('Erro ao buscar dados');
         const data = await resp.json();
+
+        if (!data.ok || !data.dados) {
+          M.toast({ text: 'Erro ao carregar dados', classes: 'red' });
+          return;
+        }
+
         tabela.innerHTML = '';
-        data.forEach(row => {
+        data.dados.forEach(row => {
           const tr = document.createElement('tr');
           tr.innerHTML = `
             <td>
               <input type="hidden" name="questao[]" value="${row.questao}" />
               ${row.questao}
             </td>
-            <td><input type="text" name="disciplina[]" value="${row.disciplina}" /></td>
-            <td><input type="text" name="gabarito[]" value="${row.gabarito}" maxlength="1" style="text-transform:uppercase" /></td>
+            <td><input type="text" name="disciplina[]" value="${row.disciplina || ''}" /></td>
+            <td><input type="text" name="gabarito[]" value="${row.gabarito || ''}" maxlength="1" style="text-transform:uppercase" /></td>
             <td><input type="file" name="imagem[]" accept="image/*" /></td>
             <td>
-              ${row.link ? `<a class="preview" href="${row.link}" target="_blank">Ver imagem</a>` : 'Sem imagem'}
-              <input type="hidden" name="link[]" value="${row.link || ''}" />
+              ${row.imagem ? `<a class="preview" href="${row.imagem}" target="_blank">Ver imagem</a>` : 'Sem imagem'}
+              <input type="hidden" name="link[]" value="${row.imagem || ''}" />
             </td>
           `;
           tabela.appendChild(tr);
         });
-      } catch (e) {
-        M.toast({ text: 'Erro ao carregar dados', classes: 'red' });
+
+        M.toast({ text: 'Dados carregados com sucesso', classes: 'green' });
+
+      } catch (err) {
+        console.error(err);
+        M.toast({ text: 'Erro ao processar resposta da API', classes: 'red' });
       }
     });
 
@@ -111,19 +120,20 @@
       formData.append('codigo', codigo);
 
       try {
-        const resp = await fetch(`${API_BASE}/salvar_edicao.php`, {
+        const resp = await fetch(`${API_BASE}/salvar_gabarito.php`, {
           method: 'POST',
           body: formData
         });
 
         const result = await resp.json();
         if (result.ok) {
-          M.toast({ text: 'Alterações salvas!', classes: 'green' });
+          M.toast({ text: 'Alterações salvas com sucesso!', classes: 'green' });
         } else {
-          M.toast({ text: result.message || 'Erro ao salvar', classes: 'red' });
+          M.toast({ text: result.message || 'Erro ao salvar alterações', classes: 'red' });
         }
-      } catch (e) {
-        M.toast({ text: 'Erro na requisição', classes: 'red' });
+      } catch (err) {
+        console.error(err);
+        M.toast({ text: 'Erro de rede ou servidor', classes: 'red' });
       }
     });
   </script>
