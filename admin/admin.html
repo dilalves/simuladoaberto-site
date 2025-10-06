@@ -140,13 +140,13 @@
     document.getElementById('go-conferir-gabarito')?.addEventListener('click', (e) => {
       e.preventDefault();
       const canonico = prompt("Informe o código da versão canônica (ex: 2500000201):");
-      if (canonico && /^\d{10}$/.test(canonico)) {
+      if (canonico) {
+        // Use seu servidor PHP:
         const url = `https://api.secauxiliar.com.br/admin/conferir_correspondencia.php?canonico=${canonico}`;
-        window.open(url, '_blank'); // abre em nova aba
-      } else if (canonico !== null) {
-        M.toast({ text: 'Código inválido. Tente novamente.', classes: 'red darken-2', displayLength: 3000 });
+        window.open(url, '_blank');
       }
     });
+
 
     document.getElementById('go-sessoes-unidades')          .addEventListener('click', ()=>nav('sessoes-unidades.html'));
     document.getElementById('go-sessoes-professores')       .addEventListener('click', ()=>nav('sessoes-professores.html'));
