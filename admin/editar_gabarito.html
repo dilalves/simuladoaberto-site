@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Editar Gabarito Canônico</title>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css"/>
+  <style>
+    :root { --primary: #0b3b78; --bg: #f6f8fb; }
+    body { background: var(--bg); }
+    header.page { background: var(--primary); color: white; padding: 14px 20px; font-weight: bold; }
+    .card { border-radius: 14px; }
+    table.striped thead th { background: #fff; position: sticky; top: 0; z-index: 1; }
+    td input[type="text"] { margin: 0; height: 2rem; }
+    td select { margin: 0; height: 2rem; }
+    td .preview { font-size: 0.9rem; color: #0b3b78; }
+  </style>
+</head>
+<body>
+  <header class="page">Administrativo → Edição de Gabarito Canônico</header>
+  <main class="container">
+    <div class="card">
+      <div class="card-content">
+        <div class="row">
+          <div class="input-field col s6">
+            <input id="evento" type="text" class="validate" placeholder="Ex: enem0925">
+            <label for="evento">Evento</label>
+          </div>
+          <div class="input-field col s6">
+            <input id="codigo" type="text" class="validate" placeholder="Ex: 2500000101">
+            <label for="codigo">Código da Versão Canônica</label>
+          </div>
+        </div>
+        <div class="center-align">
+          <button id="btnCarregar" class="btn blue darken-2 waves-effect">Carregar Dados</button>
+        </div>
+      </div>
+    </div>
+
+    <form id="formEdicao">
+      <div class="card">
+        <div class="card-content">
+          <table class="striped responsive-table">
+            <thead>
+              <tr>
+                <th>Questão</th>
+                <th>Disciplina</th>
+                <th>Gabarito</th>
+                <th>Imagem (opcional)</th>
+                <th>Status / Link</th>
+              </tr>
+            </thead>
+            <tbody id="tabela-gabarito">
+              <!-- Preenchido via JS -->
+            </tbody>
+          </table>
+        </div>
+        <div class="card-action right-align">
+          <button type="submit" class="btn green darken-2 waves-effect">Salvar Alterações</button>
+        </div>
+      </div>
+    </form>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+  <script>
+    const tabela = document.getElementById('tabela-gabarito');
+    const btnCarregar = document.getElementById('btnCarregar');
+    const form = document.getElementById('formEdicao');
+
+    btnCarregar.addEventListener('click', async () => {
+      const evento = document.getElementById('evento').value.trim();
+      const codigo = document.getElementById('codigo').value.trim();
+      if (!evento || !codigo) return M.toast({ text: 'Preencha evento e código', classes: 'red' });
+
+      const resp = await fetch(`/admin/api/buscar_gabarito.php?evento=${evento}&canonico=${codigo}`);
+      const data = await resp.json();
+      tabela.innerHTML = '';
+      data.forEach(row => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>
+            <input type="hidden" name="questao[]" value="${row.questao}" />
+            ${row.questao}
+          </td>
+          <td><input type="text" name="disciplina[]" value="${row.disciplina}" /></td>
+          <td><input type="text" name="gabarito[]" value="${row.gabarito}" maxlength="1" style="text-transform:uppercase" /></td>
+          <td><input type="file" name="imagem[]" accept="image/*" /></td>
+          <td>
+            ${row.link ? `<a class="preview" href="${row.link}" target="_blank">Ver imagem</a>` : 'Sem imagem'}
+            <input type="hidden" name="link[]" value="${row.link || ''}" />
+          </td>
+        `;
+        tabela.appendChild(tr);
+      });
+    });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const evento = document.getElementById('evento').value.trim();
+      const codigo = document.getElementById('codigo').value.trim();
+      const formData = new FormData(form);
+      formData.append('evento', evento);
+      formData.append('codigo', codigo);
+
+      const resp = await fetch('/admin/api/editar_correspondencia.php', {
+        method: 'POST',
+        body: formData
+      });
+
+      const result = await resp.json();
+      if (result.ok) {
+        M.toast({ text: 'Alterações salvas!', classes: 'green' });
+      } else {
+        M.toast({ text: result.message || 'Erro ao salvar', classes: 'red' });
+      }
+    });
+  </script>
+</body>
+</html>
