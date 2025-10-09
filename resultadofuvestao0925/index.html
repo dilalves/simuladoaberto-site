@@ -151,17 +151,21 @@
       if (erros.length === 0) {
         tbody.innerHTML = `<tr><td colspan="4">Parabéns! Nenhum erro encontrado 🎉</td></tr>`;
       } else {
-        tbody.innerHTML = erros.map(r => `
-          <tr class="erro">
-            <td>${r.QUESTAO_ALUNO}</td>
-            <td>${r.RESPOSTA_ALUNO}</td>
-            <td>${r.GABARITO_CORRETO}</td>
-            <td>
-              ${r.LINK ? `<button class="btn-small blue lighten-1 modal-trigger" onclick="abrirModalResolucao('${r.LINK}')">Ver resolução</button>` : '-'}
-            </td>
-          </tr>
-        `).join('');
+        tbody.innerHTML = erros.map(r => {
+          const botao = (r.RESPOSTA_ALUNO !== r.GABARITO_CORRETO && r.LINK)
+            ? `<button class="btn-small blue lighten-1 modal-trigger" onclick="abrirModalResolucao('${r.LINK}')">Ver resolução</button>`
+            : '-';
+          return `
+            <tr class="erro">
+              <td>${r.QUESTAO_ALUNO}</td>
+              <td>${r.RESPOSTA_ALUNO}</td>
+              <td>${r.GABARITO_CORRETO}</td>
+              <td>${botao}</td>
+            </tr>
+          `;
+        }).join('');
       }
+
 
       tabela.style.display = 'table';
     } catch (e) {
