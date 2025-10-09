@@ -7,7 +7,6 @@
   <title>Resultado - Simulado Fuvestão 2026</title>
 
   <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
-
   <style>
     header {
       margin:0;
@@ -25,19 +24,6 @@
     .erro { background:#ffebee; }
     .btn { border-radius:6px; }
     .card { border-radius:10px; }
-
-    /* Resolução */
-    #resolucaoContainer {
-      display:none;
-      margin-top:40px;
-    }
-    #resolucaoImagem {
-      max-width:100%;
-      border-radius:8px;
-      box-shadow:0 0 8px rgba(0,0,0,0.2);
-    }
-
-    /* Botão flutuante */
     #btnTopo {
       position:fixed;
       right:20px;
@@ -60,7 +46,6 @@
 </head>
 
 <body>
-
   <header>
     <h1>Simulado Aberto Fuvestão 2026</h1>
   </header>
@@ -101,12 +86,18 @@
       <tbody></tbody>
     </table>
 
-    <div id="resolucaoContainer" class="center-align">
-      <h6 class="brand">Resolução da Questão</h6>
-      <img id="resolucaoImagem" src="" alt="Resolução">
+    <!-- Modal de Resolução -->
+    <div id="modalResolucao" class="modal">
+      <div class="modal-content center-align">
+        <h6 class="brand">Resolução da Questão</h6>
+        <img id="imgResolucaoModal" src="" alt="Resolução" style="max-width:100%; border-radius:8px; box-shadow:0 0 8px rgba(0,0,0,0.2);">
+      </div>
+      <div class="modal-footer">
+        <a href="#!" class="modal-close btn-flat">Fechar</a>
+      </div>
     </div>
 
-    <button id="btnTopo" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+    <button id="btnTopo" onclick="window.scrollTo({top:0,behavior:'smooth'})">&#8593;</button>
   </div>
 
   <script>
@@ -130,16 +121,10 @@
       const tabela = document.getElementById('tblRespostas');
       const tbody = tabela.querySelector('tbody');
 
-      // Cabeçalho com informações básicas
       dadosAluno.innerHTML = `
         <h6><b>${aluno.Nome}</b> • ${aluno.Nome_Unidade}</h6>
         <p>Inscrição: ${aluno.INSCRICAO} | CPF: ${aluno.CPF}</p>
         <p><b>Acertos:</b> ${dados.acertos}/${dados.total} (${dados.percentual}%)</p>
-      `;
-      dadosAluno.style.display = 'block';
-
-      // Bloco de notas e classificações
-      const notasHTML = `
         <table class="highlight centered">
           <thead>
             <tr><th colspan="13">Desempenho nas Áreas</th></tr>
@@ -159,9 +144,8 @@
           </tbody>
         </table>
       `;
-      dadosAluno.innerHTML += notasHTML;
+      dadosAluno.style.display = 'block';
 
-      // Filtra apenas as questões erradas
       const erros = respostas.filter(r => r.RESPOSTA_ALUNO !== r.GABARITO_CORRETO);
 
       if (erros.length === 0) {
@@ -173,7 +157,7 @@
             <td>${r.RESPOSTA_ALUNO}</td>
             <td>${r.GABARITO_CORRETO}</td>
             <td>
-              ${r.LINK ? `<button class="btn-small blue lighten-1" onclick="mostrarResolucao('${r.LINK}')">Ver resolução</button>` : '-'}
+              ${r.LINK ? `<button class="btn-small blue lighten-1 modal-trigger" onclick="abrirModalResolucao('${r.LINK}')">Ver resolução</button>` : '-'}
             </td>
           </tr>
         `).join('');
@@ -186,25 +170,27 @@
     }
   }
 
-  function mostrarResolucao(link) {
-    const container = document.getElementById("resolucaoContainer");
-    const img = document.getElementById("resolucaoImagem");
-
+  function abrirModalResolucao(link) {
     const match = link.match(/id=([^&]+)/);
     if (match) {
       const fileId = match[1];
+      const img = document.getElementById("imgResolucaoModal");
       img.src = `https://drive.google.com/uc?export=view&id=${fileId}`;
-      container.style.display = 'block';
-      window.scrollTo({ top: container.offsetTop - 60, behavior: 'smooth' });
-      document.getElementById("btnTopo").style.display = 'block';
+      const modal = M.Modal.getInstance(document.getElementById('modalResolucao'));
+      modal.open();
     } else {
-      alert("Link inválido ou indisponível.");
+      M.toast({html: 'Link da resolução inválido.', classes: 'red'});
     }
   }
 
   window.addEventListener("scroll", () => {
     const btn = document.getElementById("btnTopo");
     btn.style.display = (window.scrollY > 500) ? 'block' : 'none';
+  });
+
+  document.addEventListener('DOMContentLoaded', function() {
+    const modals = document.querySelectorAll('.modal');
+    M.Modal.init(modals);
   });
   </script>
 
