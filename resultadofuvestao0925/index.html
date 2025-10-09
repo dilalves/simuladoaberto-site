@@ -177,7 +177,7 @@
  function abrirModalResolucao(link) {
     if (link.includes('drive.google.com')) {
       // substitui download por view
-      const urlView = link.replace('export=download', 'export=view');
+      const urlView = link.replace(/\\\//g, '/').replace('export=download', 'export=view');
       const img = document.getElementById("imgResolucaoModal");
       img.src = urlView;
 
