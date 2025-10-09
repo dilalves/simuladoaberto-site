@@ -151,7 +151,7 @@
   async function buscarResultado() {
     const inscricao = document.getElementById("inscricao").value.trim();
     const cpf = document.getElementById("cpf").value.trim();
-    const url = `https://apisecauxiliar.com.br/psq_resultado_fuv_0925.php?inscricao=${inscricao}&cpf=${cpf}`;
+    const url = `https://api.secauxiliar.com.br/psq_resultado_fuv_0925.php?inscricao=${inscricao}&cpf=${cpf}`;
 
     const resp = await fetch(url);
     const dados = await resp.json();
