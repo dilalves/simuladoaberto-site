@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link rel="icon" type="image/x-icon" href="https://www.curso-objetivo.br/assets/img/favicon.ico" />
+  <title>Resultado - Simulado Fuvestão 2026
+    
+  </title>
+
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
+
+  <style>
+    header{margin:0;padding:20px 0;background:#002776;color:#fff;text-align:center}
+    body{background:#fafafa}
+    h1{margin:0;font-size:24px}
+    footer{text-align:center;padding:20px;font-size:14px;color:#888}
+    #chartWrap{display:none} /* canvas oculto só p/ gráfico do PDF */
+
+    /* mensagem embutida abaixo da nota */
+    .mini-msg{
+      margin-top:6px;
+      font-size:13px;
+      line-height:1.25;
+      color:#1565c0;
+      background:#e3f2fd;
+      border-left:4px solid #1976d2;
+      border-radius:4px;
+      padding:8px;
+      text-align: justify;
+      hyphens: auto;
+      }
+
+    /* bloco “Redação (Total) + Competências” movido para baixo dos textos */
+    #blocoRedacao{
+      display:none;               /* fica escondido até termos dados */
+      margin-top:16px;
+      background:#f5f5f5;
+      border-radius:6px;
+      padding:12px 14px;
+    }
+    #blocoRedacao .item{
+      margin:4px 0;
+      font-size:15px;
+    }
+
+    /* esconder linhas antigas de “Redação (Total)” e “Competências” na tabela */
+    tr.hide-row{display:none}
+
+    td .nota{ font-weight:700; font-size:16px; display:inline-block; margin-bottom:6px }
+  .mini-msg{
+    margin-top:0;              /* já temos espaço pela .nota */
+    background:#eaf3ff;        /* um pouquinho mais claro */
+    color:#1257a6;
+    border-left-color:#166bd9;
+  }
+  /* largura fixa pros <th> ficarem alinhados em telas largas */
+  table.striped th{ width:210px }
+
+     #blocoRedacao{
+    background: #f7f9fc;
+    border: 1px solid #e3e9f5;
+    box-shadow: 0 1px 2px rgba(0,0,0,.04);
+  }
+  #blocoRedacao .item strong{ color:#263238 }
+
+    table.striped td, table.striped th{ padding:10px 14px }
+  .card-content{ padding:18px } /* um pouco mais compacto */
+
+    /* MOBILE: empilha rótulo, nota e mensagem; desliga hífens */
+    @media (max-width: 600px){
+      /* a tabela vira “cards” por linha */
+      table.striped tbody tr{
+        display:block;
+        margin:14px 0;
+        padding:10px 0 12px;
+        border-top:1px solid #eee;
+      }
+      table.striped th{
+        display:block;        /* rótulo acima */
+        width:auto !important;
+        padding:0 0 6px 0;
+        font-size:13px;
+        color:#607d8b;
+        letter-spacing:.2px;
+      }
+      table.striped td{
+        display:block;        /* conteúdo abaixo do rótulo */
+        padding:0;            /* remove padding lateral que estreita o texto */
+      }
+    
+      /* nota grande, antes da mensagem */
+      td .nota{
+        display:block;
+        font-size:22px;
+        margin:0 0 8px 0;
+      }
+    
+      /* mensagem ocupa toda a largura, sem hífens */
+      .mini-msg{
+        padding:10px 12px;
+        font-size:14px;
+        line-height:1.4;
+        hyphens: none;              /* <- desliga hifenização */
+        word-break: normal;
+        overflow-wrap: break-word;  /* quebra só quando precisa */
+      }
+    
+      /* dá um respiro geral na card */
+      .card-content{ padding:14px }
+    }
+    
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+    <h5 class="brand center">Simulado Fuvestão 2025</h5>
+    <div class="card z-depth-2" style="padding:20px;">
+      <div class="row">
+        <div class="input-field col s6">
+          <input id="inscricao" type="text">
+          <label for="inscricao">Inscrição</label>
+        </div>
+        <div class="input-field col s6">
+          <input id="cpf" type="text">
+          <label for="cpf">CPF</label>
+        </div>
+      </div>
+      <div class="center">
+        <button class="btn waves-effect blue darken-3" onclick="buscarResultado()">Consultar Resultado</button>
+      </div>
+    </div>
+
+    <div id="dadosAluno" class="card white z-depth-1" style="display:none;padding:20px;"></div>
+    <table id="tblRespostas" class="striped centered responsive-table" style="display:none;">
+      <thead>
+        <tr>
+          <th>Questão</th>
+          <th>Resposta Aluno</th>
+          <th>Gabarito</th>
+          <th>Resolução</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <script>
+  async function buscarResultado() {
+    const inscricao = document.getElementById("inscricao").value.trim();
+    const cpf = document.getElementById("cpf").value.trim();
+    const url = `https://apisecauxiliar.com.br/psq_resultado_fuv_0925.php?inscricao=${inscricao}&cpf=${cpf}`;
+
+    const resp = await fetch(url);
+    const dados = await resp.json();
+
+    if (!dados.ok) {
+      M.toast({html: dados.msg, classes: 'red'});
+      return;
+    }
+
+    const aluno = dados.aluno;
+    const respostas = dados.respostas;
+    const dadosAluno = document.getElementById('dadosAluno');
+    const tabela = document.getElementById('tblRespostas');
+    const tbody = tabela.querySelector('tbody');
+
+    dadosAluno.innerHTML = `
+      <h6><b>${aluno.Nome}</b> • ${aluno.Nome_Unidade}</h6>
+      <p>Inscrição: ${aluno.INSCRICAO} | CPF: ${aluno.CPF}</p>
+      <p><b>Acertos:</b> ${dados.acertos}/${dados.total} (${dados.percentual}%)</p>
+    `;
+    dadosAluno.style.display = 'block';
+
+    tbody.innerHTML = respostas.map(r => `
+      <tr class="${r.RESPOSTA_ALUNO === r.GABARITO_CORRETO ? 'acerto' : 'erro'}">
+        <td>${r.QUESTAO_ALUNO}</td>
+        <td>${r.RESPOSTA_ALUNO}</td>
+        <td>${r.GABARITO_CORRETO}</td>
+        <td>${r.LINK ? `<a href="${r.LINK}" target="_blank">Ver resolução</a>` : '-'}</td>
+      </tr>
+    `).join('');
+
+    tabela.style.display = 'table';
+  }
+  </script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+</body>
+</html>
