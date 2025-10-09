@@ -170,18 +170,20 @@
     }
   }
 
-  function abrirModalResolucao(link) {
-    const match = link.match(/id=([^&]+)/);
-    if (match) {
-      const fileId = match[1];
+ function abrirModalResolucao(link) {
+    if (link.includes('drive.google.com')) {
+      // substitui download por view
+      const urlView = link.replace('export=download', 'export=view');
       const img = document.getElementById("imgResolucaoModal");
-      img.src = `https://drive.google.com/uc?export=view&id=${fileId}`;
+      img.src = urlView;
+
       const modal = M.Modal.getInstance(document.getElementById('modalResolucao'));
       modal.open();
     } else {
       M.toast({html: 'Link da resolução inválido.', classes: 'red'});
     }
   }
+
 
   window.addEventListener("scroll", () => {
     const btn = document.getElementById("btnTopo");
