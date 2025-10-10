@@ -195,7 +195,7 @@
           data: {
             labels: disciplinas,
             datasets: [
-              { label: 'Aluno', data: notasAluno, backgroundColor: '#002776dd' },
+              { label: 'Aluno', data: notasAluno, backgroundColor: '#8AA9E0' },
               { label: 'Média Geral', data: medias, backgroundColor: '#B3C7F3' }
             ]
           },
@@ -246,14 +246,14 @@
     teste.onload = () => {
       area.innerHTML = `
         <img src="${urlImagem}" alt="Resolução"
-            style="width:100%;height:auto;max-height:88vh;object-fit:contain;
+            style="width:100% 1000px;height:auto;max-height:88vh;object-fit:contain;
                     border-radius:8px;box-shadow:0 0 8px rgba(0,0,0,0.15);">
       `;
     };
     teste.onerror = () => {
       area.innerHTML = `
         <iframe src="${urlIframe}"
-                style="width:100%;height:88vh;border:none;border-radius:8px;
+                style="width:100% 1000px;height:88vh;border:none;border-radius:8px;
                       background:#fff;"></iframe>
       `;
     };
