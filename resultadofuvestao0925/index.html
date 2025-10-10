@@ -92,12 +92,15 @@
     <div id="modalResolucao" class="modal">
       <div class="modal-content center-align">
         <h6 class="brand">Resolução da Questão</h6>
-        <img id="imgResolucaoModal" src="" alt="Resolução" style="max-width:100%; border-radius:8px; box-shadow:0 0 8px rgba(0,0,0,0.2);">
+        <img id="imgResolucaoModal" src="" alt="Resolução" 
+            style="max-width:100%; border-radius:8px; box-shadow:0 0 8px rgba(0,0,0,0.2); margin-bottom: 10px;">
+        <p><a id="linkTextoResolucao" href="#" target="_blank" style="font-size:12px; word-break:break-all;"></a></p>
       </div>
       <div class="modal-footer">
         <a href="#!" class="modal-close btn-flat">Fechar</a>
       </div>
     </div>
+
 
     <button id="btnTopo" onclick="window.scrollTo({top:0,behavior:'smooth'})">&#8593;</button>
   </div>
@@ -242,30 +245,42 @@
   }
 
   function abrirModalResolucao(link) {
-    if (!link) {
-      M.toast({ html: 'Resolução indisponível.', classes: 'red' });
-      return;
-    }
-
-    let urlView = link.trim();
-
-    // Corrige possíveis variantes do Drive
-    if (urlView.includes('drive.google.com')) {
-      if (urlView.includes('uc?export=download')) {
-        urlView = urlView.replace('export=download', 'export=view');
-      } else if (urlView.match(/file\/d\/([^/]+)/)) {
-        const id = urlView.match(/file\/d\/([^/]+)/)[1];
-        urlView = `https://drive.google.com/uc?export=view&id=${id}`;
-      }
-    }
-
-    const img = document.getElementById("imgResolucaoModal");
-    img.src = urlView;
-
-    const modalEl = document.getElementById('modalResolucao');
-    const instance = M.Modal.getInstance(modalEl) || M.Modal.init(modalEl);
-    instance.open();
+  if (!link) {
+    M.toast({ html: 'Resolução indisponível.', classes: 'red' });
+    return;
   }
+
+  // Mostra no console o que está vindo
+  console.log("Link recebido:", link);
+
+  // Mostra o link como texto visível no modal
+  const textoLink = document.getElementById("linkTextoResolucao");
+  if (textoLink) {
+    textoLink.textContent = link;
+    textoLink.href = link;
+    textoLink.target = "_blank";
+  }
+
+  let urlView = link.trim();
+
+  // Corrige links do Drive
+  if (urlView.includes('drive.google.com')) {
+    if (urlView.includes('uc?export=download')) {
+      urlView = urlView.replace('export=download', 'export=view');
+    } else if (urlView.match(/file\/d\/([^/]+)/)) {
+      const id = urlView.match(/file\/d\/([^/]+)/)[1];
+      urlView = `https://drive.google.com/uc?export=view&id=${id}`;
+    }
+  }
+
+  const img = document.getElementById("imgResolucaoModal");
+  img.src = urlView;
+
+  const modalEl = document.getElementById('modalResolucao');
+  const instance = M.Modal.getInstance(modalEl) || M.Modal.init(modalEl);
+  instance.open();
+}
+
 
 
 
