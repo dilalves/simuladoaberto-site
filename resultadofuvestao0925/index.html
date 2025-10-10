@@ -21,7 +21,7 @@
     .brand { color:#002776; font-weight:600; }
     table.striped th { color:#002776; }
     .acerto { background:#e8f5e9; }
-    .erro { background:#ffebee; }
+    .erro { background:#eef3ff; }
     .btn { border-radius:6px; }
     .card { border-radius:10px; }
     #btnTopo {
@@ -143,10 +143,58 @@
             </tr>
           </tbody>
         </table>
+        <!-- 🧩 Canvas do gráfico comparativo -->
+          <canvas id="graficoDesempenho" style="max-width:700px;margin:30px auto;display:block;"></canvas>               
       `;
+      
       dadosAluno.style.display = 'block';
 
-      const erros = respostas.filter(r => r.RESPOSTA_ALUNO !== r.GABARITO_CORRETO);
+
+
+      tbody.innerHTML = respostas.map(r => {
+        const acertou = r.ACERTOU == 1;
+        const classe  = acertou ? 'acerto' : 'erro';
+        const icone   = acertou ? '<span style="color:green;font-weight:bold;font-size:18px;">&#10004;</span>' 
+                                : `<button class="btn-small blue lighten-1 modal-trigger" onclick="abrirModalResolucao('${r.LINK || ''}')">Ver resolução</button>`;
+
+        return `
+          <tr class="${classe}">
+            <td>${r.QUESTAO_ALUNO}</td>
+            <td>${r.RESPOSTA_ALUNO || '-'}</td>
+            <td>${r.GABARITO_CORRETO}</td>
+            <td>${icone}</td>
+          </tr>
+        `;
+      }).join('');
+
+      // === GRÁFICO COMPARATIVO ===
+      const ctx = document.getElementById('graficoDesempenho');
+      if (ctx) {
+        const disciplinas = ['POR','HIS','ING','SOC','BIO','QUI','FIL','FIS','MAT','GEO'];
+        const notasAluno  = disciplinas.map(d => parseFloat(aluno[d]));
+        const medias      = disciplinas.map(d => parseFloat(dados.media_geral[d]));
+
+        new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: disciplinas,
+            datasets: [
+              { label: 'Aluno', data: notasAluno, backgroundColor: '#002776cc' },
+              { label: 'Média Geral', data: medias, backgroundColor: '#ffc107aa' }
+            ]
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              title: { display: true, text: 'Comparativo por Disciplina' },
+              legend: { position: 'bottom' }
+            },
+            scales: { y: { beginAtZero: true } }
+          }
+        });
+      }
+
+
 
       if (erros.length === 0) {
         tbody.innerHTML = `<tr><td colspan="4">Parabéns! Nenhum erro encontrado 🎉</td></tr>`;
@@ -175,17 +223,31 @@
   }
 
  function abrirModalResolucao(link) {
-    if (link.includes('drive.google.com')) {
-      // substitui download por view
-      const urlView = link.replace(/\\\//g, '/').replace('export=download', 'export=view');
-      const img = document.getElementById("imgResolucaoModal");
-      img.src = urlView;
-
-      const modal = M.Modal.getInstance(document.getElementById('modalResolucao'));
-      modal.open();
-    } else {
-      M.toast({html: 'Link da resolução inválido.', classes: 'red'});
+    if (!link) {
+      M.toast({ html: 'Resolução indisponível.', classes: 'red' });
+      return;
     }
+
+    let urlView = link.trim();
+
+    // Corrige possíveis variantes do Drive
+    if (urlView.includes('drive.google.com')) {
+      // Caso 1: já tenha "uc?export=download"
+      if (urlView.includes('uc?export=download')) {
+        urlView = urlView.replace('export=download', 'export=view');
+      }
+      // Caso 2: link do tipo file/d/<ID>/view
+      else if (urlView.match(/file\/d\/([^/]+)/)) {
+        const id = urlView.match(/file\/d\/([^/]+)/)[1];
+        urlView = `https://drive.google.com/uc?export=view&id=${id}`;
+      }
+    }
+
+    const img = document.getElementById("imgResolucaoModal");
+    img.src = urlView;
+
+    const modal = M.Modal.getInstance(document.getElementById('modalResolucao'));
+    modal.open();
   }
 
 
@@ -199,7 +261,7 @@
     M.Modal.init(modals);
   });
   </script>
-
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
 </body>
 </html>
