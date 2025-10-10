@@ -93,20 +93,16 @@
       <tbody></tbody>
     </table>
 
-    <!-- Modal de Resolução -->
-    <div id="modalResolucao" class="modal" style="max-width:95vw;">
-      <div class="modal-content center-align" style="padding:10px 0; overflow-y:auto; max-height:90vh;">
-        <h6 class="brand" style="margin-bottom:10px;">Resolução da Questão</h6>
-        <img id="imgResolucaoModal"
-            src=""
-            alt="Resolução"
-            style="width:100%;height:auto;max-height:88vh;object-fit:contain;
-                    border-radius:8px;box-shadow:0 0 8px rgba(0,0,0,0.15);">
-      </div>
-      <div class="modal-footer" style="text-align:right;">
-        <a href="#!" class="modal-close btn-flat">Fechar</a>
-      </div>
+   <!-- Modal de Resolução -->
+  <div id="modalResolucao" class="modal" style="max-width:95vw;">
+    <div class="modal-content center-align" style="padding:10px 0;">
+      <h6 class="brand" style="margin-bottom:10px;">Resolução da Questão</h6>
+      <div id="areaResolucao" style="padding:0 10px;"></div>
     </div>
+    <div class="modal-footer" style="text-align:right;">
+      <a href="#!" class="modal-close btn-flat">Fechar</a>
+    </div>
+  </div>
 
 
     <button id="btnTopo" onclick="window.scrollTo({top:0,behavior:'smooth'})">&#8593;</button>
@@ -227,48 +223,48 @@
 
   // === ABRIR MODAL DE RESOLUÇÃO ===
   function abrirModalResolucao(link) {
-    if (!link) return;
+  if (!link) return;
 
-    const match = link.match(/[-\w]{25,}/);
-    let id = match ? match[0] : null;
-    if (!id) return;
+  const match = link.match(/[-\w]{25,}/);
+  let id = match ? match[0] : null;
+  if (!id) return;
 
-    const urlImagem = `https://lh3.googleusercontent.com/d/${id}=s2000`;
-    const urlIframe = `https://drive.google.com/file/d/${id}/preview`;
+  const urlImagem = `https://lh3.googleusercontent.com/d/${id}=s2000`;
+  const urlIframe = `https://drive.google.com/file/d/${id}/preview`;
 
-    const modal = document.getElementById('modalResolucao');
-    const img   = document.getElementById('imgResolucaoModal');
-    if (!modal || !img) return;
+  const modal = document.getElementById('modalResolucao');
+  const area = document.getElementById('areaResolucao');
+  if (!modal || !area) return;
 
-    img.src = '';
-    img.style.display = 'none';
-    modal.querySelector('.modal-content').innerHTML = `
-      <h6 class="brand" style="margin-bottom:10px;">Resolução da Questão</h6>
-      <p style="color:#666;">Carregando resolução...</p>
+  area.innerHTML = `<p style="color:#666;">Carregando resolução...</p>`;
+
+  // Remove instância anterior (resolve bug de não reabrir)
+  const oldInstance = M.Modal.getInstance(modal);
+  if (oldInstance) oldInstance.destroy();
+
+  // Testa se a imagem é acessível
+  const teste = new Image();
+  teste.onload = () => {
+    area.innerHTML = `
+      <img src="${urlImagem}" alt="Resolução"
+           style="width:100%;height:auto;max-height:88vh;object-fit:contain;
+                  border-radius:8px;box-shadow:0 0 8px rgba(0,0,0,0.15);">
     `;
+  };
+  teste.onerror = () => {
+    area.innerHTML = `
+      <iframe src="${urlIframe}"
+              style="width:100%;height:88vh;border:none;border-radius:8px;
+                     background:#fff;"></iframe>
+    `;
+  };
+  teste.src = urlImagem;
 
-    const teste = new Image();
-    teste.onload = () => {
-      modal.querySelector('.modal-content').innerHTML = `
-        <h6 class="brand" style="margin-bottom:10px;">Resolução da Questão</h6>
-        <img src="${urlImagem}" alt="Resolução"
-            style="width:100%;height:auto;max-height:88vh;object-fit:contain;
-                    border-radius:8px;box-shadow:0 0 8px rgba(0,0,0,0.15);">
-      `;
-    };
-    teste.onerror = () => {
-      modal.querySelector('.modal-content').innerHTML = `
-        <h6 class="brand" style="margin-bottom:10px;">Resolução da Questão</h6>
-        <iframe src="${urlIframe}"
-                style="width:100%;height:88vh;border:none;border-radius:8px;
-                      background:#fff;"></iframe>
-      `;
-    };
-    teste.src = urlImagem;
+  // Inicializa e abre modal novamente
+  const instance = M.Modal.init(modal, {preventScrolling:false});
+  instance.open();
+}
 
-    const instance = M.Modal.getInstance(modal) || M.Modal.init(modal);
-    instance.open();
-  }
 
 
   // === BOTÃO VOLTAR AO TOPO ===
