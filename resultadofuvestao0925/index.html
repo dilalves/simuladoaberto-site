@@ -93,23 +93,19 @@
       <tbody></tbody>
     </table>
 
-    <!-- 🖼 Modal de Resolução -->
-   <div id="modalResolucao" class="modal">
-    <div class="modal-content center-align">
-      <h6 class="brand">Resolução da Questão</h6>
-      <img id="imgResolucaoModal" 
-          src="" 
-          alt="Resolução" 
-          style="width:100%;height:auto;max-height:90vh;object-fit:contain;border-radius:8px;box-shadow:0 0 8px rgba(0,0,0,0.2);margin:10px auto;">
-      <p>
-        <a id="linkTextoResolucao" href="#" target="_blank" 
-          style="font-size:12px;word-break:break-all;color:#002776;"></a>
-      </p>
+    <!-- Modal de Resolução -->
+    <div id="modalResolucao" class="modal">
+      <div class="modal-content center-align">
+        <h6 class="brand">Resolução da Questão</h6>
+        <div id="areaResolucao" style="margin:10px 0;"></div>
+        <p><a id="linkTextoResolucao" href="#" target="_blank" 
+              style="font-size:12px;word-break:break-all;color:#002776;"></a></p>
+      </div>
+      <div class="modal-footer">
+        <a href="#!" class="modal-close btn-flat">Fechar</a>
+      </div>
     </div>
-    <div class="modal-footer">
-      <a href="#!" class="modal-close btn-flat">Fechar</a>
-    </div>
-  </div>
+
     <button id="btnTopo" onclick="window.scrollTo({top:0,behavior:'smooth'})">&#8593;</button>
   </div>
 
@@ -230,33 +226,52 @@
 function abrirModalResolucao(link) {
   if (!link) return;
 
-  // Extrai o ID e monta URL direta (imagem)
-  try {
-    const match = link.match(/[-\w]{25,}/);
-    if (match) {
-      const id = match[0];
-      link = `https://drive.google.com/uc?id=${id}`;
-    }
-  } catch(e) {
-    console.warn('Link não pôde ser ajustado:', e);
-  }
+  // Extrai o ID do Google Drive
+  const match = link.match(/[-\w]{25,}/);
+  let id = match ? match[0] : null;
+  if (id) link = `https://drive.google.com/uc?id=${id}`;
 
   const modal = document.getElementById('modalResolucao');
-  const img   = document.getElementById('imgResolucaoModal');
+  const area  = document.getElementById('areaResolucao');
   const aLink = document.getElementById('linkTextoResolucao');
 
-  if (!modal || !img || !aLink) {
-    console.error('Modal ou elementos internos não encontrados.');
+  if (!modal || !area || !aLink) {
+    console.error('Elementos do modal não encontrados.');
     return;
   }
 
-  img.src = link;
+  // Define visual padrão (limpa conteúdo anterior)
+  area.innerHTML = `
+    <div style="color:#888;font-size:13px;">Carregando resolução...</div>
+  `;
+
+  // Testa se o link é de imagem
+  const imgTest = new Image();
+  imgTest.onload = () => {
+    area.innerHTML = `
+      <img src="${link}" alt="Resolução"
+           style="width:100%;height:auto;max-height:90vh;object-fit:contain;
+                  border-radius:8px;box-shadow:0 0 8px rgba(0,0,0,0.2);" />
+    `;
+  };
+  imgTest.onerror = () => {
+    // Se não for imagem, exibe via iframe (PDF, etc.)
+    area.innerHTML = `
+      <iframe src="https://drive.google.com/file/d/${id}/preview"
+              style="width:100%;height:80vh;border:none;border-radius:8px;"></iframe>
+    `;
+  };
+  imgTest.src = link;
+
+  // Atualiza link textual
   aLink.textContent = link;
   aLink.href = link;
 
+  // Abre o modal
   const instance = M.Modal.getInstance(modal) || M.Modal.init(modal);
   instance.open();
 }
+
 
 
 
