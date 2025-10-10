@@ -156,8 +156,10 @@
       tbody.innerHTML = respostas.map(r => {
         const acertou = r.ACERTOU == 1;
         const classe  = acertou ? 'acerto' : 'erro';
-        const icone   = acertou ? '<span style="color:green;font-weight:bold;font-size:18px;">&#10004;</span>' 
-                                : `<button class="btn-small blue lighten-1 modal-trigger" onclick="abrirModalResolucao('${r.LINK || ''}')">Ver resolução</button>`;
+        const icone = acertou 
+                                ? '<span style="color:green;font-weight:bold;font-size:18px;">&#10004;</span>' 
+                                : `<button class="btn-small blue lighten-1" onclick="abrirModalResolucao('${r.LINK || ''}')">Ver resolução</button>`;
+
 
         return `
           <tr class="${classe}">
@@ -239,48 +241,32 @@
     }
   }
 
- function abrirModalResolucao(link) {
-    if (!link || !link.includes('drive.google.com')) {
+  function abrirModalResolucao(link) {
+    if (!link) {
       M.toast({ html: 'Resolução indisponível.', classes: 'red' });
       return;
     }
 
     let urlView = link.trim();
 
-    // Caso 1: já no formato uc?export=download
-    if (urlView.includes('uc?export=download')) {
-      urlView = urlView.replace('export=download', 'export=view');
-    }
-    // Caso 2: file/d/ID/view
-    else if (urlView.match(/file\/d\/([^/]+)/)) {
-      const id = urlView.match(/file\/d\/([^/]+)/)[1];
-      urlView = `https://drive.google.com/uc?export=view&id=${id}`;
-    }
-    // Caso 3: open?id=ID
-    else if (urlView.includes('open?id=')) {
-      const id = urlView.split('open?id=')[1];
-      urlView = `https://drive.google.com/uc?export=view&id=${id}`;
+    // Corrige possíveis variantes do Drive
+    if (urlView.includes('drive.google.com')) {
+      if (urlView.includes('uc?export=download')) {
+        urlView = urlView.replace('export=download', 'export=view');
+      } else if (urlView.match(/file\/d\/([^/]+)/)) {
+        const id = urlView.match(/file\/d\/([^/]+)/)[1];
+        urlView = `https://drive.google.com/uc?export=view&id=${id}`;
+      }
     }
 
     const img = document.getElementById("imgResolucaoModal");
-    const modalElem = document.getElementById("modalResolucao");
-
-    if (!img || !modalElem) {
-      console.error("Elemento de imagem ou modal não encontrado.");
-      return;
-    }
-
     img.src = urlView;
 
-    // Garante que o modal está inicializado
-    let instance = M.Modal.getInstance(modalElem);
-    if (!instance) {
-      M.Modal.init(modalElem, {});
-      instance = M.Modal.getInstance(modalElem);
-    }
-
+    const modalEl = document.getElementById('modalResolucao');
+    const instance = M.Modal.getInstance(modalEl) || M.Modal.init(modalEl);
     instance.open();
   }
+
 
 
 
