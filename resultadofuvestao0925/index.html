@@ -21,9 +21,10 @@
     .brand { color:#002776; font-weight:600; }
     table.striped th { color:#002776; }
     .acerto { background:#e8f5e9; }
-    .erro { background:#eef3ff;
-            border-left:4px solid #002776;
-          }
+    .erro {
+      background:#eef3ff;
+      border-left:4px solid #002776;
+    }
     .btn { border-radius:6px; }
     .card { border-radius:10px; }
     #btnTopo {
@@ -58,6 +59,8 @@
 
   <div class="container">
     <h5 class="brand center">Simulado Fuvestão 2025</h5>
+
+    <!-- 🔍 Formulário de busca -->
     <div class="card z-depth-2" style="padding:20px;">
       <div class="row">
         <div class="input-field col s6">
@@ -74,8 +77,10 @@
       </div>
     </div>
 
+    <!-- 📄 Dados e gráfico -->
     <div id="dadosAluno" class="card white z-depth-1" style="display:none; padding:20px;"></div>
 
+    <!-- 🧩 Tabela de respostas -->
     <table id="tblRespostas" class="striped centered responsive-table" style="display:none;">
       <thead>
         <tr>
@@ -88,24 +93,38 @@
       <tbody></tbody>
     </table>
 
-    <!-- Modal de Resolução -->
+    <!-- 🖼 Modal de Resolução -->
     <div id="modalResolucao" class="modal">
       <div class="modal-content center-align">
         <h6 class="brand">Resolução da Questão</h6>
-        <img id="imgResolucaoModal" src="" alt="Resolução" 
-            style="max-width:100%; border-radius:8px; box-shadow:0 0 8px rgba(0,0,0,0.2); margin-bottom: 10px;">
-        <p><a id="linkTextoResolucao" href="#" target="_blank" style="font-size:12px; word-break:break-all;"></a></p>
+        <img id="imgResolucaoModal" src="" alt="Resolução"
+             style="max-width:100%; border-radius:8px; box-shadow:0 0 8px rgba(0,0,0,0.2); margin-bottom:10px;">
+        <p>
+          <a id="linkTextoResolucao" href="#" target="_blank"
+             style="font-size:12px; word-break:break-all; color:#002776;"></a>
+        </p>
       </div>
       <div class="modal-footer">
         <a href="#!" class="modal-close btn-flat">Fechar</a>
       </div>
     </div>
 
-
     <button id="btnTopo" onclick="window.scrollTo({top:0,behavior:'smooth'})">&#8593;</button>
   </div>
 
+  <!-- ======================== SCRIPTS ======================== -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+
   <script>
+  // Inicializa Materialize
+  document.addEventListener('DOMContentLoaded', function() {
+    const modals = document.querySelectorAll('.modal');
+    M.Modal.init(modals);
+  });
+
+  // === CONSULTA RESULTADO ===
   async function buscarResultado() {
     const inscricao = document.getElementById("inscricao").value.trim();
     const cpf = document.getElementById("cpf").value.trim();
@@ -148,22 +167,17 @@
             </tr>
           </tbody>
         </table>
-        <!-- 🧩 Canvas do gráfico comparativo -->
-          <canvas id="graficoDesempenho" style="width:100%;max-width:1000px;margin:30px auto;display:block;"></canvas>
+        <canvas id="graficoDesempenho" style="width:100%;max-width:1000px;margin:30px auto;display:block;"></canvas>
       `;
       
       dadosAluno.style.display = 'block';
-
-
 
       tbody.innerHTML = respostas.map(r => {
         const acertou = r.ACERTOU == 1;
         const classe  = acertou ? 'acerto' : 'erro';
         const icone = acertou 
-                                ? '<span style="color:green;font-weight:bold;font-size:18px;">&#10004;</span>' 
-                                : `<button class="btn-small blue lighten-1" onclick="abrirModalResolucao('${r.LINK || ''}')">Ver resolução</button>`;
-
-
+          ? '<span style="color:green;font-weight:bold;font-size:18px;">&#10004;</span>' 
+          : `<button class="btn-small blue lighten-1" onclick="abrirModalResolucao('${r.LINK || ''}')">Ver resolução</button>`;
         return `
           <tr class="${classe}">
             <td>${r.QUESTAO_ALUNO}</td>
@@ -181,61 +195,28 @@
         const notasAluno  = disciplinas.map(d => parseFloat(aluno[d]));
         const medias      = disciplinas.map(d => parseFloat(dados.media_geral[d]));
 
-        // Configuração do gráfico
         new Chart(ctx, {
           type: 'bar',
           data: {
             labels: disciplinas,
             datasets: [
-              {
-                label: 'Aluno',
-                data: notasAluno,
-                backgroundColor: '#002776dd'
-              },
-              {
-                label: 'Média Geral',
-                data: medias,
-                backgroundColor: '#B3C7F3'
-              }
+              { label: 'Aluno', data: notasAluno, backgroundColor: '#002776dd' },
+              { label: 'Média Geral', data: medias, backgroundColor: '#B3C7F3' }
             ]
           },
           options: {
             responsive: true,
             plugins: {
-              title: {
-                display: true,
-                text: 'Comparativo por Disciplina',
-                font: { size: 18 }
-              },
-              legend: {
-                position: 'bottom'
-              },
-              tooltip: {
-                enabled: true,
-                callbacks: {
-                  label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(1)}`
-                }
-              },
-              datalabels: {
-                color: '#000',
-                anchor: 'end',
-                align: 'start',
-                font: { weight: 'bold', size: 12 },
-                formatter: val => (val ? val.toFixed(1) : '')
-              }
+              title: { display: true, text: 'Comparativo por Disciplina', font: { size: 18 } },
+              legend: { position: 'bottom' },
+              tooltip: { enabled: true },
+              datalabels: { color: '#000', anchor: 'end', align: 'start', font: { weight: 'bold', size: 12 } }
             },
-            scales: {
-              y: {
-                beginAtZero: true,
-                max: 20,
-                ticks: { stepSize: 2 }
-              }
-            }
+            scales: { y: { beginAtZero: true, max: 20, ticks: { stepSize: 2 } } }
           },
           plugins: [ChartDataLabels]
         });
       }
-      //fim do bloco dos gráficos
 
       tabela.style.display = 'table';
     } catch (e) {
@@ -244,53 +225,35 @@
     }
   }
 
-  function abrirModalResolucao(link){
-    if(!link) return;
+  // === ABRIR MODAL DE RESOLUÇÃO ===
+  function abrirModalResolucao(link) {
+    if (!link) return;
+
+    // Corrige o link se vier com export=download
+    link = link.replace('export=download', 'export=view');
+
     const modal = document.getElementById('modalResolucao');
-    const conteudo = document.getElementById('conteudoResolucao');
+    const img   = document.getElementById('imgResolucaoModal');
+    const aLink = document.getElementById('linkTextoResolucao');
 
-    conteudo.innerHTML = `
-      <h5 style="text-align:center;color:#002776;">Resolução da Questão</h5>
-      <img src="${link}" 
-          alt="Resolução" 
-          style="width:100%;max-width:1000px;display:block;margin:15px auto;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.2);" />
-    `;
+    if (!modal || !img || !aLink) {
+      console.error('Modal ou elementos internos não encontrados.');
+      return;
+    }
 
-    const instance = M.Modal.getInstance(modal);
+    img.src = link;
+    aLink.textContent = link;
+    aLink.href = link;
+
+    const instance = M.Modal.getInstance(modal) || M.Modal.init(modal);
     instance.open();
   }
 
+  // === BOTÃO VOLTAR AO TOPO ===
   window.addEventListener("scroll", () => {
     const btn = document.getElementById("btnTopo");
     btn.style.display = (window.scrollY > 500) ? 'block' : 'none';
   });
-
-  document.addEventListener('DOMContentLoaded', function() {
-    const modals = document.querySelectorAll('.modal');
-    M.Modal.init(modals);
-  });
-
-  function verResolucao(urlImagem) {
-    const modal = document.getElementById('modalResolucao');
-    const img = document.getElementById('imgResolucaoModal');
-    if (modal && img) {
-      img.src = urlImagem;
-      const instance = M.Modal.getInstance(modal);
-      if (instance) {
-        instance.open();
-      } else {
-        M.Modal.init(modal, {});
-        M.Modal.getInstance(modal).open();
-      }
-    } else {
-      console.error("Modal ou imagem não encontrados.");
-    }
-  }
-
-
   </script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
 </body>
 </html>
