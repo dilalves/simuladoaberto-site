@@ -190,7 +190,7 @@
               {
                 label: 'Média Geral',
                 data: medias,
-                backgroundColor: '#ffc107cc'
+                backgroundColor: '#B3C7F3'
               }
             ]
           },
@@ -240,32 +240,48 @@
   }
 
  function abrirModalResolucao(link) {
-    if (!link) {
+    if (!link || !link.includes('drive.google.com')) {
       M.toast({ html: 'Resolução indisponível.', classes: 'red' });
       return;
     }
 
     let urlView = link.trim();
 
-    // Corrige possíveis variantes do Drive
-    if (urlView.includes('drive.google.com')) {
-      // Caso 1: já tenha "uc?export=download"
-      if (urlView.includes('uc?export=download')) {
-        urlView = urlView.replace('export=download', 'export=view');
-      }
-      // Caso 2: link do tipo file/d/<ID>/view
-      else if (urlView.match(/file\/d\/([^/]+)/)) {
-        const id = urlView.match(/file\/d\/([^/]+)/)[1];
-        urlView = `https://drive.google.com/uc?export=view&id=${id}`;
-      }
+    // Caso 1: já no formato uc?export=download
+    if (urlView.includes('uc?export=download')) {
+      urlView = urlView.replace('export=download', 'export=view');
+    }
+    // Caso 2: file/d/ID/view
+    else if (urlView.match(/file\/d\/([^/]+)/)) {
+      const id = urlView.match(/file\/d\/([^/]+)/)[1];
+      urlView = `https://drive.google.com/uc?export=view&id=${id}`;
+    }
+    // Caso 3: open?id=ID
+    else if (urlView.includes('open?id=')) {
+      const id = urlView.split('open?id=')[1];
+      urlView = `https://drive.google.com/uc?export=view&id=${id}`;
     }
 
     const img = document.getElementById("imgResolucaoModal");
+    const modalElem = document.getElementById("modalResolucao");
+
+    if (!img || !modalElem) {
+      console.error("Elemento de imagem ou modal não encontrado.");
+      return;
+    }
+
     img.src = urlView;
 
-    const modal = M.Modal.getInstance(document.getElementById('modalResolucao'));
-    modal.open();
+    // Garante que o modal está inicializado
+    let instance = M.Modal.getInstance(modalElem);
+    if (!instance) {
+      M.Modal.init(modalElem, {});
+      instance = M.Modal.getInstance(modalElem);
+    }
+
+    instance.open();
   }
+
 
 
   window.addEventListener("scroll", () => {
@@ -277,6 +293,25 @@
     const modals = document.querySelectorAll('.modal');
     M.Modal.init(modals);
   });
+
+  function verResolucao(urlImagem) {
+    const modal = document.getElementById('modalResolucao');
+    const img = document.getElementById('imgResolucaoModal');
+    if (modal && img) {
+      img.src = urlImagem;
+      const instance = M.Modal.getInstance(modal);
+      if (instance) {
+        instance.open();
+      } else {
+        M.Modal.init(modal, {});
+        M.Modal.getInstance(modal).open();
+      }
+    } else {
+      console.error("Modal ou imagem não encontrados.");
+    }
+  }
+
+
   </script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
