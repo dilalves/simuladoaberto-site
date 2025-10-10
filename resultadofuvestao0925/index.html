@@ -97,12 +97,13 @@
     <div id="modalResolucao" class="modal">
       <div class="modal-content center-align">
         <h6 class="brand">Resolução da Questão</h6>
-        <img id="imgResolucaoModal" src="" alt="Resolução"
-             style="max-width:100%; border-radius:8px; box-shadow:0 0 8px rgba(0,0,0,0.2); margin-bottom:10px;">
-        <p>
-          <a id="linkTextoResolucao" href="#" target="_blank"
-             style="font-size:12px; word-break:break-all; color:#002776;"></a>
-        </p>
+        <div id="iframeContainer" style="position:relative;padding-top:56%;overflow:hidden;border-radius:8px;box-shadow:0 0 8px rgba(0,0,0,0.2);">
+          <iframe id="iframeResolucao" 
+                  src="" 
+                  style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;" 
+                  allowfullscreen></iframe>
+        </div>
+        <p><a id="linkTextoResolucao" href="#" target="_blank" style="font-size:12px;word-break:break-all;color:#002776;"></a></p>
       </div>
       <div class="modal-footer">
         <a href="#!" class="modal-close btn-flat">Fechar</a>
@@ -229,25 +230,34 @@
   function abrirModalResolucao(link) {
     if (!link) return;
 
-    // Corrige o link se vier com export=download
-    link = link.replace('export=download', 'export=view');
+    // Extrai o ID e monta o link de visualização
+    try {
+      const match = link.match(/[-\w]{25,}/);
+      if (match) {
+        const id = match[0];
+        link = `https://drive.google.com/file/d/${id}/preview`;
+      }
+    } catch(e) {
+      console.warn('Link não pôde ser ajustado:', e);
+    }
 
     const modal = document.getElementById('modalResolucao');
-    const img   = document.getElementById('imgResolucaoModal');
+    const iframe = document.getElementById('iframeResolucao');
     const aLink = document.getElementById('linkTextoResolucao');
 
-    if (!modal || !img || !aLink) {
+    if (!modal || !iframe || !aLink) {
       console.error('Modal ou elementos internos não encontrados.');
       return;
     }
 
-    img.src = link;
+    iframe.src = link;
     aLink.textContent = link;
     aLink.href = link;
 
     const instance = M.Modal.getInstance(modal) || M.Modal.init(modal);
     instance.open();
   }
+
 
   // === BOTÃO VOLTAR AO TOPO ===
   window.addEventListener("scroll", () => {
