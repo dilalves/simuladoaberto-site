@@ -231,21 +231,42 @@
   function abrirModalResolucao(link) {
     if (!link) return;
 
-    // Extrai o ID do arquivo e monta a URL direta (imagem)
+    // Extrai o ID do arquivo do Drive
     const match = link.match(/[-\w]{25,}/);
     let id = match ? match[0] : null;
-    if (id) link = `https://drive.google.com/uc?export=download&id=${id}`;
+    if (!id) return;
+
+    // Prepara URLs possíveis
+    const urlImagem = `https://lh3.googleusercontent.com/d/${id}=s2000`; // imagem direta (quando pública)
+    const urlIframe = `https://drive.google.com/file/d/${id}/preview`;   // fallback seguro
 
     const modal = document.getElementById('modalResolucao');
-    const img   = document.getElementById('imgResolucaoModal');
+    const area  = document.getElementById('areaResolucao');
+    if (!modal || !area) return;
 
-    if (!modal || !img) {
-      console.error('Elementos do modal não encontrados.');
-      return;
-    }
+    // Mostra mensagem de carregamento
+    area.innerHTML = `<p style="color:#666;">Carregando resolução...</p>`;
 
-    // Atualiza imagem
-    img.src = link;
+    // Testa se a imagem existe
+    const teste = new Image();
+    teste.onload = () => {
+      // Exibe como imagem
+      area.innerHTML = `
+        <img src="${urlImagem}" alt="Resolução" 
+            style="width:100%;height:auto;object-fit:contain;
+                    border-radius:8px;box-shadow:0 0 8px rgba(0,0,0,0.15);
+                    max-height:85vh;">
+      `;
+    };
+    teste.onerror = () => {
+      // Fallback limpo (iframe sem fundo preto)
+      area.innerHTML = `
+        <iframe src="${urlIframe}" 
+                style="width:100%;height:85vh;border:none;border-radius:8px;
+                      background:#fff;"></iframe>
+      `;
+    };
+    teste.src = urlImagem;
 
     // Abre modal
     const instance = M.Modal.getInstance(modal) || M.Modal.init(modal);
