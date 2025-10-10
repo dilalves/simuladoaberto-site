@@ -21,7 +21,9 @@
     .brand { color:#002776; font-weight:600; }
     table.striped th { color:#002776; }
     .acerto { background:#e8f5e9; }
-    .erro { background:#eef3ff; }
+    .erro { background:#eef3ff;
+            border-left:4px solid #002776;
+          }
     .btn { border-radius:6px; }
     .card { border-radius:10px; }
     #btnTopo {
@@ -144,7 +146,7 @@
           </tbody>
         </table>
         <!-- 🧩 Canvas do gráfico comparativo -->
-          <canvas id="graficoDesempenho" style="max-width:700px;margin:30px auto;display:block;"></canvas>               
+          <canvas id="graficoDesempenho" style="width:100%;max-width:1000px;margin:30px auto;display:block;height:380px;"></canvas>
       `;
       
       dadosAluno.style.display = 'block';
@@ -174,46 +176,62 @@
         const notasAluno  = disciplinas.map(d => parseFloat(aluno[d]));
         const medias      = disciplinas.map(d => parseFloat(dados.media_geral[d]));
 
+        // Configuração do gráfico
         new Chart(ctx, {
           type: 'bar',
           data: {
             labels: disciplinas,
             datasets: [
-              { label: 'Aluno', data: notasAluno, backgroundColor: '#002776cc' },
-              { label: 'Média Geral', data: medias, backgroundColor: '#ffc107aa' }
+              {
+                label: 'Aluno',
+                data: notasAluno,
+                backgroundColor: '#002776dd'
+              },
+              {
+                label: 'Média Geral',
+                data: medias,
+                backgroundColor: '#ffc107cc'
+              }
             ]
           },
           options: {
             responsive: true,
+            maintainAspectRatio: false,
             plugins: {
-              title: { display: true, text: 'Comparativo por Disciplina' },
-              legend: { position: 'bottom' }
+              title: {
+                display: true,
+                text: 'Comparativo por Disciplina',
+                font: { size: 18 }
+              },
+              legend: {
+                position: 'bottom'
+              },
+              tooltip: {
+                enabled: true,
+                callbacks: {
+                  label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(1)}`
+                }
+              },
+              datalabels: {
+                color: '#000',
+                anchor: 'end',
+                align: 'start',
+                font: { weight: 'bold', size: 12 },
+                formatter: val => (val ? val.toFixed(1) : '')
+              }
             },
-            scales: { y: { beginAtZero: true } }
-          }
+            scales: {
+              y: {
+                beginAtZero: true,
+                max: 20,
+                ticks: { stepSize: 2 }
+              }
+            }
+          },
+          plugins: [ChartDataLabels]
         });
       }
-
-
-
-      if (erros.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="4">Parabéns! Nenhum erro encontrado 🎉</td></tr>`;
-      } else {
-        tbody.innerHTML = erros.map(r => {
-          const botao = (r.RESPOSTA_ALUNO !== r.GABARITO_CORRETO && r.LINK)
-            ? `<button class="btn-small blue lighten-1 modal-trigger" onclick="abrirModalResolucao('${r.LINK}')">Ver resolução</button>`
-            : '-';
-          return `
-            <tr class="erro">
-              <td>${r.QUESTAO_ALUNO}</td>
-              <td>${r.RESPOSTA_ALUNO}</td>
-              <td>${r.GABARITO_CORRETO}</td>
-              <td>${botao}</td>
-            </tr>
-          `;
-        }).join('');
-      }
-
+      //fim do bloco dos gráficos
 
       tabela.style.display = 'table';
     } catch (e) {
@@ -262,6 +280,7 @@
   });
   </script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
 </body>
 </html>
