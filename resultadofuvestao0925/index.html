@@ -45,6 +45,34 @@
     #btnTopo:hover {
       background:#0b49a5;
     }
+
+    /* --- Ajuste final do modal de resolução --- */
+    .modal {
+      top: 2vh !important;
+      max-height: 96vh !important;
+      overflow: visible !important;
+    }
+
+    .modal.open {
+      overflow: visible !important;
+    }
+
+    .modal .modal-content {
+      max-height: none !important;
+      overflow: visible !important;
+      padding: 0 !important;
+      margin: 0 !important;
+    }
+
+    .modal .modal-footer {
+      position: sticky;
+      bottom: 0;
+      background: #fff;
+      border-top: 1px solid #eee;
+      padding-right: 20px !important;
+    }
+
+
 /* -----------  MOBILE FIRST (celular) ----------- */
 @media (max-width: 480px) {
   body { background:#fafafa; }
@@ -337,49 +365,68 @@
 
   // === ABRIR MODAL DE RESOLUÇÃO ===
   function abrirModalResolucao(link) {
-    if (!link) return;
+  if (!link) return;
 
-    const match = link.match(/[-\w]{25,}/);
-    let id = match ? match[0] : null;
-    if (!id) return;
+  const match = link.match(/[-\w]{25,}/);
+  let id = match ? match[0] : null;
+  if (!id) return;
 
-    const urlImagem = `https://lh3.googleusercontent.com/d/${id}=s2000`;
-    const urlIframe = `https://drive.google.com/file/d/${id}/preview`;
+  const urlImagem = `https://lh3.googleusercontent.com/d/${id}=s2000`;
+  const urlIframe = `https://drive.google.com/file/d/${id}/preview`;
 
-    const modal = document.getElementById('modalResolucao');
-    const area = document.getElementById('areaResolucao');
-    if (!modal || !area) return;
+  const modal = document.getElementById('modalResolucao');
+  const area = document.getElementById('areaResolucao');
+  if (!modal || !area) return;
 
-    area.innerHTML = `<p style="color:#666;">Carregando resolução...</p>`;
+  area.innerHTML = `<p style="color:#666;">Carregando resolução...</p>`;
 
-    // Remove instância anterior (resolve bug de não reabrir)
-    const oldInstance = M.Modal.getInstance(modal);
-    if (oldInstance) oldInstance.destroy();
+  const oldInstance = M.Modal.getInstance(modal);
+  if (oldInstance) oldInstance.destroy();
 
-    // Testa se a imagem é acessível
-    const teste = new Image();
-    teste.onload = () => {
-      area.innerHTML = `
-        <img src="${urlImagem}" alt="Resolução"
-            style="width:100% 1000px;height:auto;max-height:88vh;object-fit:contain;
-                    border-radius:8px;box-shadow:0 0 8px rgba(0,0,0,0.15);">
-      `;
-    };
-    teste.onerror = () => {
-      area.innerHTML = `
-        <iframe src="${urlIframe}"
-                style="width:100% 1000px;height:88vh;border:none;border-radius:8px;
-                      background:#fff;"></iframe>
-      `;
-    };
-    teste.src = urlImagem;
+  const teste = new Image();
+ teste.onload = () => {
+  area.innerHTML = `
+    <div style="
+      display:flex;
+      justify-content:center;
+      align-items:flex-start;
+      overflow-y:auto;
+      overflow-x:hidden;
+      max-height: calc(90vh - 10px); /* respeita o espaço do cabeçalho e rodapé */
+      padding:10px 0 100px;
+      margin:0 auto;
+      scrollbar-width:thin;
+    ">
+      <img src="${urlImagem}" alt="Resolução"
+        style="
+          width:100%;
+          max-width:900px;
+          height:auto;
+          border-radius:10px;
+          box-shadow:0 0 12px rgba(0,0,0,0.25);
+          display:block;
+        ">
+    </div>
+  `;
+};
 
-    // Inicializa e abre modal novamente
-    const instance = M.Modal.init(modal, {preventScrolling:false});
-    instance.open();
-  }
 
 
+  teste.onerror = () => {
+    area.innerHTML = `
+      <iframe src="${urlIframe}"
+              style="width:85vw;height:100vh;border:none;border-radius:10px;background:#fff;"></iframe>
+    `;
+  };
+  teste.src = urlImagem;
+    const instance = M.Modal.init(modal, {
+    preventScrolling: true,
+    dismissible: true,
+    opacity: 0.6
+  });
+
+  instance.open();
+}
 
   // === BOTÃO VOLTAR AO TOPO ===
   window.addEventListener("scroll", () => {
