@@ -376,8 +376,8 @@
       align-items:flex-start;
       overflow-y:auto;
       overflow-x:hidden;
-      height:calc(95vh - 20px);
-      padding:10px 0 40px;
+      max-height:calc(90vh - 60px); /* respeita o espaço do cabeçalho e rodapé */
+      padding:10px 0 30px;
       margin:0 auto;
       scrollbar-width:thin;
     ">
@@ -393,6 +393,7 @@
     </div>
   `;
 };
+
 
 
   teste.onerror = () => {
