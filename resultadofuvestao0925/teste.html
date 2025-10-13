@@ -367,30 +367,32 @@
 
   const teste = new Image();
   teste.onload = () => {
-    area.innerHTML = `
-      <div style="
-        display:flex;
-        justify-content:center;
-        align-items:flex-start;
-        overflow-y:auto;
-        overflow-x:hidden;
-        max-height:85vh;
-        padding:10px;
-        margin:0 auto;
-        scrollbar-width:thin;
-      ">
-        <img src="${urlImagem}" alt="Resolução"
-          style="
-            width:100%;
-            max-width:900px;
-            height:auto;
-            border-radius:10px;
-            box-shadow:0 0 12px rgba(0,0,0,0.25);
-            display:block;
-          ">
-      </div>
-    `;
-  };
+  area.innerHTML = `
+    <div style="
+      display:flex;
+      justify-content:center;
+      align-items:flex-start;
+      overflow-y:auto;
+      overflow-x:hidden;
+      height:calc(95vh - 60px);
+      padding:10px 0 20px 0;
+      margin:0 auto;
+      scrollbar-width:thin;
+    ">
+      <img src="${urlImagem}" alt="Resolução"
+        style="
+          width:100%;
+          max-width:900px;
+          height:auto;
+          border-radius:10px;
+          box-shadow:0 0 12px rgba(0,0,0,0.25);
+          display:block;
+          margin-bottom:10px;
+        ">
+    </div>
+  `;
+};
+
   teste.onerror = () => {
     area.innerHTML = `
       <iframe src="${urlIframe}"
