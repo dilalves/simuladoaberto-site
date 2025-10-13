@@ -337,61 +337,48 @@
 
   // === ABRIR MODAL DE RESOLUÇÃO ===
   function abrirModalResolucao(link) {
-  if (!link) return;
+    if (!link) return;
 
-  const match = link.match(/[-\w]{25,}/);
-  let id = match ? match[0] : null;
-  if (!id) return;
+    const match = link.match(/[-\w]{25,}/);
+    let id = match ? match[0] : null;
+    if (!id) return;
 
-  const urlImagem = `https://lh3.googleusercontent.com/d/${id}=s2000`;
-  const urlIframe = `https://drive.google.com/file/d/${id}/preview`;
+    const urlImagem = `https://lh3.googleusercontent.com/d/${id}=s2000`;
+    const urlIframe = `https://drive.google.com/file/d/${id}/preview`;
 
-  const modal = document.getElementById('modalResolucao');
-  const area = document.getElementById('areaResolucao');
-  if (!modal || !area) return;
+    const modal = document.getElementById('modalResolucao');
+    const area = document.getElementById('areaResolucao');
+    if (!modal || !area) return;
 
-  area.innerHTML = `<p style="color:#666;">Carregando resolução...</p>`;
+    area.innerHTML = `<p style="color:#666;">Carregando resolução...</p>`;
 
-  const oldInstance = M.Modal.getInstance(modal);
-  if (oldInstance) oldInstance.destroy();
+    // Remove instância anterior (resolve bug de não reabrir)
+    const oldInstance = M.Modal.getInstance(modal);
+    if (oldInstance) oldInstance.destroy();
 
-  const teste = new Image();
-  teste.onload = () => {
-    area.innerHTML = `
-      <div style="
-        display:flex;
-        justify-content:center;
-        align-items:center;
-        overflow:auto;
-        max-height:90vh;
-      ">
+    // Testa se a imagem é acessível
+    const teste = new Image();
+    teste.onload = () => {
+      area.innerHTML = `
         <img src="${urlImagem}" alt="Resolução"
-          style="
-            width:auto;
-            height:auto;
-            max-width:95vw;
-            max-height:90vh;
-            border-radius:10px;
-            box-shadow:0 0 12px rgba(0,0,0,0.25);
-            cursor:zoom-in;
-          "
-          onclick="this.style.transform=this.style.transform?'':'scale(1.5)';this.style.transition='transform 0.3s';"
-        >
-      </div>
-    `;
-  };
-  teste.onerror = () => {
-    area.innerHTML = `
-      <iframe src="${urlIframe}"
-              style="width:95vw;height:90vh;border:none;border-radius:10px;background:#fff;"></iframe>
-    `;
-  };
-  teste.src = urlImagem;
+            style="width:auto;max-width:98vw;height:auto;max-height:95vh;
+                    object-fit:contain;border-radius:8px;
+                    box-shadow:0 0 8px rgba(0,0,0,0.15);">
+      `;
+    };
+    teste.onerror = () => {
+      area.innerHTML = `
+        <iframe src="${urlIframe}"
+                style="width:100% 1000px;height:88vh;border:none;border-radius:8px;
+                      background:#fff;"></iframe>
+      `;
+    };
+    teste.src = urlImagem;
 
-  const instance = M.Modal.init(modal, {preventScrolling:false});
-  instance.open();
-}
-
+    // Inicializa e abre modal novamente
+    const instance = M.Modal.init(modal, {preventScrolling:false});
+    instance.open();
+  }
 
 
 
