@@ -46,16 +46,32 @@
       background:#0b49a5;
     }
 
-    /* Impede rolagem dupla no modal */
+    /* --- Ajuste final do modal de resolução --- */
     .modal {
-  overflow: hidden !important;
-        }
-        .modal .modal-content {
-        overflow: hidden !important;
-        max-height: none !important;
-        padding: 0 !important;
-        margin: 0 !important;
-        }
+      top: 2vh !important;
+      max-height: 96vh !important;
+      overflow: visible !important;
+    }
+
+    .modal.open {
+      overflow: visible !important;
+    }
+
+    .modal .modal-content {
+      max-height: none !important;
+      overflow: visible !important;
+      padding: 0 !important;
+      margin: 0 !important;
+    }
+
+    .modal .modal-footer {
+      position: sticky;
+      bottom: 0;
+      background: #fff;
+      border-top: 1px solid #eee;
+      padding-right: 20px !important;
+    }
+
 
 /* -----------  MOBILE FIRST (celular) ----------- */
 @media (max-width: 480px) {
