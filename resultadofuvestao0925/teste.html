@@ -51,21 +51,35 @@
       #dadosAluno { padding:14px !important; font-size:14px; }
 
       /* === WRAPPER DO GRÁFICO (para não cortar) === */
-      #chartWrap {
-        width: 100%;
-        overflow-x: auto;
-        overflow-y: hidden;
-        -webkit-overflow-scrolling: touch;
-        border-radius: 6px;
-        background: #fff;
-        padding: 10px 0;
-      }
-      #chartWrap canvas {
-        width: 900px !important;      /* garante scroll horizontal */
+     /* === Gráfico === */
+    #chartWrap {
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    text-align: center;
+    background: #fff;
+    border-radius: 8px;
+    padding: 10px 0;
+    }
+
+    /* desktop */
+    #chartWrap canvas {
+    width: 90%;
+    max-width: 1000px;
+    height: 380px;
+    display: inline-block;
+    }
+
+    /* mobile específico */
+    @media (max-width: 480px) {
+    #chartWrap canvas {
+        width: 900px !important;  /* força scroll horizontal */
         max-width: none !important;
-        height: 260px !important;     /* altura fixa proporcional */
-        display: block;
-      }
+        height: 280px !important; /* altura proporcional */
+    }
+    }
+
 
       /* === TABELA DE QUESTÕES === */
       .tabelaWrap {
