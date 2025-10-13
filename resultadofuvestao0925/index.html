@@ -139,6 +139,19 @@
     }
   }
 
+  /* versão desktop: aviso oculto */
+  #avisoMobile {
+    display: none;
+    background: #fff3cd;
+    border: 1px solid #ffeeba;
+    color: #856404;
+    padding: 14px;
+    border-radius: 8px;
+    font-size: 14px;
+    margin-top: 16px;
+    text-align: center;
+  }
+
   </style>
 </head>
 
@@ -197,6 +210,11 @@
       <a href="#!" class="modal-close btn-flat">Fechar</a>
     </div>
   </div>
+
+    <div id="avisoMobile">
+      ⚠️ Para visualizar as questões e resoluções completas,<br>
+        acesse este resultado em um computador ou tablet.
+    </div>
 
     <button id="btnTopo" onclick="window.scrollTo({top:0,behavior:'smooth'})">&#8593;</button>
   </div>
@@ -276,6 +294,9 @@
           </tr>
         `;
       }).join('');
+
+
+      
 
       // === GRÁFICO COMPARATIVO ===
       const ctx = document.getElementById('graficoDesempenho');
