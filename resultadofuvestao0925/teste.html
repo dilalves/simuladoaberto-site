@@ -48,17 +48,14 @@
 
     /* Impede rolagem dupla no modal */
     .modal {
-      max-height: 98vh !important; /* ocupa 98% da altura da tela */
-      top: 1vh !important;         /* centraliza verticalmente */
-      overflow: hidden !important; /* evita barra dupla */
-    }
-
-    .modal .modal-content {
-      max-height: none !important; /* remove limite interno */
-      overflow: hidden !important;
-      padding-bottom: 0 !important;
-    }
-
+  overflow: hidden !important;
+        }
+        .modal .modal-content {
+        overflow: hidden !important;
+        max-height: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        }
 
 /* -----------  MOBILE FIRST (celular) ----------- */
 @media (max-width: 480px) {
@@ -379,7 +376,7 @@
       align-items:flex-start;
       overflow-y:auto;
       overflow-x:hidden;
-      max-height: 95vh  /* calc(90vh - 100px); /* respeita o espaço do cabeçalho e rodapé */
+      max-height:calc(90vh - 10px); /* respeita o espaço do cabeçalho e rodapé */
       padding:10px 0 50px;
       margin:0 auto;
       scrollbar-width:thin;
