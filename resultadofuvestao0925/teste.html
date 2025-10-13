@@ -48,12 +48,14 @@
 
     /* Impede rolagem dupla no modal */
     .modal {
-    overflow-y: hidden !important;
-    }
-    .modal .modal-content {
-    overflow: hidden !important;
-    padding-bottom: 0 !important;
-    }
+  overflow: hidden !important;
+        }
+        .modal .modal-content {
+        overflow: hidden !important;
+        max-height: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        }
 
 /* -----------  MOBILE FIRST (celular) ----------- */
 @media (max-width: 480px) {
@@ -366,7 +368,7 @@
   if (oldInstance) oldInstance.destroy();
 
   const teste = new Image();
-  teste.onload = () => {
+ teste.onload = () => {
   area.innerHTML = `
     <div style="
       display:flex;
@@ -374,8 +376,8 @@
       align-items:flex-start;
       overflow-y:auto;
       overflow-x:hidden;
-      height:calc(95vh - 60px);
-      padding:10px 0 20px 0;
+      height:calc(95vh - 20px);
+      padding:10px 0 40px;
       margin:0 auto;
       scrollbar-width:thin;
     ">
@@ -387,11 +389,11 @@
           border-radius:10px;
           box-shadow:0 0 12px rgba(0,0,0,0.25);
           display:block;
-          margin-bottom:10px;
         ">
     </div>
   `;
 };
+
 
   teste.onerror = () => {
     area.innerHTML = `
