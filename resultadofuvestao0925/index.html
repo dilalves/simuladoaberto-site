@@ -47,85 +47,81 @@
     }
 /* -----------  MOBILE FIRST (celular) ----------- */
 @media (max-width: 480px) {
-  h1 {
-    font-size:18px;
-  }
-  .container {
-    padding:0 10px;
-  }
+  body { background:#fafafa; }
+
+  h1 { font-size:18px; }
+
+  .container { padding:0 10px; }
+
   .card {
     padding:14px !important;
     margin-bottom:15px;
   }
-  .input-field label {
-    font-size:13px;
-  }
-  input {
-    font-size:14px;
-    text-align:center;
-  }
+
   .btn {
     width:100%;
     margin-top:6px;
   }
+
   #dadosAluno {
     padding:14px !important;
     font-size:14px;
   }
-  table.striped {
-    font-size:12px;
+
+  /* === Gráfico === */
+  #chartWrap {
+    width:100%;
+    overflow-x:auto;
+    overflow-y:hidden;
+    -webkit-overflow-scrolling:touch;
+    border-radius:6px;
+    background:#fff;
+    padding:10px 0;
+  }
+  #chartWrap canvas {
+    min-width:800px; /* largura mínima para não cortar disciplinas */
+    height:auto !important;
     display:block;
+  }
+
+  /* === Tabela de questões === */
+  .tabelaWrap {
     overflow-x:auto;
     white-space:nowrap;
   }
-  /* gráfico horizontal com rolagem */
-  #chartWrap {
-    overflow-x:auto;
-    overflow-y:hidden;
-    width:100%;
-    -webkit-overflow-scrolling: touch;
-  }
-  canvas {
-    min-width:600px; /* evita corte do gráfico */
-  }
-  /* notas dentro das barras */
-  .chartjs-render-monitor {
-    max-width:100%;
-    height:auto;
-  }
-  /* tabela de questões - visual claro e legível */
-  .tabelaQuestoes {
-    font-size:13px;
+
+  table.striped {
+    font-size:12px;
     border-collapse:separate;
     border-spacing:0 4px;
+    min-width:600px;
   }
-  .tabelaQuestoes th,
-  .tabelaQuestoes td {
+
+  table.striped th,
+  table.striped td {
     text-align:center;
     padding:6px 8px;
   }
-  /* destaque acertos e erros */
+
   .acerto {
     background:#e8f5e9;
     color:#1b5e20;
     font-weight:600;
   }
+
   .erro {
     background:#ffebee;
     color:#b71c1c;
     font-weight:600;
   }
-  /* rolagem horizontal só na tabela de questões */
-  .tabelaWrap {
-    overflow-x:auto;
-    white-space:nowrap;
-  }
+
   #btnTopo {
     width:40px;
     height:40px;
     font-size:18px;
   }
 }
+
 
   /* -----------  TABLET (entre 481 e 768px) ----------- */
   @media (min-width: 481px) and (max-width: 768px) {
