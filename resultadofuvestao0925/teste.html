@@ -45,6 +45,16 @@
     #btnTopo:hover {
       background:#0b49a5;
     }
+
+    /* Impede rolagem dupla no modal */
+    .modal {
+    overflow-y: hidden !important;
+    }
+    .modal .modal-content {
+    overflow: hidden !important;
+    padding-bottom: 0 !important;
+    }
+
 /* -----------  MOBILE FIRST (celular) ----------- */
 @media (max-width: 480px) {
   body { background:#fafafa; }
@@ -388,9 +398,7 @@
     `;
   };
   teste.src = urlImagem;
-
-  // ⚙️ Modal sem rolagem duplicada
-  const instance = M.Modal.init(modal, {
+    const instance = M.Modal.init(modal, {
     preventScrolling: true,
     dismissible: true,
     opacity: 0.6
@@ -398,10 +406,6 @@
 
   instance.open();
 }
-
-
-
-
 
   // === BOTÃO VOLTAR AO TOPO ===
   window.addEventListener("scroll", () => {
