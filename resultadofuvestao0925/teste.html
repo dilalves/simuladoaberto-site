@@ -361,7 +361,7 @@
     teste.onload = () => {
       area.innerHTML = `
         <img src="${urlImagem}" alt="Resolução"
-            style="width:auto;max-width:98vw;height:auto;max-height:95vh;
+            style="width:auto;max-width:110vw;height:auto;max-height:95vh;
                     object-fit:contain;border-radius:8px;
                     box-shadow:0 0 8px rgba(0,0,0,0.15);">
       `;
@@ -369,7 +369,7 @@
     teste.onerror = () => {
       area.innerHTML = `
         <iframe src="${urlIframe}"
-                style="width:100% 1000px;height:88vh;border:none;border-radius:8px;
+                style="width:100%;height:88vh;border:none;border-radius:8px;
                       background:#fff;"></iframe>
       `;
     };
