@@ -332,10 +332,13 @@
         }
 
         if (j.correcoes) {
-          const { c1:vc1=0, c2:vc2=0, c3:vc3=0, c4:vc4=0, c5:vc5=0 } = j.correcoes;
+          const { c1:vc1=0, c2:vc2=0, c3:vc3=0, c4:vc4=0, c5:vc5=0, obs:obsTxt='' } = j.correcoes;
           c1.value=vc1; c2.value=vc2; c3.value=vc3; c4.value=vc4; c5.value=vc5;
+          obs.value = obsTxt;
           soma();
+          if (window.M && M.updateTextFields) M.updateTextFields(); // atualiza o label do campo
         }
+
 
         // se backend devolver notas
         if (Array.isArray(j.notas)) {
