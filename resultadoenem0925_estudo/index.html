@@ -1,0 +1,1167 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link rel="icon" type="image/x-icon" href="https://www.curso-objetivo.br/assets/img/favicon.ico" />
+  <title>Resultado - Simulado Aberto ENEM Agosto</title>
+
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
+
+  <style>
+    header{margin:0;padding:20px 0;background:#002776;color:#fff;text-align:center}
+    body{background:#fafafa}
+    h1{margin:0;font-size:24px}
+    footer{text-align:center;padding:20px;font-size:14px;color:#888}
+    #chartWrap{display:none} /* canvas oculto só p/ gráfico do PDF */
+
+    /* mensagem embutida abaixo da nota */
+    .mini-msg{
+      margin-top:6px;
+      font-size:13px;
+      line-height:1.25;
+      color:#1565c0;
+      background:#e3f2fd;
+      border-left:4px solid #1976d2;
+      border-radius:4px;
+      padding:8px;
+      text-align: justify;
+      hyphens: auto;
+      }
+
+    /* bloco “Redação (Total) + Competências” movido para baixo dos textos */
+    #blocoRedacao{
+      display:none;               /* fica escondido até termos dados */
+      margin-top:16px;
+      background:#f5f5f5;
+      border-radius:6px;
+      padding:12px 14px;
+    }
+    #blocoRedacao .item{
+      margin:4px 0;
+      font-size:15px;
+    }
+
+    /* esconder linhas antigas de “Redação (Total)” e “Competências” na tabela */
+    tr.hide-row{display:none}
+
+    td .nota{ font-weight:700; font-size:16px; display:inline-block; margin-bottom:6px }
+  .mini-msg{
+    margin-top:0;              /* já temos espaço pela .nota */
+    background:#eaf3ff;        /* um pouquinho mais claro */
+    color:#1257a6;
+    border-left-color:#166bd9;
+  }
+  /* largura fixa pros <th> ficarem alinhados em telas largas */
+  table.striped th{ width:210px }
+
+     #blocoRedacao{
+    background: #f7f9fc;
+    border: 1px solid #e3e9f5;
+    box-shadow: 0 1px 2px rgba(0,0,0,.04);
+  }
+  #blocoRedacao .item strong{ color:#263238 }
+
+    table.striped td, table.striped th{ padding:10px 14px }
+  .card-content{ padding:18px } /* um pouco mais compacto */
+
+    /* MOBILE: empilha rótulo, nota e mensagem; desliga hífens */
+    @media (max-width: 600px){
+      /* a tabela vira “cards” por linha */
+      table.striped tbody tr{
+        display:block;
+        margin:14px 0;
+        padding:10px 0 12px;
+        border-top:1px solid #eee;
+      }
+      table.striped th{
+        display:block;        /* rótulo acima */
+        width:auto !important;
+        padding:0 0 6px 0;
+        font-size:13px;
+        color:#607d8b;
+        letter-spacing:.2px;
+      }
+      table.striped td{
+        display:block;        /* conteúdo abaixo do rótulo */
+        padding:0;            /* remove padding lateral que estreita o texto */
+      }
+    
+      /* nota grande, antes da mensagem */
+      td .nota{
+        display:block;
+        font-size:22px;
+        margin:0 0 8px 0;
+      }
+    
+      /* mensagem ocupa toda a largura, sem hífens */
+      .mini-msg{
+        padding:10px 12px;
+        font-size:14px;
+        line-height:1.4;
+        hyphens: none;              /* <- desliga hifenização */
+        word-break: normal;
+        overflow-wrap: break-word;  /* quebra só quando precisa */
+      }
+    
+      /* dá um respiro geral na card */
+      .card-content{ padding:14px }
+    }
+    
+  </style>
+</head>
+<body>
+ 
+  <header>
+    <h1>Simulado Aberto ENEM Agosto/2025</h1>
+  </header>
+
+   <img src="https://raw.githubusercontent.com/dilalves/simuladoaberto-site/main/resultadoenem0825/Digital---Simulado-Aberto-728X90.png" 
+     alt="Banner Simulado Aberto"
+     style="display:block; margin:20px auto;">
+
+  <div class="container" style="max-width:900px; margin-top:28px">
+    <h5 class="blue-text text-darken-2">Consultar Resultado</h5>
+
+    <div class="card">
+      <div class="card-content">
+        <div class="row">
+          <div class="input-field col s12 m6">
+            <input id="inscricao" type="text" required>
+            <label for="inscricao">Inscrição</label>
+          </div>
+          <div class="input-field col s12 m6">
+            <input id="cpf" type="text" required placeholder="somente números">
+            <label for="cpf">CPF</label>
+          </div>
+        </div>
+
+        <div class="row" style="margin-bottom:0">
+          <div class="col s12 center-align">
+            <button id="btnConsultar" class="btn waves-effect waves-light blue darken-2">
+              Consultar
+            </button>
+            <button id="btnPdf" class="btn blue waves-effect waves-light" disabled>
+              Baixar PDF
+            </button>
+            <span id="status" class="grey-text text-darken-1" style="margin-left:12px"></span>
+          </div>
+        </div>
+
+
+        <div id="msg" style="margin-top:12px; color:#d32f2f"></div>
+      </div>
+    </div>
+
+    <div id="resultado" style="display:none">
+      <div class="card">
+        <div class="card-content">
+          <span class="card-title" id="alunoNome"></span>
+
+          <table class="striped">
+            <tbody>
+              <tr><th>Inscrição</th><td id="inscOut"></td></tr>
+              <tr><th>Unidade</th><td id="unidOut"></td></tr>
+
+              <!-- Notas + mensagens embutidas -->
+              <tr><th>LINGUAGENS</th><td id="n_ling"></td></tr>
+              <tr><th>HUMANAS</th><td id="n_hum"></td></tr>
+              <tr><th>NATUREZA</th><td id="n_nat"></td></tr>
+              <tr><th>MATEMÁTICA</th><td id="n_mat"></td></tr>
+
+              <!-- Estas duas linhas ficam escondidas: vamos mostrar num bloco mais abaixo -->
+              <tr id="row_red_total" class="hide-row"><th>Redação (Total)</th><td id="n_red_total"></td></tr>
+              <tr id="row_red_comp"  class="hide-row"><th>Competências (C1–C5)</th><td id="n_red_comp"></td></tr>
+
+              <tr><th>CLS_G</th><td id="n_CLS_G"></td></tr>
+              <tr><th>CLS_U</th><td id="n_CLS_U"></td></tr>
+            </tbody>
+          </table>
+
+          <!-- Bloco movido: Redação (Total) + Competências, logo abaixo das mensagens -->
+          <div id="blocoRedacao">
+            <div class="item"><strong>Redação (Total):</strong> <span id="out_red_total">-</span></div>
+            <div class="item"><strong>Competências (C1–C5):</strong> <span id="out_red_comp">-</span></div>
+          </div>
+
+          <!-- Imagem da redação vem depois -->
+          <div style="margin-top:16px">
+            <h6 class="blue-text text-darken-2">Imagem da Redação</h6>
+            <div id="imgBox"></div>
+            
+          </div>
+
+          <!-- Explicação das Competências -->
+            <div id="textoCompetencias" class="card-panel" style="margin-top:14px; background:#f7f9fc; border:1px solid #e3e9f5">
+              <h6 class="blue-text text-darken-2" style="margin:0 0 6px 0">O que significam as Competências da Redação</h6>
+              <ul class="browser-default" style="margin:8px 0 0 18px">
+                <li><strong>Competência 1 –</strong> Dominar a escrita formal da Língua Portuguesa.</li>
+                <li><strong>Competência 2 –</strong> Compreender o tema e desenvolver o texto dissertativo-argumentativo.</li>
+                <li><strong>Competência 3 –</strong> Usar informações e argumentos de forma organizada e coerente.</li>
+                <li><strong>Competência 4 –</strong> Empregar recursos linguísticos para garantir coesão e clareza.</li>
+                <li><strong>Competência 5 –</strong> Propor intervenção para o problema discutido, respeitando os direitos humanos.</li>
+              </ul>
+            </div>
+
+          
+        </div>
+      </div>
+    </div>
+
+    <!-- Canvas escondido para gerar gráfico para o PDF -->
+    <div id="chartWrap" style="display:none">
+      <canvas id="grafico"  width="900" height="420"></canvas>   <!-- comparativo Aluno x Média -->
+      <canvas id="graficoC" width="520" height="220"></canvas>   <!-- competências C1..C5 -->
+    </div>
+  </div>
+
+  <footer>simuladoaberto.com - Curso Objetivo Vestibulares</footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+
+  <script>
+  /* ===== CONFIG BÁSICA ===== */
+  //const ENDPOINT = 'https://script.google.com/macros/s/AKfycbwradbKRivZtlC3TAWqqPuIsC1UoM6Lgh53FRsM0Z9GryRZ6EcPAXP6NVj_3KqNwJw3/exec';
+  const ENDPOINT = 'https://api.secauxiliar.com.br/psq_resultado_enem_0825.php'
+  const TEMPLATE_URL = 'https://raw.githubusercontent.com/dilalves/simuladoaberto-site/main/resultadoenem0825/RESULTADO_PADRAO_0825.pdf';
+
+  let ultimoResultado = null;
+
+  document.getElementById('btnConsultar').addEventListener('click', consultar);
+  document.getElementById('btnPdf').addEventListener('click', gerarPDF);
+
+  /* ===== CONSULTA ===== */
+  async function consultar(){
+  const status = document.getElementById('status');
+  const msg = document.getElementById('msg');
+  const resDiv = document.getElementById('resultado');
+  const btnPdf = document.getElementById('btnPdf');
+
+  status.textContent = 'Consultando...';
+  msg.textContent = '';
+  resDiv.style.display = 'none';
+  btnPdf.disabled = true; btnPdf.classList.add('grey');
+
+  const insc = document.getElementById('inscricao').value.replace(/\D/g,'');
+  const cpf  = document.getElementById('cpf').value.replace(/\D/g,'');
+  if (!insc || cpf.length < 11) { msg.textContent = 'Preencha inscrição e CPF válidos.'; status.textContent=''; return; }
+
+  try{
+    const url = `${ENDPOINT}?action=resultado&inscricao=${encodeURIComponent(insc)}&cpf=${encodeURIComponent(cpf)}`;
+    const r = await fetch(url, { cache:'no-store' });
+    const j = await r.json();
+    if (!j.ok) { msg.textContent = j.error || 'Não encontrado'; status.textContent=''; return; }
+
+    ultimoResultado = j;
+
+    /* === MÉDIAS GLOBAIS (p/ comparativo) === */
+    ultimoResultado.medias = normalizeMedias(j.medias);
+    
+    if (!ultimoResultado.medias) {
+      try {
+        const rMed = await fetch(`${ENDPOINT}?action=stats`, { cache: 'no-store' });
+        if (rMed.ok) {
+          const jMed = await rMed.json();
+          const medias = normalizeMedias(jMed?.medias ?? jMed ?? null);
+          if (medias) ultimoResultado.medias = medias;
+        }
+      } catch(e) {
+        console.warn('Sem médias do endpoint', e);
+      }
+    }
+    console.log('MEDIAS USADAS:', ultimoResultado.medias);
+    
+    /* === /MÉDIAS === */
+
+    // Cabeçalho
+    document.getElementById('alunoNome').textContent = (j.aluno && j.aluno.nome) ? j.aluno.nome : `Inscrição ${j.inscricao}`;
+    document.getElementById('inscOut').textContent = j.inscricao;
+    document.getElementById('unidOut').textContent = (j.aluno && j.aluno.unidadeNome) ? j.aluno.unidadeNome : '-';
+
+    const A = j.areas || {};
+    const R = j.redacao || {};
+    const C = j.classificacao || {};
+    const msgs = getMessages(A, R);
+
+    // notas + mensagens (no mesmo <td>)
+    setScoreWithMsg('n_ling', A.linguagens, msgs.linguagens);
+    setScoreWithMsg('n_hum',  A.humanas,    msgs.humanas);
+    setScoreWithMsg('n_nat',  A.natureza,   msgs.natureza);
+    setScoreWithMsg('n_mat',  A.matematica, msgs.matematica);
+
+    // classificação
+    setText('n_CLS_G', C.cls_g ?? j.cls_g ?? '-');
+    setText('n_CLS_U', C.cls_u ?? j.cls_u ?? '-');
+
+    // bloco Redação + Competências
+    //document.getElementById('out_red_total').textContent = val(R.total);    ***** linha comentada para teste. inseri a mensagem na linha abaixo
+    document.getElementById('out_red_total').textContent = val(R.total) + " — " + msgRedacao(R.total);
+    const comps = [R.c1,R.c2,R.c3,R.c4,R.c5].filter(x=>x!=null).join(' / ') || '-';
+    document.getElementById('out_red_comp').textContent  = comps;
+    document.getElementById('blocoRedacao').style.display = 'block';
+
+    // Imagem/preview da Redação
+    const L = j.links || {};
+    montarRedacao(L.imagemRedacao);
+
+    resDiv.style.display = 'block';
+    btnPdf.disabled = false; btnPdf.classList.remove('grey');
+    status.textContent = '';
+  }catch(e){
+    msg.textContent = 'Erro ao consultar. Tente novamente.';
+    console.error(e);
+    status.textContent='';
+  }
+}
+
+
+  function setText(id, v){ document.getElementById(id).textContent = (v==null?'-':v); }
+  function val(x){ return (x==null?'-':x); }
+
+  // Mostra pontuação + caixinha com a mensagem logo abaixo
+  function setScoreWithMsg(id, score, message){
+    const el = document.getElementById(id);
+    const nota = (score==null?'-':score);
+    const msgHtml = message ? `<div class="mini-msg">${message}</div>` : '';
+    el.innerHTML = `<span class="nota">${nota}</span>${msgHtml}`;
+  }
+
+  /* ===== Redação: imagem/iframe + link ===== */
+  function montarRedacao(link){
+    const box = document.getElementById('imgBox');
+    if (!box) return;
+    box.innerHTML = '';
+    if (!link) return;
+
+    const idMatch1 = String(link).match(/\/file\/d\/([^/]+)\//);
+    const idMatch2 = String(link).match(/[?&]id=([^&]+)/);
+    const id = idMatch1 ? idMatch1[1] : (idMatch2 ? idMatch2[1] : null);
+
+    const direct  = id ? `https://drive.google.com/uc?id=${id}&export=view`  : link;
+    const preview = id ? `https://drive.google.com/file/d/${id}/preview`     : link;
+    const view    = id ? `https://drive.google.com/file/d/${id}/view`        : link;
+
+    const img = new Image();
+    img.className = 'redacao';
+    img.alt = 'Redação';
+    img.src = direct;
+
+    img.onerror = () => {
+      box.innerHTML = '';
+      const ifr = document.createElement('iframe');
+      ifr.style.width = '100%';
+      ifr.style.height = '820px';
+      ifr.style.border = '0';
+      ifr.src = preview;
+      box.appendChild(ifr);
+
+      const p = document.createElement('p'); p.style.marginTop = '8px';
+      const a = document.createElement('a'); a.href = view; a.target = '_blank'; a.rel = 'noopener'; a.textContent = 'Abrir no Google Drive';
+      p.append('Não carregou como imagem? ', a);
+      box.appendChild(p);
+    };
+
+    img.onload = () => {
+      box.appendChild(img);
+      const p = document.createElement('p'); p.style.marginTop = '8px';
+      const a = document.createElement('a'); a.href = view; a.target = '_blank'; a.rel = 'noopener'; a.textContent = 'Abrir no Google Drive';
+      p.append('Não carregou como imagem? ', a);
+      box.appendChild(p);
+    };
+
+    box.appendChild(img);
+  }
+
+  /* ===== MENSAGENS POR NOTA (mesmo conteúdo que já usamos) ===== */
+  function getMessages(A, R){
+    const L = A?.linguagens ?? null;
+    const H = A?.humanas    ?? null;
+    const N = A?.natureza   ?? null;
+    const M = A?.matematica ?? null;
+    const RT= R?.total      ?? null;
+
+    return {
+      linguagens: msgLinguagens(L),
+      humanas:    msgHumanas(H),
+      natureza:   msgNatureza(N),
+      matematica: msgMatematica(M),
+      redacao:    msgRedacao(RT)
+    };
+  }
+
+  function faixa(nota, faixas, msgSemNota){
+    if (nota == null) return msgSemNota;
+    for (const f of faixas){
+      const okMin = nota >= f.min;
+      const okMax = f.max == null ? true : nota <= f.max;
+      if (okMin && okMax) return f.msg;
+    }
+    return faixas.at(-1).msg;
+  }
+
+  function msgLinguagens(nota){
+    return faixa(nota, [
+      {min:-Infinity, max:400, msg:"Você já deu o primeiro passo! Que tal ler mais textos variados, como notícias, charges e crônicas? A prática da leitura vai ajudar a interpretar melhor e evoluir nos estudos."},
+      {min:400, max:499, msg:"Seu caminho já começou! Foque em entender as ideias principais dos textos, sublinhando palavras-chave. Quanto mais contato com a leitura, melhor o desempenho!"},
+      {min:500, max:599, msg:"Ótimo trabalho! Você está no caminho certo. Continue lendo diferentes gêneros e praticando a interpretação. Discutir ideias também aprimora a compreensão."},
+      {min:600, max:649, msg:"Seu desempenho está crescendo! Experimente leituras mais desafiadoras (poesia, artigo de opinião). Resolver provas anteriores melhora a compreensão de textos."},
+      {min:650, max:699, msg:"Incrível! Seu domínio de leitura está avançado. Explorar obras literárias amplia vocabulário e diferentes pontos de vista."},
+      {min:700, max:799, msg:"Parabéns! Boa compreensão e capacidade crítica. Continue com leituras complexas e argumentos bem estruturados."},
+      {min:800, max:null, msg:"Excepcional! Domínio alto de linguagem e interpretação. Explore literatura e textos acadêmicos para lapidar a análise crítica."}
+    ], "Linguagens: sem nota registrada.");
+  }
+
+  function msgHumanas(nota){
+    return faixa(nota, [
+      {min:-Infinity, max:400, msg:"Você já começou a construir seu conhecimento em Ciências Humanas! Que tal explorar mais sobre história, geografia, sociologia e filosofia? Assistir a documentários e ler textos variados pode ajudar a entender melhor os temas."},
+      {min:400, max:499, msg:"Ótimo começo! Foque em compreender os principais acontecimentos históricos e suas conexões com o presente. Reflita sobre temas sociais e políticos para ampliar sua visão de mundo."},
+      {min:500, max:599, msg:"Bom trabalho! Seu conhecimento em Ciências Humanas está se fortalecendo. Continue lendo livros e artigos sobre temas históricos e sociais. Debater ideias e formar opiniões embasadas pode ajudar a consolidar seu aprendizado."},
+      {min:600, max:649, msg:"Muito bem! Você já tem uma boa compreensão dos conteúdos. Continue relacionando os temas estudados com questões do mundo atual e explore fontes confiáveis para aprofundar ainda mais seu conhecimento."},
+      {min:650, max:699, msg:"Parabéns! Seu desempenho em Ciências Humanas mostra que você domina os temas com profundidade. Continue explorando autores clássicos e contemporâneos para enriquecer ainda mais suas análises."},
+      {min:700, max:799, msg:"Excelente! Seu raciocínio crítico e interpretação dos fatos históricos e sociais são impressionantes. Continue desenvolvendo sua capacidade analítica e aprofundando seus conhecimentos sobre geopolítica, economia e filosofia."},
+      {min:800, max:null, msg:"Fantástico! Seu conhecimento em Ciências Humanas está em alto nível. Sua capacidade de análise crítica e reflexão sobre o mundo é admirável. Continue explorando diferentes perspectivas e conectando os temas para expandir ainda mais sua visão global."}
+    ], "Humanas: sem nota registrada.");
+  }
+
+  function msgNatureza(nota){
+    return faixa(nota, [
+      {min:-Infinity, max:400, msg:"Você deu o primeiro passo! Explore mais os fenômenos naturais e suas aplicações. Estudar de forma prática, fazendo experimentos simples, por exemplo, pode ajudar a entender melhor os conceitos."},
+      {min:400, max:499, msg:"Você está começando a construir seu conhecimento! Continue focando nas bases e pratique resolvendo questões e experimentos simples. Isso ajudará a evoluir ainda mais."},
+      {min:500, max:599, msg:"Bom progresso! Seu conhecimento em Ciências da Natureza está crescendo. Continue praticando e conectando conceitos ao cotidiano. Resolver questões de provas anteriores e analisar experimentos simples vai ajudar muito!"},
+      {min:600, max:649, msg:"Ótimo trabalho! Seu desempenho está se destacando. Aprofunde-se mais em tópicos desafiadores, leia livros complementares e resolva questões avançadas para impulsionar ainda mais seu aprendizado."},
+      {min:650, max:699, msg:"Excelente! Seu domínio dos conceitos está ótimo. Explore mais as aplicações práticas da ciência, leia materiais complementares e analise experimentos desafiadores para expandir ainda mais seu conhecimento."},
+      {min:700, max:799, msg:"Parabéns! Você está indo muito bem. Aprofunde ainda mais seus estudos, investigue fenômenos naturais complexos e resolva questões de nível avançado. Seu desempenho reflete uma grande capacidade de análise!"},
+      {min:800, max:null, msg:"Incrível! Seu conhecimento é de alto nível. Sua capacidade de raciocínio científico é excelente. Continue explorando tópicos avançados, analisando experimentos complexos e desafiando-se a ir além nos estudos."}
+    ], "Natureza: sem nota registrada.");
+  }
+
+  function msgMatematica(nota){
+    return faixa(nota, [
+      {min:-Infinity, max:400, msg:"Você já deu o primeiro passo! Que tal revisar as operações básicas e resolver problemas mais simples? Com mais prática, você vai entender melhor os conceitos fundamentais e avançar nos estudos."},
+      {min:400, max:499, msg:"Você está no caminho certo! Foque nas bases da matemática e procure resolver exercícios de problemas simples. Revisar fórmulas também vai ajudar a melhorar!"},
+      {min:500, max:599, msg:"Bom trabalho! Seu entendimento de Matemática está crescendo. Continue praticando as operações e explore problemas mais complexos. Resolver questões de provas anteriores vai ajudar a consolidar os conceitos."},
+      {min:600, max:649, msg:"Excelente progresso! Seu desempenho está bom, mas pode melhorar ainda mais. Aprofunde-se em álgebra e geometria, e resolva questões de níveis mais desafiadores para aprimorar seu raciocínio lógico."},
+      {min:650, max:699, msg:"Ótimo desempenho! Você já tem um bom domínio das habilidades matemáticas. Continue praticando álgebra e geometria. Tente resolver questões mais difíceis e desafie-se a estudar novas áreas da matemática."},
+      {min:700, max:799, msg:"Parabéns! Seu domínio de Matemática está excelente. Continue aprimorando sua habilidade de resolução de problemas, praticando mais exercícios complexos e explorando tópicos mais avançados, como trigonometria e funções."},
+      {min:800, max:null, msg:"Incrível! Seu conhecimento de Matemática é impressionante. Sua capacidade de resolver problemas complexos é excelente. Continue explorando tópicos avançados do ensino médio, como trigonometria, matrizes, probabilidade e estatística. Resolver desafios e provas mais exigentes vai ajudar você a se destacar ainda mais!"}
+    ], "Matemática: sem nota registrada.");
+  }
+
+  function msgRedacao(nota){
+    return faixa(nota, [
+      {min:-Infinity, max:200, msg:"Não desista! Toda jornada começa com o primeiro passo. Pratique a escrita de textos dissertativos e analise redações nota 1000 para entender melhor a estrutura!"},
+      {min:200, max:299, msg:"Você está progredindo! Foque na estrutura do texto e na sua linha de raciocínio. Ler e escrever com frequência vai ajudar a melhorar!"},
+      {min:300, max:399, msg:"Bom começo! Tente desenvolver melhor seus argumentos e ampliar seu repertório cultural. Leia editoriais, notícias e artigos de opinião para fortalecer suas ideias."},
+      {min:400, max:499, msg:"Seu texto tem potencial! Aprofundar sua argumentação e apresentar uma boa proposta de intervenção, viável e coerente com os argumentos apresentados, ajudará a elevar sua nota."},
+      {min:500, max:599, msg:"Bom trabalho! Você já compreende bem a estrutura da redação. Agora, foque na progressão textual e no aprimoramento da proposta de intervenção, que deve conter: agente, ação, modo/meio, efeito/finalidade e detalhamento."},
+      {min:600, max:699, msg:"Muito bem! Sua redação está bem desenvolvida. Continue refinando a argumentação e explorando referências para tornar seu texto ainda mais aprimorado, apresentando uma proposta de intervenção viável e coerente com os argumentos apresentados."},
+      {min:700, max:799, msg:"Parabéns! Sua escrita é clara e bem organizada. Para alcançar um nível ainda mais alto, busque aprofundar a análise crítica e verifique se sua proposta de intervenção apresenta os seguintes elementos: agente, ação, modo/meio, efeito/finalidade, detalhamento."},
+      {min:800, max:899, msg:"Excelente! Sua argumentação e domínio da escrita são de alto nível. Continue praticando para alcançar a nota máxima!"},
+      {min:900, max:null, msg:"Fantástico! Sua redação demonstra domínio total da estrutura, argumentação e coesão. Seu nível de escrita é digno de nota máxima. Continue se aprimorando e inspirando outros com seu talento!"}
+    ], "Redação: sem nota registrada.");
+  }
+
+    function msgC1(nota){
+  return faixa(nota, [
+    {min:0,   max:99,  msg:"Competência 1 – Dominar a escrita formal da Língua Portuguesa: Texto com muitos desvios gramaticais e de convenções da escrita, comprometendo a compreensão."},
+    {min:100, max:129, msg:"Competência 1 – Dominar a escrita formal da Língua Portuguesa: Texto apresenta alguns desvios de pontuação, grafia e morfossintaxe, com comprometimento parcial da estrutura."},
+    {min:130, max:149, msg:"Competência 1 – Dominar a escrita formal da Língua Portuguesa: Domínio razoável da norma padrão, ainda com desvios que não comprometem a compreensão global."},
+    {min:150, max:169, msg:"Competência 1 – Dominar a escrita formal da Língua Portuguesa: Bom domínio da modalidade escrita formal, com poucos desvios gramaticais e de convenções."},
+    {min:170, max:189, msg:"Competência 1 – Dominar a escrita formal da Língua Portuguesa: Ótimo domínio da modalidade escrita formal; eventuais desvios são raros e não afetam a qualidade do texto."},
+    {min:190, max:null,msg:"Competência 1 – Dominar a escrita formal da Língua Portuguesa: Excelente domínio da modalidade escrita formal, com plena adequação às convenções da escrita."}
+  ], "C1: sem nota registrada.");
+}
+
+function msgC2(nota){
+  return faixa(nota, [
+    {min:0,   max:99,  msg:"Competência 2 – Compreender o tema e desenvolver o texto dissertativo-argumentativo: Texto tangencia o tema ou apresenta argumentação incoerente/insuficiente, com pouco repertório."},
+    {min:100, max:129, msg:"Competência 2 – Compreender o tema e desenvolver o texto dissertativo-argumentativo: Desenvolvimento limitado do tema, com argumentação previsível ou pouco consistente."},
+    {min:130, max:149, msg:"Competência 2 – Compreender o tema e desenvolver o texto dissertativo-argumentativo: Desenvolve o tema com coerência parcial e repertório suficiente, ainda com limitações de aprofundamento."},
+    {min:150, max:169, msg:"Competência 2 – Compreender o tema e desenvolver o texto dissertativo-argumentativo: Desenvolvimento consistente do tema, com uso adequado de repertório sociocultural."},
+    {min:170, max:189, msg:"Competência 2 – Compreender o tema e desenvolver o texto dissertativo-argumentativo: Argumentação consistente e fluente, articulada ao projeto do texto, com repertório produtivo."},
+    {min:190, max:null,msg:"Competência 2 – Compreender o tema e desenvolver o texto dissertativo-argumentativo: Excelente desenvolvimento do tema, com autoria marcada e repertório diversificado, plenamente adequado ao gênero."}
+  ], "C2: sem nota registrada.");
+}
+
+function msgC3(nota){
+  return faixa(nota, [
+    {min:0,   max:99,  msg:"Competência 3 – Usar informações e argumentos de forma organizada e coerente: Apresenta informações desconexas e pouco relacionadas ao ponto de vista."},
+    {min:100, max:129, msg:"Competência 3 – Usar informações e argumentos de forma organizada e coerente: Organização incipiente; argumentos previsíveis e pouco articulados."},
+    {min:130, max:149, msg:"Competência 3 – Usar informações e argumentos de forma organizada e coerente: Em defesa de um ponto de vista, apresenta informações relacionadas ao tema, de forma organizada, com indícios de autoria."},
+    {min:150, max:169, msg:"Competência 3 – Usar informações e argumentos de forma organizada e coerente: Seleciona e organiza informações/argumentos de forma consistente, com autoria e progressão."},
+    {min:170, max:189, msg:"Competência 3 – Usar informações e argumentos de forma organizada e coerente: Argumentos relevantes e bem articulados, com boa progressão e consistência."},
+    {min:190, max:null,msg:"Competência 3 – Usar informações e argumentos de forma organizada e coerente: Seleção e organização exemplares; argumentos originais e plenamente articulados em defesa do ponto de vista."}
+  ], "C3: sem nota registrada.");
+}
+
+function msgC4(nota){
+  return faixa(nota, [
+    {min:0,   max:99,  msg:"Competência 4 – Empregar recursos linguísticos para garantir coesão e clareza: Grande dificuldade em articular as partes do texto, comprometendo a coesão."},
+    {min:100, max:129, msg:"Competência 4 – Empregar recursos linguísticos para garantir coesão e clareza: Articula de forma mediana, com inadequações/desvios e repertório coesivo pouco diversificado."},
+    {min:130, max:149, msg:"Competência 4 – Empregar recursos linguísticos para garantir coesão e clareza: Articulação adequada na maior parte do texto, embora ainda ocorram alguns desvios de coesão."},
+    {min:150, max:169, msg:"Competência 4 – Empregar recursos linguísticos para garantir coesão e clareza: Boa articulação entre as partes do texto, com poucos desvios e uso variado de recursos coesivos."},
+    {min:170, max:189, msg:"Competência 4 – Empregar recursos linguísticos para garantir coesão e clareza: Ótima articulação textual; repertório coesivo diversificado, com raras inadequações."},
+    {min:190, max:null,msg:"Competência 4 – Empregar recursos linguísticos para garantir coesão e clareza: Excelente articulação; repertório amplo de mecanismos linguísticos e coesivos, sem inadequações relevantes."}
+  ], "C4: sem nota registrada.");
+}
+
+function msgC5(nota){
+  return faixa(nota, [
+    {min:0,   max:99,  msg:"Competência 5 – Propor intervenção para o problema discutido, respeitando os direitos humanos: Proposta de intervenção insuficiente, inadequada ou pouco relacionada ao problema abordado."},
+    {min:100, max:129, msg:"Competência 5 – Propor intervenção para o problema discutido, respeitando os direitos humanos: Proposta incipiente, pouco detalhada e não plenamente articulada ao desenvolvimento do texto."},
+    {min:130, max:149, msg:"Competência 5 – Propor intervenção para o problema discutido, respeitando os direitos humanos: Proposta bem elaborada e articulada ao tema, ainda sem detalhamento suficiente."},
+    {min:150, max:169, msg:"Competência 5 – Propor intervenção para o problema discutido, respeitando os direitos humanos: Proposta bem elaborada, articulada e consistente; atende ao problema discutido."},
+    {min:170, max:189, msg:"Competência 5 – Propor intervenção para o problema discutido, respeitando os direitos humanos: Proposta completa e abrangente, bem detalhada e viável, respeitando os direitos humanos."},
+    {min:190, max:null,msg:"Competência 5 – Propor intervenção para o problema discutido, respeitando os direitos humanos: Proposta completa, detalhada e plenamente articulada, com respeito aos direitos humanos."}
+  ], "C5: sem nota registrada.");
+}
+
+function getFeedbackCompetencias(R){
+  return {
+    c1: msgC1(R?.c1 ?? null),
+    c2: msgC2(R?.c2 ?? null),
+    c3: msgC3(R?.c3 ?? null),
+    c4: msgC4(R?.c4 ?? null),
+    c5: msgC5(R?.c5 ?? null),
+  };
+}
+
+    
+
+  //* ===== PDF (pdf-lib) com template + comparativo + mini C1..C5 ===== */
+  async function gerarPDF(){
+    if (!ultimoResultado) return;
+  
+    const { PDFDocument, StandardFonts } = PDFLib;
+  
+    // abre template do fundo
+    let tplPdf = null;
+    try{
+      const ab = await fetch(TEMPLATE_URL, { cache:'no-store' }).then(r => r.arrayBuffer());
+      tplPdf = await PDFDocument.load(ab);
+    }catch(e){
+      console.warn('Não consegui carregar TEMPLATE_URL; usando branco.', e);
+    }
+  
+    const doc  = await PDFDocument.create();
+    const font = await doc.embedFont(StandardFonts.Helvetica);
+  
+    // ======== PÁGINA 1 ========
+    let page1;
+    if (tplPdf){
+      const [tpl1] = await doc.copyPages(tplPdf, [0]);
+      page1 = doc.addPage(tpl1);
+    } else {
+      page1 = doc.addPage([595.28, 841.89]);
+    }
+    setPdfContext(doc, page1, font);
+  
+    const LEFT = 48, GAP = 14, TOP1 = page1.getHeight() - 160;
+    let y = TOP1;
+  
+    const j  = ultimoResultado;
+    const A  = j.areas || {};
+    const R  = j.redacao || {};
+    const C  = j.classificacao || {};
+    const nome = (j.aluno && j.aluno.nome) || '-';
+    const unid = (j.aluno && j.aluno.unidadeNome) || '-';
+  
+    // cabeçalho
+    drawTextLine('Simulado ENEM Agosto/2025 - Resultado do Candidato', LEFT, y + 18, 16);
+    drawTextLine(`Aluno: ${nome}`,            LEFT, y, 12); y -= GAP;
+    drawTextLine(`Inscrição: ${j.inscricao}`, LEFT, y, 12);
+    drawTextLine(`Unidade: ${unid}`,          LEFT + 220, y, 12); y -= GAP;
+  
+    // notas em tabela (valores alinhados)
+    y = drawScoreTableCentered(A, C, y);   // devolve o novo Y logo abaixo da tabela
+
+  
+    // gráfico comparativo grande
+    try{
+      const medias = normalizeMedias(j.medias ?? ultimoResultado.medias ?? null);
+      const urlComp = await makeChartImageComparativo(A, medias);
+      if (urlComp){
+        const png = await doc.embedPng(dataURLtoBytes(urlComp));
+        const W = page1.getWidth() - LEFT*2;
+        const H = 210;
+        page1.drawImage(png, { x: LEFT, y: y - H, width: W, height: H });
+        y -= (H + 16);
+      }
+    }catch(e){ console.warn('comparativo', e); }
+
+    // mensagens (somente das áreas)
+    const msgs = getMessages(A, R);
+    _pdf_ctx.y = y;
+    //drawBullet(msgs.linguagens, 12, 'justify');
+    //drawBullet(msgs.humanas,    12, 'justify');
+    //drawBullet(msgs.natureza,   12, 'justify');
+    //drawBullet(msgs.matematica, 12, 'justify');
+
+    drawBullet(`Linguagens: ${msgs.linguagens}`, 12, 'justify');
+    drawBullet(`Humanas: ${msgs.humanas}`, 12, 'justify');
+    drawBullet(`Natureza: ${msgs.natureza}`, 12, 'justify');
+    drawBullet(`Matemática: ${msgs.matematica}`, 12, 'justify');
+      
+    // ======== PÁGINA 2 (Redação) ========
+    let page2;
+    if (tplPdf){
+      const [tpl2] = await doc.copyPages(tplPdf, [0]); // copia de novo
+      page2 = doc.addPage(tpl2);
+    } else {
+      page2 = doc.addPage([595.28, 841.89]);
+    }
+    setPdfContext(doc, page2, font);
+  
+    const TOP2 = page2.getHeight() - 160;
+    let y2 = TOP2;
+  
+    drawTextLine('Redação', LEFT, y2 + 18, 16);
+    drawTextLine(`Aluno: ${nome}`,            LEFT, y2, 12); y2 -= GAP;
+    drawTextLine(`Inscrição: ${j.inscricao}`, LEFT, y2, 12); y2 -= GAP;
+  
+    // nota total + competências em linha
+    const comps = [R.c1, R.c2, R.c3, R.c4, R.c5].map(x=>x??'-').join(' / ');
+    drawTextLine(`Nota total: ${R.total ?? '-'}`,       LEFT, y2, 12); y2 -= GAP;
+    drawTextLine(`Competências (C1–C5): ${comps}`,      LEFT, y2, 12); y2 -= GAP + 6;
+  
+    // gráfico C1..C5 grande
+    try{
+      const urlC = await makeChartImageCompetencias(R);
+      if (urlC){
+        const pngC = await doc.embedPng(dataURLtoBytes(urlC));
+        const Wc = page2.getWidth() - LEFT*2;
+        const Hc = 200;
+        page2.drawImage(pngC, { x: LEFT, y: y2 - Hc, width: Wc, height: Hc });
+        y2 -= (Hc + 16);
+      }
+    }catch(e){ console.warn('competencias', e); }
+  
+    // mensagem da Redação
+    const msgs2 = getMessages(A, R);
+    _pdf_ctx.y = y2;
+    drawBullet(msgs2.redacao, 12);
+
+    // dá um respiro generoso e garante espaço na página
+    const gap = Math.round(12 * 1.5);   // ~18px
+    _pdf_ctx.y -= gap;
+    ensureSpace(1, 12);                  // previne cortar no rodapé
+    
+    drawTextLine('Observações por competência', _pdf_ctx.MARGIN_X, _pdf_ctx.y - 14, 12, [0.13,0.16,0.20]);
+    _pdf_ctx.y -= Math.round(12 * 0.75); // mais um espacinho abaixo do título
+        
+    _pdf_ctx.y -= 10;  // 👈 mais folga ainda antes de iniciar os bullets
+    
+    // feedback por competência
+    const fbc = getFeedbackCompetencias(R);
+    drawBullet(fbc.c1, 12);
+    drawBullet(fbc.c2, 12);
+    drawBullet(fbc.c3, 12);
+    drawBullet(fbc.c4, 12);
+    drawBullet(fbc.c5, 12);
+  
+    
+  // --- Página 3: Redação (se houver imagem) -------------------
+   const imgTag = document.querySelector('#imgBox img');
+    if (imgTag && imgTag.src) {
+      try {
+        // 3ª página
+        const page3 = doc.addPage([595.28, 841.89]);
+        setPdfContext(doc, page3, font);
+        drawTextLine('Redação - Imagem', 50, page3.getHeight() - 60, 14);
+    
+        // pega via proxy do Apps Script (libera CORS)
+        const proxUrl = `${ENDPOINT}?action=img&u=${encodeURIComponent(imgTag.src)}`;
+        const resp    = await fetch(proxUrl, { cache:'no-store' });
+        if (!resp.ok) throw new Error('proxy resp not ok');
+        const imgBytes = new Uint8Array(await resp.arrayBuffer());
+    
+        // tenta JPG, cai pra PNG se falhar
+        let imgEmbed;
+        try { imgEmbed = await doc.embedJpg(imgBytes); }
+        catch { imgEmbed = await doc.embedPng(imgBytes); }
+    
+        // escala proporcional
+        const maxW = page3.getWidth()  - 100;
+        const maxH = page3.getHeight() - 120;
+        const scale = Math.min(maxW / imgEmbed.width, maxH / imgEmbed.height);
+    
+        page3.drawImage(imgEmbed, {
+          x: 50,
+          y: 60,
+          width:  imgEmbed.width  * scale,
+          height: imgEmbed.height * scale,
+        });
+      } catch (e) {
+        console.error('Erro ao inserir imagem da redação (proxy):', e);
+      }
+    } 
+
+    
+     // baixar arquivo final
+    const bytes = await doc.save();
+    const blob  = new Blob([bytes], { type:'application/pdf' });
+    const a     = document.createElement('a');
+    a.href      = URL.createObjectURL(blob);
+    a.download  = `resultado_ENEM_${j.inscricao}.pdf`;
+    a.click();
+    
+  }
+
+  /* ===== helpers gerais ===== */
+  function val(x){ return (x==null?'-':x); }
+  function dataURLtoBytes(dataURL){
+    const base64 = dataURL.split(',')[1];
+    const bin = atob(base64); const len = bin.length;
+    const bytes = new Uint8Array(len);
+    for (let i=0;i<len;i++) bytes[i] = bin.charCodeAt(i);
+    return bytes;
+  }
+
+  async function makeChartImage(A, R){
+    const el = document.getElementById('grafico');
+    if (!el) return null;
+    if (window._chartInst) { window._chartInst.destroy(); }
+
+    const labels = ['LING', 'HUM', 'NAT', 'MAT', 'RED'];
+    const data = [A.linguagens ?? null, A.humanas ?? null, A.natureza ?? null, A.matematica ?? null, R.total ?? null];
+
+    window._chartInst = new Chart(el.getContext('2d'), {
+      type: 'bar',
+      data: { labels, datasets: [{ label:'Notas', data }] },
+      options: { responsive: false, animation: false, scales: { y: { suggestedMin: 0, suggestedMax: 1000 } } }
+    });
+
+    await new Promise(r=>setTimeout(r, 50));
+    return el.toDataURL('image/png');
+  }
+
+  /* ===== Helpers de composição de texto no PDF (pdf-lib) ===== */
+  let _pdf_ctx = { doc:null, page:null, font:null, y:0, MARGIN_X:40, MARGIN_BOTTOM:40 };
+
+  function setPdfContext(doc, page, font){
+    _pdf_ctx = { ..._pdf_ctx, doc, page, font, y: page.getHeight() - 40 };
+  }
+
+  function drawTextLine(txt, x, y, size=12, color=[0,0,0]){
+    const { page, font } = _pdf_ctx;
+    page.drawText(String(txt||''), { x, y, size, font, color: PDFLib.rgb(...color) });
+  }
+
+  function contentWidth(){ return _pdf_ctx.page.getWidth() - _pdf_ctx.MARGIN_X*2; }
+
+  function splitIntoLines(text, size=12, maxWidth=contentWidth()){
+    const { font } = _pdf_ctx;
+    const words = String(text||'').trim().split(/\s+/);
+    const lines = [];
+    let line = '';
+    for (const w of words){
+      const probe = line ? line + ' ' + w : w;
+      if (font.widthOfTextAtSize(probe, size) <= maxWidth){
+        line = probe;
+      } else {
+        if (line) lines.push(line);
+        let rest = w;
+        while (font.widthOfTextAtSize(rest, size) > maxWidth && rest.length>1){
+          let cut = rest.length-1;
+          while (cut>1 && font.widthOfTextAtSize(rest.slice(0,cut), size) > maxWidth) cut--;
+          lines.push(rest.slice(0,cut));
+          rest = rest.slice(cut);
+        }
+        line = rest;
+      }
+    }
+    if (line) lines.push(line);
+    return lines;
+  }
+
+  function ensureSpace(linesCount, size=12){
+    const lineHeight = Math.round(size*1.25);
+    const need = linesCount*lineHeight + 6;
+    if (_pdf_ctx.y - need < _pdf_ctx.MARGIN_BOTTOM){
+      const { doc, page } = _pdf_ctx;
+      const next = doc.addPage([page.getWidth(), page.getHeight()]);
+      _pdf_ctx.page = next;
+      _pdf_ctx.y = next.getHeight() - 40;
+    }
+  }
+
+  function drawParagraph(text, size=12, indentLeft=0, align='left'){
+    const lineH = Math.round(size*1.25);
+    const maxW  = contentWidth() - indentLeft;
+    const lines = splitIntoLines(text, size, maxW);
+    ensureSpace(lines.length, size);
+  
+    const x0 = _pdf_ctx.MARGIN_X + indentLeft;
+    lines.forEach((ln, i) => {
+      _pdf_ctx.y -= lineH;
+      const isLast = i === lines.length - 1;
+      if (align === 'justify' && !isLast) {
+        drawJustifiedLine(ln, x0, _pdf_ctx.y, size, maxW);
+      } else {
+        drawTextLine(ln, x0, _pdf_ctx.y, size);
+      }
+    });
+  }
+  
+  function drawBullet(text, size=12, align='left'){
+    const bullet = '• ';
+    const bW = _pdf_ctx.font.widthOfTextAtSize(bullet, size);
+    const lineH = Math.round(size*1.25);
+    const maxW  = contentWidth() - bW;
+    const lines = splitIntoLines(text, size, maxW);
+    ensureSpace(lines.length, size);
+  
+    // primeira linha: desenha bolinha e justifica só o texto
+    _pdf_ctx.y -= lineH;
+    drawTextLine(bullet, _pdf_ctx.MARGIN_X, _pdf_ctx.y, size);
+    if (align === 'justify' && lines.length > 1){
+      drawJustifiedLine(lines[0], _pdf_ctx.MARGIN_X + bW, _pdf_ctx.y, size, maxW);
+    } else {
+      drawTextLine(lines[0], _pdf_ctx.MARGIN_X + bW, _pdf_ctx.y, size);
+    }
+  
+    // demais linhas (sem o bullet)
+    for (let i=1;i<lines.length;i++){
+      _pdf_ctx.y -= lineH;
+      const isLast = i === lines.length - 1;
+      if (align === 'justify' && !isLast){
+        drawJustifiedLine(lines[i], _pdf_ctx.MARGIN_X + bW, _pdf_ctx.y, size, maxW);
+      } else {
+        drawTextLine(lines[i], _pdf_ctx.MARGIN_X + bW, _pdf_ctx.y, size);
+      }
+    }
+  }
+// gráfico comparativo: 4 áreas (Aluno x Média)
+async function makeChartImageComparativo(A, medias){
+  const el = document.getElementById('grafico');
+  if (!el) return null;
+
+  const restore = useOffscreenCanvas();
+  if (window._chartInst) window._chartInst.destroy();
+
+  const labels = ['LING', 'HUM', 'NAT', 'MAT'];
+  const aluno  = [A.linguagens ?? null, A.humanas ?? null, A.natureza ?? null, A.matematica ?? null];
+
+  const datasets = [{ label:'Aluno', data: aluno }];
+
+  const hasAnyMedia =
+    medias && [medias.linguagens, medias.humanas, medias.natureza, medias.matematica]
+      .some(v => v != null && Number.isFinite(Number(v)));
+
+  if (hasAnyMedia){
+    datasets.push({
+      label:'Média',
+      data:[
+        medias.linguagens ?? null,
+        medias.humanas    ?? null,
+        medias.natureza   ?? null,
+        medias.matematica ?? null
+      ]
+    });
+  }
+
+   window._chartInst = new Chart(el.getContext('2d'), {
+    type: 'bar',
+    data: { labels, datasets },
+    options: {
+      responsive: false,
+      animation: false,
+      scales: { y: { suggestedMin: 0, suggestedMax: 1000 } },
+      plugins: {
+        legend: { display: true, position: 'top' },
+        chartValueLabels: { formatter: v => v.toFixed(2) } // 👈 2 casas
+      }
+    }
+  });
+
+  window._chartInst.update();
+  await new Promise(r => requestAnimationFrame(r));
+  await new Promise(r => setTimeout(r, 100));
+
+  const url = el.toDataURL('image/png');
+  window._chartInst.destroy();
+  restore();
+  return url;
+}
+
+
+// ——— Competências C1..C5 (com rótulos) ———
+async function makeChartImageCompetencias(R){
+  const c = document.getElementById('graficoC');
+  if (!c) return null;
+
+  const restore = useOffscreenCanvas();
+  if (window._chartInstC) window._chartInstC.destroy();
+
+  const labels = ['C1','C2','C3','C4','C5'];
+  const data   = [R.c1, R.c2, R.c3, R.c4, R.c5].map(x => x ?? null);
+
+  window._chartInstC = new Chart(c.getContext('2d'), {
+    type: 'bar',
+    data: { labels, datasets: [{ label: 'Competências', data }] },
+    options: {
+      responsive: false,
+      animation: false,
+      layout: { padding: { top: 12 } },               // folga no topo
+      scales: {
+        y: {
+          suggestedMin: 0,
+          suggestedMax: 210,                           // sobe o teto p/ não cortar “200”
+          grace: 10,                                   // mais um respiro
+          ticks: { stepSize: 20 }
+        }
+      },
+      plugins: {
+        legend: { display: false },
+        chartValueLabels: { formatter: (v) => String(Math.round(v)) }
+      }
+    },
+    plugins: [chartValueLabels]
+  });
+
+  window._chartInstC.update();
+  await new Promise(r => requestAnimationFrame(r));
+  await sleep(80);
+
+  const url = c.toDataURL('image/png');
+  window._chartInstC.destroy();
+  restore();
+  return url;
+}
+
+// Plugin: rótulos nas barras com formatação customizável
+// Plugin ÚNICO (com guarda) — evita redeclaração e já registra globalmente
+if (!window.chartValueLabels) {
+  window.chartValueLabels = {
+    id: 'chartValueLabels',
+    afterDatasetsDraw(chart, _args, pluginOptions) {
+      const { ctx, chartArea:{ top } = { top: 0 } } = chart;
+      const fmt = pluginOptions?.formatter || (v => String(v));
+
+      ctx.save();
+      ctx.font = '10px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'bottom';
+
+      chart.data.datasets.forEach((ds, di) => {
+        const meta = chart.getDatasetMeta(di);
+        meta.data.forEach((el, i) => {
+          const n = Number(ds.data[i]);
+          if (!Number.isFinite(n)) return;
+          let y = el.y - 4;
+          if (y < top + 8) y = top + 8;   // evita cortar rótulo no topo
+          ctx.fillText(fmt(n, ds, chart, i), el.x, y);
+        });
+      });
+
+      ctx.restore();
+    }
+  };
+  Chart.register(window.chartValueLabels);
+}
+
+
+// registra o plugin globalmente
+// Chart.register(chartValueLabels);
+
+
+
+    // espera simples
+    const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+    
+    // liga o "laboratório" de gráficos fora da tela e retorna um restore()
+    function useOffscreenCanvas() {
+      const wrap = document.getElementById('chartWrap');
+      if (!wrap) return () => {};
+      const prev = {
+        display: wrap.style.display,
+        position: wrap.style.position,
+        left: wrap.style.left,
+        top: wrap.style.top,
+        visibility: wrap.style.visibility,
+      };
+      // mostra o container, mas fora da tela (nada pisca)
+      wrap.style.display = 'block';
+      wrap.style.position = 'absolute';
+      wrap.style.left = '-10000px';
+      wrap.style.top = '-10000px';
+      wrap.style.visibility = 'hidden';
+      return () => Object.assign(wrap.style, prev);
+    }
+
+    function normalizeMedias(m){
+  if (!m) return null;
+  const pick = (obj, ...keys) =>
+    keys.reduce((v,k)=> v ?? obj?.[k], null);
+
+  const toNum = v => {
+    if (v == null) return null;
+    const n = Number(String(v).replace(',', '.'));
+    return Number.isFinite(n) ? n : null;
+  };
+
+  const out = {
+    linguagens: toNum(pick(m, 'linguagens','ling','Linguagens','LING')),
+    humanas:    toNum(pick(m, 'humanas','hum','Humanas','HUM')),
+    natureza:   toNum(pick(m, 'natureza','nat','Natureza','NAT')),
+    matematica: toNum(pick(m, 'matematica','mat','Matemática','MAT'))
+  };
+
+  // se tudo deu null, considera inválido
+  return (out.linguagens ?? out.humanas ?? out.natureza ?? out.matematica) != null ? out : null;
+}
+
+  //justificar o texto do pdf
+  function drawJustifiedLine(text, x, y, size=12, maxWidth=contentWidth()){
+  const { page, font } = _pdf_ctx;
+  const words = String(text||'').trim().split(/\s+/);
+  if (words.length <= 1) { drawTextLine(text, x, y, size); return; }
+
+  const spaceW = font.widthOfTextAtSize(' ', size);
+  const wordsW = words.reduce((s,w)=> s + font.widthOfTextAtSize(w, size), 0);
+  const gaps   = words.length - 1;
+  const normal = wordsW + gaps*spaceW;
+
+  // se já está “cheio”, não força
+  if (normal >= maxWidth * 0.985) { drawTextLine(text, x, y, size); return; }
+
+  const extraPerGap = (maxWidth - normal) / gaps;
+  let cursor = x;
+  for (let i=0;i<words.length;i++){
+    const w = words[i];
+    page.drawText(w, { x: cursor, y, size, font });
+    cursor += font.widthOfTextAtSize(w, size);
+    if (i < gaps) cursor += spaceW + extraPerGap;
+  }
+}
+
+
+    // 2 casas para números; se não for número, devolve como veio ou '-'
+function fmt2(v){
+  if (v == null) return '-';
+  const n = Number(v);
+  return Number.isFinite(n) ? n.toFixed(2) : String(v);
+}
+
+/**
+ * Desenha uma tabela simples de 2 colunas (rótulo / valor)
+ * rows: [ [label, value], ... ]
+ * Retorna o novo y (já descontado a altura + um pequeno espaçamento)
+ */
+function drawKeyValTable(rows, x, y, opts={}){
+  const { page, font } = _pdf_ctx;
+  const size   = opts.size   ?? 12;
+  const rowH   = opts.rowH   ?? Math.round(size * 1.35);   // altura da linha
+  const labW   = opts.labelW ?? 115;                       // largura da coluna de rótulos
+  const valW   = opts.valueW ?? 90;                        // largura da coluna de valores
+  const padX   = opts.padX   ?? 6;
+  const gap    = opts.gap    ?? 10;                        // espaço abaixo da tabela
+  const wTotal = labW + valW;
+  const hTotal = rowH * rows.length;
+
+  // borda da tabela
+  page.drawRectangle({
+    x, y: y - hTotal, width: wTotal, height: hTotal,
+    borderWidth: 0.5,
+    borderColor: PDFLib.rgb(0.82, 0.86, 0.94),
+    color: PDFLib.rgb(1,1,1)
+  });
+
+  // linhas com “zebra”
+  rows.forEach((r, i) => {
+    const rowTop = y - rowH * (i + 1);
+    if (i % 2 === 0) {
+      page.drawRectangle({
+        x, y: rowTop, width: wTotal, height: rowH,
+        color: PDFLib.rgb(0.97, 0.98, 1)
+      });
+    }
+    const base = rowTop + Math.round((rowH - size) / 2); // “centraliza” verticalmente
+
+    // rótulo
+    page.drawText(String(r[0] ?? ''), {
+      x: x + padX, y: base, size, font, color: PDFLib.rgb(0,0,0)
+    });
+
+    // valor (alinhado à direita)
+    const valStr = String(r[1] ?? '-');
+    const tw = font.widthOfTextAtSize(valStr, size);
+    const vx = x + labW + valW - padX - tw;
+    page.drawText(valStr, { x: vx, y: base, size, font, color: PDFLib.rgb(0,0,0) });
+  });
+
+  return y - hTotal - gap;
+}
+
+    // Tabela centralizada, translúcida e com 2 casas nas áreas
+function drawScoreTableCentered(A, C, yTop) {
+  const size = 12;
+  const lh   = Math.round(size * 1.25);
+  const pad  = 8;
+
+  // linhas: [rótulo, valor, ehNota?]  (ehNota => 2 casas decimais)
+  const linhas = [
+    ['Linguagens', A.linguagens, true],
+    ['Humanas',    A.humanas,    true],
+    ['Natureza',   A.natureza,   true],
+    ['Matemática', A.matematica, true],
+    ['Classificação Geral',   (C.cls_g ?? '-'), false],
+    ['Classificação na Unidade', (C.cls_u ?? '-'), false],
+  ];
+
+  // larguras das colunas
+  const COL1 = 190;   // rótulos
+  const COL2 = 90;    // valores (alinhados à direita)
+  const W    = COL1 + COL2 + pad*2;
+  const H    = linhas.length * lh + pad*2;
+
+  // centraliza horizontalmente
+  const x = Math.round((_pdf_ctx.page.getWidth() - W) / 2);
+  const y = yTop;                 // topo da caixa
+  const yBox = y - H;             // base da caixa
+
+  // fundo translúcido (mostra a marca d’água)
+  _pdf_ctx.page.drawRectangle({
+    x, y: yBox, width: W, height: H,
+    color: PDFLib.rgb(1,1,1),     // branco
+    opacity: 0.55,                // transparência
+    borderColor: PDFLib.rgb(0.85,0.9,1),
+    borderWidth: 1,
+    borderOpacity: 0.8
+  });
+
+  // escreve linhas
+  for (let i = 0; i < linhas.length; i++) {
+    const yy = y - pad - (i+0.8)*lh;   // posição da linha (um tiquinho acima do centro do lh)
+    const [rot, val, ehNota] = linhas[i];
+
+    // rótulo (esq.)
+    drawTextLine(rot, x + pad, yy, size);
+
+    // valor (dir., alinhado à direita)
+    let texto;
+    if (val == null || val === '-') {
+      texto = '-';
+    } else if (ehNota) {
+      const n = Number(val);
+      texto = Number.isFinite(n) ? n.toFixed(2) : String(val);
+    } else {
+      texto = String(val);
+    }
+
+    const tw = _pdf_ctx.font.widthOfTextAtSize(texto, size);
+    const xRight = x + pad + COL1 + COL2;          // borda direita da coluna de valores
+    drawTextLine(texto, xRight - tw, yy, size);
+  }
+
+  // retorna o novo Y logo abaixo da caixa, com um espacinho
+  return (yBox - 10);
+}
+
+    
+    
+  </script>
+</body>
+</html>
