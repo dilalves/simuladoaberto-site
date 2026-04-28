@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <link rel="icon" type="image/x-icon" href="https://www.curso-objetivo.br/assets/img/favicon.ico" />
-  <title>Resultado - Simulado Fuvestão 2026</title>
+  <title>Resultado - Simulado Fuvestão Maio 2026</title>
 
   <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
   <style>
@@ -188,7 +188,7 @@
     <h1>Simulado Aberto Fuvestão 2026</h1>
   </header>
 
-  <img src="https://raw.githubusercontent.com/dilalves/simuladoaberto-site/main/resultadofuvestao0925/Digital---Simulado-Aberto-728X90.png" 
+  <img src="https://raw.githubusercontent.com/dilalves/simuladoaberto-site/main/resultadofuvestao0526/Digital---Simulado-Aberto-728X90.png"
        alt="Banner Simulado Aberto"
        style="display:block; margin:20px auto; max-width:728px; width:100%;">
 
@@ -263,7 +263,7 @@
   async function buscarResultado() {
     const inscricao = document.getElementById("inscricao").value.trim();
     const cpf = document.getElementById("cpf").value.trim();
-    const url = `https://api.secauxiliar.com.br/psq_resultado_fuv_0925.php?inscricao=${inscricao}&cpf=${cpf}`;
+    const url = `https://api.secauxiliar.com.br/psq_resultado_fuv_0526.php?inscricao=${inscricao}&cpf=${cpf}`;
 
     try {
       const resp = await fetch(url);
