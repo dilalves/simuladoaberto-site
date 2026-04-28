@@ -367,7 +367,10 @@
 
   // === ABRIR MODAL DE RESOLUÇÃO ===
 function abrirModalResolucao(link) {
-  if (!link) return;
+  if (!link) {
+    M.toast({html:'Resolução não disponível.', classes:'orange'});
+    return;
+  }
 
   const modal = document.getElementById('modalResolucao');
   const area = document.getElementById('areaResolucao');
@@ -378,36 +381,54 @@ function abrirModalResolucao(link) {
   const oldInstance = M.Modal.getInstance(modal);
   if (oldInstance) oldInstance.destroy();
 
-  area.innerHTML = `
-    <div style="
-      display:flex;
-      justify-content:center;
-      align-items:flex-start;
-      overflow-y:auto;
-      overflow-x:hidden;
-      max-height: calc(90vh - 10px);
-      padding:10px 0 100px;
-      margin:0 auto;
-      scrollbar-width:thin;
-    ">
-      <img src="${link}" alt="Resolução"
-        style="
-          width:100%;
-          max-width:900px;
-          height:auto;
-          border-radius:10px;
-          box-shadow:0 0 12px rgba(0,0,0,0.25);
-          display:block;
-        ">
-    </div>
-  `;
-
   const instance = M.Modal.init(modal, {
     preventScrolling: true,
     dismissible: true,
     opacity: 0.6
   });
 
+  const imgTeste = new Image();
+
+  imgTeste.onload = () => {
+    area.innerHTML = `
+      <div style="
+        display:flex;
+        justify-content:center;
+        align-items:flex-start;
+        overflow-y:auto;
+        overflow-x:hidden;
+        max-height: calc(90vh - 10px);
+        padding:10px 0 100px;
+        margin:0 auto;
+        scrollbar-width:thin;
+      ">
+        <img src="${link}" alt="Resolução"
+          style="
+            width:100%;
+            max-width:900px;
+            height:auto;
+            border-radius:10px;
+            box-shadow:0 0 12px rgba(0,0,0,0.25);
+            display:block;
+          ">
+      </div>
+    `;
+  };
+
+  imgTeste.onerror = () => {
+    area.innerHTML = `
+      <p style="color:#b71c1c;padding:20px;">
+        Não foi possível carregar a resolução.
+      </p>
+      <p>
+        <a href="${link}" target="_blank" class="btn blue darken-3">
+          Abrir em nova aba
+        </a>
+      </p>
+    `;
+  };
+
+  imgTeste.src = link;
   instance.open();
 }
 
