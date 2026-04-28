@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <link rel="icon" type="image/x-icon" href="https://www.curso-objetivo.br/assets/img/favicon.ico" />
@@ -8,6 +9,7 @@
 
   <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
   <style>
+    /*     cd C:\3A_SISTEMAS_SIMULADOABERTO\simuladoaberto-site */
     header {
       margin:0;
       padding:20px 0;
@@ -312,8 +314,8 @@
         const classe  = acertou ? 'acerto' : 'erro';
         const icone = acertou 
           ? '<span style="color:green;font-weight:bold;font-size:18px;">&#10004;</span>' 
-          : `<button class="btn-small blue lighten-1" onclick="abrirModalResolucao('${r.LINK || ''}')">Ver resolução</button>`;
-        return `
+          : `<button class="btn-small blue lighten-1" onclick='abrirModalResolucao(${JSON.stringify(r.LINK || "")})'>Ver resolução</button>`;
+          return `
           <tr class="${classe}">
             <td>${r.QUESTAO_ALUNO}</td>
             <td>${r.RESPOSTA_ALUNO || '-'}</td>
