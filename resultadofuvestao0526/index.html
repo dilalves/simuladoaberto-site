@@ -364,15 +364,8 @@
   }
 
   // === ABRIR MODAL DE RESOLUÇÃO ===
-  function abrirModalResolucao(link) {
+function abrirModalResolucao(link) {
   if (!link) return;
-
-  const match = link.match(/[-\w]{25,}/);
-  let id = match ? match[0] : null;
-  if (!id) return;
-
-  const urlImagem = `https://lh3.googleusercontent.com/d/${id}=s2000`;
-  const urlIframe = `https://drive.google.com/file/d/${id}/preview`;
 
   const modal = document.getElementById('modalResolucao');
   const area = document.getElementById('areaResolucao');
@@ -383,8 +376,6 @@
   const oldInstance = M.Modal.getInstance(modal);
   if (oldInstance) oldInstance.destroy();
 
-  const teste = new Image();
- teste.onload = () => {
   area.innerHTML = `
     <div style="
       display:flex;
@@ -392,12 +383,12 @@
       align-items:flex-start;
       overflow-y:auto;
       overflow-x:hidden;
-      max-height: calc(90vh - 10px); /* respeita o espaço do cabeçalho e rodapé */
+      max-height: calc(90vh - 10px);
       padding:10px 0 100px;
       margin:0 auto;
       scrollbar-width:thin;
     ">
-      <img src="${urlImagem}" alt="Resolução"
+      <img src="${link}" alt="Resolução"
         style="
           width:100%;
           max-width:900px;
@@ -408,18 +399,8 @@
         ">
     </div>
   `;
-};
 
-
-
-  teste.onerror = () => {
-    area.innerHTML = `
-      <iframe src="${urlIframe}"
-              style="width:85vw;height:100vh;border:none;border-radius:10px;background:#fff;"></iframe>
-    `;
-  };
-  teste.src = urlImagem;
-    const instance = M.Modal.init(modal, {
+  const instance = M.Modal.init(modal, {
     preventScrolling: true,
     dismissible: true,
     opacity: 0.6
