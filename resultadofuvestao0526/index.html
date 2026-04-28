@@ -263,7 +263,7 @@
   async function buscarResultado() {
     const inscricao = document.getElementById("inscricao").value.trim();
     const cpf = document.getElementById("cpf").value.trim();
-    const url = `https://apisec.secauxiliar.com.br/simulados/fuvestao0526/psq_resultado_fuv_0526.php?inscricao=${inscricao}&cpf=${cpf}`;
+    const url = `https://apisec.secauxiliar.com.br/SIMULADOS/FUVESTAO0526/psq_resultado_fuv_0526.php?inscricao=${inscricao}&cpf=${cpf}`;
 
     try {
       const resp = await fetch(url);
