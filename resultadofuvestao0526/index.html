@@ -256,9 +256,15 @@
 
   <script>
   // Inicializa Materialize
-  document.addEventListener('DOMContentLoaded', function() {
+  document.addEventListener('DOMContentLoaded', async function() {
     const modals = document.querySelectorAll('.modal');
     M.Modal.init(modals);
+
+    const liberado = await verificarLiberacaoResultado();
+
+    if (!liberado) {
+      window.location.href = 'resultado_indisponivel.html';
+    }
   });
 
   //bloco para verificar se o resultado foi liberado antes de tentar buscar os dados do aluno
