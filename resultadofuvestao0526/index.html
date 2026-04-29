@@ -362,9 +362,27 @@
               title: { display: true, text: 'Comparativo por Disciplina', font: { size: 18 } },
               legend: { position: 'bottom' },
               tooltip: { enabled: true },
-              datalabels: { color: '#000', anchor: 'end', align: 'start', font: { weight: 'bold', size: 12 } }
+              datalabels: { 
+                color: '#000',
+                anchor: 'end',
+                align: 'end',
+                offset: 4,
+                font: { 
+                  weight: 'bold', 
+                  size: 12 
+                },
+                formatter: function(value) {
+                  return value > 0 ? value : '';
+                }
+              }
             },
-            scales: { y: { beginAtZero: true, max: 20, ticks: { stepSize: 2 } } }
+            scales: { 
+              y: { 
+                beginAtZero: true, 
+                max: 22, 
+                ticks: { stepSize: 2 } 
+              } 
+            }
           },
           plugins: [ChartDataLabels]
         });
