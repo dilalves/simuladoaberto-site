@@ -339,10 +339,22 @@
           type: 'bar',
           data: {
             labels: disciplinas,
-            datasets: [
-              { label: 'Aluno', data: notasAluno, backgroundColor: '#8AA9E0' },
-              { label: 'Média Geral', data: medias, backgroundColor: '#B3C7F3' }
-            ]
+              datasets: [                               
+                { 
+                  label: 'Aluno', 
+                  data: notasAluno, 
+                  backgroundColor: '#0D47A1',
+                  borderColor: '#0D47A1',
+                  borderWidth: 1
+                },
+                { 
+                  label: 'Média Geral', 
+                  data: medias, 
+                  backgroundColor: '#F9A825',
+                  borderColor: '#F9A825',
+                  borderWidth: 1
+                }
+              ] 
           },
           options: {
             responsive: true,
