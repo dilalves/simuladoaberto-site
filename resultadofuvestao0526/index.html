@@ -261,11 +261,44 @@
     M.Modal.init(modals);
   });
 
+  //bloco para verificar se o resultado foi liberado antes de tentar buscar os dados do aluno
+  async function verificarLiberacaoResultado() {
+    try {
+      const url = `https://apisec.secauxiliar.com.br/SIMULADOS/FUVESTAO0526/check_liberacao_resultado.php?evento=FUVESTAO0526`;
+
+      const resp = await fetch(url);
+      const dados = await resp.json();
+
+      if (!dados.ok || !dados.liberado) {
+        M.toast({
+          html: dados.msg || 'Resultado ainda não disponível.',
+          classes: 'red'
+        });
+        return false;
+      }
+
+      return true;
+
+    } catch (e) {
+      console.error(e);
+      M.toast({
+        html: 'Não foi possível verificar a liberação do resultado.',
+        classes: 'red'
+      });
+      return false;
+    }
+  }
+
   // === CONSULTA RESULTADO ===
   async function buscarResultado() {
-    const inscricao = document.getElementById("inscricao").value.trim();
-    const cpf = document.getElementById("cpf").value.trim();
-    const url = `https://apisec.secauxiliar.com.br/SIMULADOS/FUVESTAO0526/psq_resultado_fuv_0526.php?inscricao=${inscricao}&cpf=${cpf}`;
+
+  const liberado = await verificarLiberacaoResultado();
+  if (!liberado) return;
+
+  const inscricao = document.getElementById("inscricao").value.trim();
+  const cpf = document.getElementById("cpf").value.trim();
+  const url = `https://apisec.secauxiliar.com.br/SIMULADOS/FUVESTAO0526/psq_resultado_fuv_0526.php?inscricao=${inscricao}&cpf=${cpf}`;
+
 
     try {
       const resp = await fetch(url);
