@@ -307,7 +307,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   try { await carregarContexto(); }
   catch(e){ if (String(e.message).includes('UNAUTHORIZED')) return redirectToLogin(); }
 
-  const API_UPLOAD = 'https://api.secauxiliar.com.br/upload.php'; // endpoint PHP
+  const API_UPLOAD = 'https://apisec.secauxiliar.com.br/redacaoenem/upload.php'; // endpoint PHP
   const ACCEPT_EXT = ['jpg','jpeg','tif','tiff']; //aceita tif - solicitação de Nhandeara (nãot tem outra opção lá)
 
   const btnPick  = document.getElementById('btnPick');
