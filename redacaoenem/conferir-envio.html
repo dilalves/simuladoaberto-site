@@ -796,14 +796,32 @@ async function processarFilaOMR() {
       try {
         const res = await fetch(`https://apisec.secauxiliar.com.br/redacaoenem/log_get_one.php?id=${id}`);
         const dados = await res.json();
-        if (dados?.inscricao && dados?.omr_status === 'AGUARDANDO CORREÇÃO') {
-          statusCell.innerHTML = `
-            <span class="chip-status blue lighten-5 blue-text text-darken-4">
-              AGUARDANDO CORREÇÃO<br>
-            </span>`;
-          if (inscrCell) inscrCell.textContent = dados.inscricao;
-          btn.remove();
-        }
+        if (dados?.ok) {
+          if (inscrCell) inscrCell.textContent = dados.inscricao || '—';
+
+          const status = (dados.omr_status || '').toUpperCase();
+
+          if (status === 'AGUARDANDO CORREÇÃO') {
+            statusCell.innerHTML = `
+              <span class="chip-status blue lighten-5 blue-text text-darken-4">
+                AGUARDANDO CORREÇÃO
+              </span>`;
+            btn.remove();
+
+          } else if (status === 'TRATAMENTO MANUAL') {
+            statusCell.innerHTML = `
+              <span class="chip-status pend">
+                TRATAMENTO MANUAL
+              </span><br>
+              <a href="#" class="btn-flat tiny blue-text text-darken-2"
+                onclick="tentarFilaOMR(this,'${fileId}','${id}')">
+                <i class="material-icons tiny left">refresh</i>Tentar OMR
+              </a>`;
+
+          } else {
+            statusCell.innerHTML = `<span class="chip-status">${status || 'RETORNO RECEBIDO'}</span>`;
+          }
+}
       } catch (e) {
         console.warn('Erro ao buscar dados após callback:', e);
       }
