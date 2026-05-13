@@ -211,10 +211,10 @@
 
 <script>
 /* ===================== SESSÃO / CONTEXTO ===================== */
-const API_BASE   = 'https://api.secauxiliar.com.br/';
-const API_UPLOAD   = 'https://api.secauxiliar.com.br/upload.php';
-const API_CONFERIR = 'https://api.secauxiliar.com.br/logs_list.php'; 
-const API_ATUALIZA = 'https://api.secauxiliar.com.br/update_inscricao.php';
+const API_BASE     = 'https://apisec.secauxiliar.com.br/';
+const API_UPLOAD   = 'https://apisec.secauxiliar.com.br/upload.php';
+const API_CONFERIR = 'https://apisec.secauxiliar.com.br/logs_list.php'; 
+const API_ATUALIZA = 'https://apisec.secauxiliar.com.br/update_inscricao.php';
 const LOGIN_URL  = '/redacaoenem/index.html';
 const SESS_KEY   = 'sessao_redacao';
 function getSession(){ try{ return JSON.parse(localStorage.getItem(SESS_KEY) || '{}'); }catch(_){ return {}; } }
@@ -454,10 +454,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const payload = {
             file_id: fileId,
             link_down: directLink,
-            callback_url: 'https://api.secauxiliar.com.br/omr-callback.php'
+            callback_url: 'https://apisec.secauxiliar.com.br/omr-callback.php'
             };
 
-            const res = await fetch('https://api-omr.onrender.com/omr_job', {
+            const res = await fetch('https://omr.secauxiliar.com.br/omr_job', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
@@ -477,7 +477,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Espera 2 segundos e tenta consultar novamente o status
             setTimeout(async () => {
               try {
-                const refresh = await fetch(`https://api.secauxiliar.com.br/log_get_one.php?id=${id}`);
+                const refresh = await fetch(`https://apisec.secauxiliar.com.br/log_get_one.php?id=${id}`);
                 const dados = await refresh.json();
 
                 if (dados && dados.inscricao && dados.omr_status === 'AGUARDANDO CORREÇÃO') {
@@ -565,7 +565,7 @@ document.addEventListener('DOMContentLoaded', () => {
         okClass:'red darken-1',
         onOk: async () => {
           try {
-            const res = await fetch('https://api.secauxiliar.com.br/recusar_imagem.php', {
+            const res = await fetch('https://apisec.secauxiliar.com.br/recusar_imagem.php', {
               method:'POST',
               headers:{ 'Content-Type':'application/json', ...authHeaders() },
               body: JSON.stringify({ id })
@@ -697,7 +697,7 @@ async function tentarOMR(btn, fileId){
   const payload = {
     file_id: fileId,
     link_down: directLink,
-    callback_url: 'https://api.secauxiliar.com.br/omr-callback.php'
+    callback_url: 'https://apisec.secauxiliar.com.br/omr-callback.php'
   };
 
   const row = btn.closest('tr');
@@ -708,7 +708,7 @@ async function tentarOMR(btn, fileId){
   statusCell.innerHTML = '<span class="orange-text">Verificando...</span>';
 
   try {
-    const r = await fetch('https://api-omr.onrender.com/omr_job', {
+    const r = await fetch('https://omr.secauxiliar.com.br/omr_job', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
@@ -725,7 +725,7 @@ async function tentarOMR(btn, fileId){
     setTimeout(async () => {
       try {
         const id = row.dataset.id;
-        const res = await fetch(`https://api.secauxiliar.com.br/log_get_one.php?id=${id}`);
+        const res = await fetch(`https://apisec.secauxiliar.com.br/log_get_one.php?id=${id}`);
         const dados = await res.json();
 
         if (dados?.inscricao && dados?.omr_status === 'AGUARDANDO CORREÇÃO') {
@@ -778,13 +778,13 @@ async function processarFilaOMR() {
   statusCell.innerHTML = '<span class="orange-text">Verificando…</span>';
 
   try {
-    const r = await fetch('https://api-omr.onrender.com/omr_job', {
+    const r = await fetch('https://omr.secauxiliar.com.br/omr_job', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         file_id: fileId,
         link_down: `https://drive.google.com/uc?export=download&id=${fileId}`,
-        callback_url: 'https://api.secauxiliar.com.br/omr-callback.php'
+        callback_url: 'https://apisec.secauxiliar.com.br/omr-callback.php'
       })
     });
 
@@ -794,7 +794,7 @@ async function processarFilaOMR() {
 
     setTimeout(async () => {
       try {
-        const res = await fetch(`https://api.secauxiliar.com.br/log_get_one.php?id=${id}`);
+        const res = await fetch(`https://apisec.secauxiliar.com.br/log_get_one.php?id=${id}`);
         const dados = await res.json();
         if (dados?.inscricao && dados?.omr_status === 'AGUARDANDO CORREÇÃO') {
           statusCell.innerHTML = `
