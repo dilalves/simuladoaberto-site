@@ -211,10 +211,10 @@
 
 <script>
 /* ===================== SESSÃO / CONTEXTO ===================== */
-const API_BASE     = 'https://apisec.secauxiliar.com.br/';
-const API_UPLOAD   = 'https://apisec.secauxiliar.com.br/upload.php';
-const API_CONFERIR = 'https://apisec.secauxiliar.com.br/logs_list.php'; 
-const API_ATUALIZA = 'https://apisec.secauxiliar.com.br/update_inscricao.php';
+const API_BASE     = 'https://apisec.secauxiliar.com.br/redacaoenem/';
+const API_UPLOAD   = 'https://apisec.secauxiliar.com.br/redacaoenem/upload.php';
+const API_CONFERIR = 'https://apisec.secauxiliar.com.br/redacaoenem/logs_list.php'; 
+const API_ATUALIZA = 'https://apisec.secauxiliar.com.br/redacaoenem/update_inscricao.php';
 const LOGIN_URL  = '/redacaoenem/index.html';
 const SESS_KEY   = 'sessao_redacao';
 function getSession(){ try{ return JSON.parse(localStorage.getItem(SESS_KEY) || '{}'); }catch(_){ return {}; } }
@@ -255,7 +255,7 @@ function setUnitHeader(unit){
   else if (unit?.nome) el.textContent = unit.nome; else el.textContent = '—';
 }
 async function carregarContexto(){
-  const data = await apiFetch('/auth_me.php');
+  const data = await apiFetch('auth_me.php');
   if (data?.user && !data?.usuario && !data?.unidade) {
     const u = data.user; data.usuario = { nome: u.nome || u.login || 'Usuário' }; data.unidade = { codigo: u.login || '', nome: u.unidade || '' };
   }
@@ -454,7 +454,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const payload = {
             file_id: fileId,
             link_down: directLink,
-            callback_url: 'https://apisec.secauxiliar.com.br/omr-callback.php'
+            callback_url: 'https://apisec.secauxiliar.com.br/redacaoenem/omr-callback.php'
             };
 
             const res = await fetch('https://omr.secauxiliar.com.br/omr_job', {
@@ -477,7 +477,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Espera 2 segundos e tenta consultar novamente o status
             setTimeout(async () => {
               try {
-                const refresh = await fetch(`https://apisec.secauxiliar.com.br/log_get_one.php?id=${id}`);
+                const refresh = await fetch(`https://apisec.secauxiliar.com.br/redacaoenem/log_get_one.php?id=${id}`);
                 const dados = await refresh.json();
 
                 if (dados && dados.inscricao && dados.omr_status === 'AGUARDANDO CORREÇÃO') {
@@ -565,7 +565,7 @@ document.addEventListener('DOMContentLoaded', () => {
         okClass:'red darken-1',
         onOk: async () => {
           try {
-            const res = await fetch('https://apisec.secauxiliar.com.br/recusar_imagem.php', {
+            const res = await fetch('https://apisec.secauxiliar.com.br/redacaoenem/recusar_imagem.php', {
               method:'POST',
               headers:{ 'Content-Type':'application/json', ...authHeaders() },
               body: JSON.stringify({ id })
@@ -697,7 +697,7 @@ async function tentarOMR(btn, fileId){
   const payload = {
     file_id: fileId,
     link_down: directLink,
-    callback_url: 'https://apisec.secauxiliar.com.br/omr-callback.php'
+    callback_url: 'https://apisec.secauxiliar.com.br/redacaoenem/omr-callback.php'
   };
 
   const row = btn.closest('tr');
@@ -725,7 +725,7 @@ async function tentarOMR(btn, fileId){
     setTimeout(async () => {
       try {
         const id = row.dataset.id;
-        const res = await fetch(`https://apisec.secauxiliar.com.br/log_get_one.php?id=${id}`);
+        const res = await fetch(`https://apisec.secauxiliar.com.br/redacaoenem/log_get_one.php?id=${id}`);
         const dados = await res.json();
 
         if (dados?.inscricao && dados?.omr_status === 'AGUARDANDO CORREÇÃO') {
@@ -784,7 +784,7 @@ async function processarFilaOMR() {
       body: JSON.stringify({
         file_id: fileId,
         link_down: `https://drive.google.com/uc?export=download&id=${fileId}`,
-        callback_url: 'https://apisec.secauxiliar.com.br/omr-callback.php'
+        callback_url: 'https://apisec.secauxiliar.com.br/redacaoenem/omr-callback.php'
       })
     });
 
@@ -794,7 +794,7 @@ async function processarFilaOMR() {
 
     setTimeout(async () => {
       try {
-        const res = await fetch(`https://apisec.secauxiliar.com.br/log_get_one.php?id=${id}`);
+        const res = await fetch(`https://apisec.secauxiliar.com.br/redacaoenem/log_get_one.php?id=${id}`);
         const dados = await res.json();
         if (dados?.inscricao && dados?.omr_status === 'AGUARDANDO CORREÇÃO') {
           statusCell.innerHTML = `
