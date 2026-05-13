@@ -809,15 +809,18 @@ async function processarFilaOMR() {
             btn.remove();
 
           } else if (status === 'TRATAMENTO MANUAL') {
-            statusCell.innerHTML = `
-              <span class="chip-status pend">
-                TRATAMENTO MANUAL
-              </span><br>
-              <a href="#" class="btn-flat tiny blue-text text-darken-2"
-                onclick="tentarFilaOMR(this,'${fileId}','${id}')">
-                <i class="material-icons tiny left">refresh</i>Tentar OMR
-              </a>`;
-
+          statusCell.innerHTML = `
+            <a href="#!" class="manual-link"
+              data-id="${id}"
+              data-img="${guessImageUrl({ FILE_ID: fileId })}"
+              data-nome=""
+              data-inscricao="${dados.inscricao || ''}">
+              TRATAMENTO MANUAL
+            </a><br>
+            <a href="#" class="btn-flat tiny blue-text text-darken-2"
+              onclick="tentarFilaOMR(this,'${fileId}','${id}')">
+              <i class="material-icons tiny left">refresh</i>Tentar OMR
+            </a>`;
           } else {
             statusCell.innerHTML = `<span class="chip-status">${status || 'RETORNO RECEBIDO'}</span>`;
           }
