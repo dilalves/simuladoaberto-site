@@ -653,10 +653,10 @@
     if (!el || !dist) return;
 
     const pct = formatarPercentual(dist.percentual_melhores);
-    const total = Number(dist.total_participantes || 0);
+    const total = Number(dist.total_inscritos_evento || dist.total_participantes || 0);
 
     el.innerHTML = `Você está classificado entre os <b>${pct}% melhores</b> neste grupo` +
-      (total > 0 ? ` • ${total} participante${total === 1 ? '' : 's'}` : '');
+      (total > 0 ? ` • ${total} Alunos${total === 1 ? '' : 's'}` : '');
   }
 
   const marcadorVocePlugin = {
