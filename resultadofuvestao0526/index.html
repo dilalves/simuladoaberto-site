@@ -75,6 +75,99 @@
     }
 
 
+    /* === Gráficos estilo Fuvest (distribuição) === */
+    .graficos-posicao {
+      margin: 28px auto 10px;
+      max-width: 1000px;
+    }
+
+    .grafico-posicao-card {
+      border: 1px solid #dbe5f2;
+      border-radius: 12px;
+      overflow: hidden;
+      background: #f5f8fd;
+      margin-bottom: 22px;
+      box-shadow: 0 1px 4px rgba(0, 39, 118, 0.08);
+    }
+
+    .grafico-posicao-topo {
+      background: linear-gradient(90deg, #002776, #1A4F8B, #2f6fb1);
+      color: #fff;
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 15px;
+    }
+
+    .grafico-posicao-topo h6 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: .2px;
+    }
+
+    .grafico-posicao-topo p {
+      margin: 3px 0 0;
+      font-size: 13px;
+      opacity: .95;
+    }
+
+    .badge-pontos {
+      min-width: 66px;
+      height: 66px;
+      border-radius: 50%;
+      background: #f5c400;
+      color: #002776;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      box-shadow: inset 0 0 0 4px rgba(255,255,255,.25);
+      line-height: 1;
+    }
+
+    .badge-pontos strong {
+      font-size: 25px;
+      line-height: 24px;
+    }
+
+    .badge-pontos span {
+      font-size: 11px;
+      margin-top: 2px;
+    }
+
+    .grafico-posicao-corpo {
+      display: grid;
+      grid-template-columns: 210px 1fr;
+      gap: 18px;
+      padding: 18px;
+      align-items: center;
+    }
+
+    .grafico-posicao-texto {
+      color: #002776;
+      font-size: 17px;
+      line-height: 1.35;
+      font-weight: 700;
+    }
+
+    .grafico-posicao-canvas-wrap {
+      width: 100%;
+      min-height: 230px;
+    }
+
+    .grafico-posicao-canvas-wrap canvas {
+      width: 100% !important;
+      height: 250px !important;
+    }
+
+    #chartWrapDistribuicao {
+      width: 100%;
+    }
+
+
 /* -----------  MOBILE FIRST (celular) ----------- */
 @media (max-width: 480px) {
   body { background:#fafafa; }
@@ -113,6 +206,54 @@
     height:auto !important;
     display:block;
   }
+
+
+  #chartWrapDistribuicao {
+    overflow-x:auto;
+    overflow-y:hidden;
+    -webkit-overflow-scrolling:touch;
+  }
+
+  .graficos-posicao {
+    margin-top: 20px;
+  }
+
+  .grafico-posicao-topo {
+    padding: 12px 14px;
+  }
+
+  .grafico-posicao-topo h6 {
+    font-size: 15px;
+  }
+
+  .grafico-posicao-topo p {
+    font-size: 12px;
+  }
+
+  .badge-pontos {
+    min-width: 54px;
+    height: 54px;
+  }
+
+  .badge-pontos strong {
+    font-size: 21px;
+  }
+
+  .grafico-posicao-corpo {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding: 14px;
+  }
+
+  .grafico-posicao-texto {
+    font-size: 14px;
+  }
+
+  .grafico-posicao-canvas-wrap canvas {
+    min-width: 760px;
+    height: 240px !important;
+  }
+
 
   /* === Tabela de questões === */
   .tabelaWrap {
@@ -255,6 +396,10 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
 
   <script>
+  let chartDisciplinas = null;
+  let chartDistribuicaoGeral = null;
+  let chartDistribuicaoUnidade = null;
+
   // Inicializa Materialize
   document.addEventListener('DOMContentLoaded', async function() {
     const modals = document.querySelectorAll('.modal');
@@ -295,6 +440,149 @@
     }
   }
 
+
+
+  function formatarPercentual(v) {
+    const n = Number(v || 0);
+    return n.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  }
+
+  function atualizarTextoDistribuicao(id, dist) {
+    const el = document.getElementById(id);
+    if (!el || !dist) return;
+
+    const pct = formatarPercentual(dist.percentual_melhores);
+    const total = Number(dist.total_participantes || 0);
+
+    el.innerHTML = `Você está classificado entre os <b>${pct}% melhores</b> neste grupo` +
+      (total > 0 ? ` • ${total} participante${total === 1 ? '' : 's'}` : '');
+  }
+
+  const marcadorVocePlugin = {
+    id: 'marcadorVocePlugin',
+    afterDatasetsDraw(chart, args, pluginOptions) {
+      const totalAluno = Number(pluginOptions.totalAluno);
+      const xScale = chart.scales.x;
+      const yScale = chart.scales.y;
+
+      if (!xScale || !yScale || Number.isNaN(totalAluno)) return;
+
+      const index = chart.data.labels.findIndex(v => Number(v) === totalAluno);
+      if (index < 0) return;
+
+      const ctx = chart.ctx;
+      const x = xScale.getPixelForValue(index);
+      const top = yScale.top;
+      const bottom = yScale.bottom;
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(x, top + 6);
+      ctx.lineTo(x, bottom);
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = '#002776';
+      ctx.stroke();
+
+      ctx.fillStyle = '#002776';
+      ctx.font = 'bold 12px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText('você', x, top + 14);
+
+      ctx.beginPath();
+      ctx.arc(x, bottom + 14, 13, 0, Math.PI * 2);
+      ctx.fillStyle = '#f5c400';
+      ctx.fill();
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = '#002776';
+      ctx.stroke();
+
+      ctx.fillStyle = '#002776';
+      ctx.font = 'bold 12px Arial';
+      ctx.fillText(String(totalAluno), x, bottom + 18);
+      ctx.restore();
+    }
+  };
+
+  function criarGraficoDistribuicao(canvasId, dist, titulo) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas || !dist) return null;
+
+    const labels = (dist.pontos || []).map(v => Number(v));
+    const valores = (dist.qtds || []).map(v => Number(v));
+    const totalAluno = Number(dist.total_aluno || 0);
+    const maxQtd = Math.max(...valores, 1);
+
+    return new Chart(canvas, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Quantidade de alunos',
+          data: valores,
+          backgroundColor: labels.map(p => p === totalAluno ? '#002776' : '#8FC5F8'),
+          borderColor: labels.map(p => p === totalAluno ? '#002776' : '#ffffff'),
+          borderWidth: 1,
+          barPercentage: 1,
+          categoryPercentage: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        layout: {
+          padding: { bottom: 22, top: 8 }
+        },
+        plugins: {
+          title: {
+            display: false,
+            text: titulo
+          },
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              title: itens => `${itens[0].label} acerto${Number(itens[0].label) === 1 ? '' : 's'}`,
+              label: item => `${item.raw} aluno${Number(item.raw) === 1 ? '' : 's'}`
+            }
+          },
+          datalabels: { display: false },
+          marcadorVocePlugin: { totalAluno }
+        },
+        scales: {
+          x: {
+            title: {
+              display: true,
+              text: 'número de acertos',
+              color: '#111',
+              font: { size: 13 }
+            },
+            grid: { display: false },
+            ticks: {
+              color: '#111',
+              autoSkip: false,
+              maxRotation: 0,
+              callback: function(value, index) {
+                const label = Number(this.getLabelForValue(value));
+                return label % 4 === 0 ? label : '';
+              }
+            }
+          },
+          y: {
+            beginAtZero: true,
+            suggestedMax: Math.ceil(maxQtd * 1.15),
+            title: {
+              display: true,
+              text: 'número de pessoas',
+              color: '#111',
+              font: { size: 13 }
+            },
+            grid: { color: 'rgba(0,0,0,0.10)' },
+            ticks: { color: '#111', precision: 0 }
+          }
+        }
+      },
+      plugins: [marcadorVocePlugin]
+    });
+  }
   // === CONSULTA RESULTADO ===
   async function buscarResultado() {
 
@@ -303,7 +591,7 @@
 
   const inscricao = document.getElementById("inscricao").value.trim();
   const cpf = document.getElementById("cpf").value.trim();
-  const url = `https://apisec.secauxiliar.com.br/SIMULADOS/FUVESTAO0526/psq_resultado_fuv_0526.php?inscricao=${inscricao}&cpf=${cpf}`;
+  const url = `https://apisec.secauxiliar.com.br/SIMULADOS/FUVESTAO0526/psq_resultado_fuv_0526.php?inscricao=${encodeURIComponent(inscricao)}&cpf=${encodeURIComponent(cpf)}`;
 
 
     try {
@@ -343,7 +631,54 @@
             </tr>
           </tbody>
         </table>
-        <canvas id="graficoDesempenho" style="width:100%;max-width:1000px;margin:30px auto;display:block;"></canvas>
+
+        <div class="graficos-posicao">
+          <div class="grafico-posicao-card">
+            <div class="grafico-posicao-topo">
+              <div>
+                <h6>Comparação com todos os participantes</h6>
+                <p id="txtDistGeral">Análise de seu desempenho em relação a todos os presentes.</p>
+              </div>
+              <div class="badge-pontos">
+                <strong>${aluno.TOTAL}</strong>
+                <span>pontos</span>
+              </div>
+            </div>
+            <div class="grafico-posicao-corpo">
+              <div class="grafico-posicao-texto">
+                desempenho em relação a todos os presentes na aplicação do exame
+              </div>
+              <div class="grafico-posicao-canvas-wrap">
+                <canvas id="graficoDistribuicaoGeral"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <div class="grafico-posicao-card">
+            <div class="grafico-posicao-topo">
+              <div>
+                <h6>Comparação com a unidade</h6>
+                <p id="txtDistUnidade">Análise de seu desempenho em relação aos presentes da sua unidade.</p>
+              </div>
+              <div class="badge-pontos">
+                <strong>${aluno.TOTAL}</strong>
+                <span>pontos</span>
+              </div>
+            </div>
+            <div class="grafico-posicao-corpo">
+              <div class="grafico-posicao-texto">
+                desempenho em relação aos participantes da unidade ${aluno.Nome_Unidade}
+              </div>
+              <div class="grafico-posicao-canvas-wrap">
+                <canvas id="graficoDistribuicaoUnidade"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="chartWrap">
+          <canvas id="graficoDesempenho" style="width:100%;max-width:1000px;margin:30px auto;display:block;"></canvas>
+        </div>
       `;
       
       dadosAluno.style.display = 'block';
@@ -367,14 +702,34 @@
 
       
 
-      // === GRÁFICO COMPARATIVO ===
+      // === GRÁFICOS DE POSIÇÃO ESTILO FUVEST ===
+      if (chartDistribuicaoGeral) chartDistribuicaoGeral.destroy();
+      if (chartDistribuicaoUnidade) chartDistribuicaoUnidade.destroy();
+      if (chartDisciplinas) chartDisciplinas.destroy();
+
+      atualizarTextoDistribuicao('txtDistGeral', dados.distribuicao_geral);
+      atualizarTextoDistribuicao('txtDistUnidade', dados.distribuicao_unidade);
+
+      chartDistribuicaoGeral = criarGraficoDistribuicao(
+        'graficoDistribuicaoGeral',
+        dados.distribuicao_geral,
+        'Comparação com todos os participantes'
+      );
+
+      chartDistribuicaoUnidade = criarGraficoDistribuicao(
+        'graficoDistribuicaoUnidade',
+        dados.distribuicao_unidade,
+        'Comparação com a unidade'
+      );
+
+      // === GRÁFICO COMPARATIVO POR DISCIPLINA ===
       const ctx = document.getElementById('graficoDesempenho');
       if (ctx) {
         const disciplinas = ['POR','HIS','ING','SOC','BIO','QUI','FIL','FIS','MAT','GEO'];
         const notasAluno  = disciplinas.map(d => parseFloat(aluno[d]));
         const medias      = disciplinas.map(d => parseFloat(dados.media_geral[d]));
 
-        new Chart(ctx, {
+        chartDisciplinas = new Chart(ctx, {
           type: 'bar',
           data: {
             labels: disciplinas,
