@@ -74,190 +74,98 @@
       padding-right: 20px !important;
     }
 
-    /* === Modal de estatísticas da questão === */
-    #modalEstatisticas {
-      max-width: 900px;
-      width: 92vw;
+
+    /* === Gráficos estilo Fuvest (distribuição) === */
+    .graficos-posicao {
+      margin: 28px auto 10px;
+      max-width: 1000px;
     }
 
-    .estat-modal-wrap {
-      padding: 22px 26px 10px;
-      color: #111;
+    .grafico-posicao-card {
+      border: 1px solid #dbe5f2;
+      border-radius: 12px;
+      overflow: hidden;
+      background: #f5f8fd;
+      margin-bottom: 22px;
+      box-shadow: 0 1px 4px rgba(0, 39, 118, 0.08);
     }
 
-    .estat-modal-header {
+    .grafico-posicao-topo {
       background: linear-gradient(90deg, #002776, #1A4F8B, #2f6fb1);
       color: #fff;
-      padding: 16px 22px;
-      border-radius: 10px 10px 0 0;
+      padding: 14px 18px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 12px;
+      gap: 15px;
     }
 
-    .estat-modal-header h5 {
+    .grafico-posicao-topo h6 {
       margin: 0;
-      font-size: 20px;
+      font-size: 18px;
       font-weight: 700;
+      letter-spacing: .2px;
     }
 
-    .estat-modal-header p {
-      margin: 4px 0 0;
+    .grafico-posicao-topo p {
+      margin: 3px 0 0;
       font-size: 13px;
       opacity: .95;
     }
 
-    .estat-grid {
-      display: grid;
-      grid-template-columns: 1.05fr .95fr;
-      gap: 30px;
-      align-items: start;
-      padding-top: 20px;
-    }
-
-    .estat-titulo {
-      color: #002776;
-      font-size: 18px;
-      font-weight: 800;
-      margin: 0 0 4px;
-    }
-
-    .estat-subtitulo {
-      margin: 0 0 14px;
-      color: #333;
-      font-size: 14px;
-    }
-
-    .estat-linha-alt {
-      display: grid;
-      grid-template-columns: 28px 1fr 62px;
-      gap: 8px;
-      align-items: center;
-      margin: 7px 0;
-    }
-
-    .estat-alt-letra {
-      width: 24px;
-      height: 24px;
+    .badge-pontos {
+      min-width: 66px;
+      height: 66px;
       border-radius: 50%;
+      background: #f5c400;
       color: #002776;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
       font-weight: 800;
-      font-size: 16px;
+      box-shadow: inset 0 0 0 4px rgba(255,255,255,.25);
+      line-height: 1;
     }
 
-    .estat-alt-letra.escolhida {
-      background: #002776;
-      color: #fff;
+    .badge-pontos strong {
+      font-size: 25px;
+      line-height: 24px;
     }
 
-    .estat-barra-fundo {
-      height: 22px;
-      background: #eaf2fb;
-      border-radius: 4px;
-      overflow: hidden;
-      position: relative;
+    .badge-pontos span {
+      font-size: 11px;
+      margin-top: 2px;
     }
 
-    .estat-barra {
-      height: 100%;
-      min-width: 2px;
-      background: #8FC5F8;
-      border-radius: 4px;
+    .grafico-posicao-corpo {
+      display: grid;
+      grid-template-columns: 210px 1fr;
+      gap: 18px;
+      padding: 18px;
+      align-items: center;
     }
 
-    .estat-barra.correta {
-      background: #002776;
-    }
-
-    .estat-barra.escolhida {
-      background: #1A4F8B;
-    }
-
-    .estat-barra.correta.escolhida {
-      background: linear-gradient(90deg, #002776, #2f6fb1);
-    }
-
-    .estat-qtd {
-      color: #555;
-      font-size: 12px;
-      text-align: left;
-      white-space: nowrap;
-    }
-
-    .dificuldade-box {
-      margin-top: 12px;
-    }
-
-    .dificuldade-trilho {
-      position: relative;
-      height: 54px;
-      background: #edf3fa;
-      border-radius: 8px;
-      margin: 12px 0 4px;
-      border: 1px solid #dbe5f2;
-      overflow: hidden;
-    }
-
-    .dificuldade-trilho::before {
-      content: "";
-      position: absolute;
-      left: 24px;
-      right: 24px;
-      top: 25px;
-      height: 2px;
-      background: repeating-linear-gradient(90deg, #b7cce4 0, #b7cce4 1px, transparent 1px, transparent 28px);
-    }
-
-    .dificuldade-marcador {
-      position: absolute;
-      top: 6px;
-      transform: translateX(-50%);
+    .grafico-posicao-texto {
       color: #002776;
-      text-align: center;
-      font-weight: 800;
-      min-width: 52px;
-    }
-
-    .dificuldade-marcador .seta {
-      width: 0;
-      height: 0;
-      margin: 0 auto 3px;
-      border-left: 12px solid transparent;
-      border-right: 12px solid transparent;
-      border-top: 16px solid #002776;
-    }
-
-    .dificuldade-labels {
-      display: flex;
-      justify-content: space-between;
-      color: #002776;
-      font-size: 14px;
+      font-size: 17px;
+      line-height: 1.35;
       font-weight: 700;
     }
 
-    .estat-info-final {
-      margin-top: 18px;
-      padding: 10px 12px;
-      border-left: 4px solid #002776;
-      background: #f5f8fd;
-      color: #333;
-      font-size: 13px;
-      border-radius: 6px;
+    .grafico-posicao-canvas-wrap {
+      width: 100%;
+      min-height: 230px;
     }
 
-    .btn-estatistica {
-      background: #002776 !important;
-      margin-left: 6px;
+    .grafico-posicao-canvas-wrap canvas {
+      width: 100% !important;
+      height: 250px !important;
     }
 
-    .btn-estatistica:hover {
-      background: #0b49a5 !important;
+    #chartWrapDistribuicao {
+      width: 100%;
     }
-
 
 
 /* -----------  MOBILE FIRST (celular) ----------- */
@@ -299,6 +207,54 @@
     display:block;
   }
 
+
+  #chartWrapDistribuicao {
+    overflow-x:auto;
+    overflow-y:hidden;
+    -webkit-overflow-scrolling:touch;
+  }
+
+  .graficos-posicao {
+    margin-top: 20px;
+  }
+
+  .grafico-posicao-topo {
+    padding: 12px 14px;
+  }
+
+  .grafico-posicao-topo h6 {
+    font-size: 15px;
+  }
+
+  .grafico-posicao-topo p {
+    font-size: 12px;
+  }
+
+  .badge-pontos {
+    min-width: 54px;
+    height: 54px;
+  }
+
+  .badge-pontos strong {
+    font-size: 21px;
+  }
+
+  .grafico-posicao-corpo {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding: 14px;
+  }
+
+  .grafico-posicao-texto {
+    font-size: 14px;
+  }
+
+  .grafico-posicao-canvas-wrap canvas {
+    min-width: 760px;
+    height: 240px !important;
+  }
+
+
   /* === Tabela de questões === */
   .tabelaWrap {
     overflow-x:auto;
@@ -335,28 +291,6 @@
     height:40px;
     font-size:18px;
   }
-
-  .estat-grid {
-    grid-template-columns: 1fr;
-    gap: 18px;
-  }
-
-  .estat-modal-wrap {
-    padding: 16px 14px 8px;
-  }
-
-  .estat-modal-header {
-    padding: 14px 16px;
-  }
-
-  .estat-modal-header h5 {
-    font-size: 17px;
-  }
-
-  .estat-linha-alt {
-    grid-template-columns: 26px 1fr 52px;
-  }
-
 }
 
 
@@ -432,7 +366,6 @@
           <th>Resposta Aluno</th>
           <th>Gabarito</th>
           <th>Resolução</th>
-          <th>Estatísticas</th>
         </tr>
       </thead>
       <tbody></tbody>
@@ -449,29 +382,6 @@
     </div>
   </div>
 
-  <!-- Modal de Estatísticas da Questão -->
-  <div id="modalEstatisticas" class="modal">
-    <div class="modal-content" style="padding:0 !important;">
-      <div class="estat-modal-header">
-        <div>
-          <h5>Estatísticas da questão</h5>
-          <p id="estatHeaderInfo">Distribuição das alternativas e índice de acerto</p>
-        </div>
-        <div class="badge-pontos" style="min-width:58px;height:58px;">
-          <strong id="estatIndiceBadge">--</strong>
-          <span>% acerto</span>
-        </div>
-      </div>
-      <div id="areaEstatistica" class="estat-modal-wrap">
-        <p style="color:#666;">Carregando estatísticas...</p>
-      </div>
-    </div>
-    <div class="modal-footer" style="text-align:right;">
-      <a href="#!" class="modal-close btn-flat">Fechar</a>
-    </div>
-  </div>
-
-
     <div id="avisoMobile">
       ⚠️ Para visualizar as questões e resoluções completas,<br>
         acesse este resultado em um computador ou tablet.
@@ -486,6 +396,10 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
 
   <script>
+  let chartDisciplinas = null;
+  let chartDistribuicaoGeral = null;
+  let chartDistribuicaoUnidade = null;
+
   // Inicializa Materialize
   document.addEventListener('DOMContentLoaded', async function() {
     const modals = document.querySelectorAll('.modal');
@@ -526,6 +440,149 @@
     }
   }
 
+
+
+  function formatarPercentual(v) {
+    const n = Number(v || 0);
+    return n.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  }
+
+  function atualizarTextoDistribuicao(id, dist) {
+    const el = document.getElementById(id);
+    if (!el || !dist) return;
+
+    const pct = formatarPercentual(dist.percentual_melhores);
+    const total = Number(dist.total_participantes || 0);
+
+    el.innerHTML = `Você está classificado entre os <b>${pct}% melhores</b> neste grupo` +
+      (total > 0 ? ` • ${total} participante${total === 1 ? '' : 's'}` : '');
+  }
+
+  const marcadorVocePlugin = {
+    id: 'marcadorVocePlugin',
+    afterDatasetsDraw(chart, args, pluginOptions) {
+      const totalAluno = Number(pluginOptions.totalAluno);
+      const xScale = chart.scales.x;
+      const yScale = chart.scales.y;
+
+      if (!xScale || !yScale || Number.isNaN(totalAluno)) return;
+
+      const index = chart.data.labels.findIndex(v => Number(v) === totalAluno);
+      if (index < 0) return;
+
+      const ctx = chart.ctx;
+      const x = xScale.getPixelForValue(index);
+      const top = yScale.top;
+      const bottom = yScale.bottom;
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(x, top + 6);
+      ctx.lineTo(x, bottom);
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = '#002776';
+      ctx.stroke();
+
+      ctx.fillStyle = '#002776';
+      ctx.font = 'bold 12px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText('você', x, top + 14);
+
+      ctx.beginPath();
+      ctx.arc(x, bottom + 14, 13, 0, Math.PI * 2);
+      ctx.fillStyle = '#f5c400';
+      ctx.fill();
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = '#002776';
+      ctx.stroke();
+
+      ctx.fillStyle = '#002776';
+      ctx.font = 'bold 12px Arial';
+      ctx.fillText(String(totalAluno), x, bottom + 18);
+      ctx.restore();
+    }
+  };
+
+  function criarGraficoDistribuicao(canvasId, dist, titulo) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas || !dist) return null;
+
+    const labels = (dist.pontos || []).map(v => Number(v));
+    const valores = (dist.qtds || []).map(v => Number(v));
+    const totalAluno = Number(dist.total_aluno || 0);
+    const maxQtd = Math.max(...valores, 1);
+
+    return new Chart(canvas, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Quantidade de alunos',
+          data: valores,
+          backgroundColor: labels.map(p => p === totalAluno ? '#002776' : '#8FC5F8'),
+          borderColor: labels.map(p => p === totalAluno ? '#002776' : '#ffffff'),
+          borderWidth: 1,
+          barPercentage: 1,
+          categoryPercentage: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        layout: {
+          padding: { bottom: 22, top: 8 }
+        },
+        plugins: {
+          title: {
+            display: false,
+            text: titulo
+          },
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              title: itens => `${itens[0].label} acerto${Number(itens[0].label) === 1 ? '' : 's'}`,
+              label: item => `${item.raw} aluno${Number(item.raw) === 1 ? '' : 's'}`
+            }
+          },
+          datalabels: { display: false },
+          marcadorVocePlugin: { totalAluno }
+        },
+        scales: {
+          x: {
+            title: {
+              display: true,
+              text: 'número de acertos',
+              color: '#111',
+              font: { size: 13 }
+            },
+            grid: { display: false },
+            ticks: {
+              color: '#111',
+              autoSkip: false,
+              maxRotation: 0,
+              callback: function(value, index) {
+                const label = Number(this.getLabelForValue(value));
+                return label % 4 === 0 ? label : '';
+              }
+            }
+          },
+          y: {
+            beginAtZero: true,
+            suggestedMax: Math.ceil(maxQtd * 1.15),
+            title: {
+              display: true,
+              text: 'número de pessoas',
+              color: '#111',
+              font: { size: 13 }
+            },
+            grid: { color: 'rgba(0,0,0,0.10)' },
+            ticks: { color: '#111', precision: 0 }
+          }
+        }
+      },
+      plugins: [marcadorVocePlugin]
+    });
+  }
   // === CONSULTA RESULTADO ===
   async function buscarResultado() {
 
@@ -534,7 +591,7 @@
 
   const inscricao = document.getElementById("inscricao").value.trim();
   const cpf = document.getElementById("cpf").value.trim();
-  const url = `https://apisec.secauxiliar.com.br/SIMULADOS/FUVESTAO0526/psq_resultado_fuv_0526.php?inscricao=${inscricao}&cpf=${cpf}`;
+  const url = `https://apisec.secauxiliar.com.br/SIMULADOS/FUVESTAO0526/psq_resultado_fuv_0526.php?inscricao=${encodeURIComponent(inscricao)}&cpf=${encodeURIComponent(cpf)}`;
 
 
     try {
@@ -574,7 +631,54 @@
             </tr>
           </tbody>
         </table>
-        <canvas id="graficoDesempenho" style="width:100%;max-width:1000px;margin:30px auto;display:block;"></canvas>
+
+        <div class="graficos-posicao">
+          <div class="grafico-posicao-card">
+            <div class="grafico-posicao-topo">
+              <div>
+                <h6>Comparação com todos os participantes</h6>
+                <p id="txtDistGeral">Análise de seu desempenho em relação a todos os presentes.</p>
+              </div>
+              <div class="badge-pontos">
+                <strong>${aluno.TOTAL}</strong>
+                <span>pontos</span>
+              </div>
+            </div>
+            <div class="grafico-posicao-corpo">
+              <div class="grafico-posicao-texto">
+                desempenho em relação a todos os presentes na aplicação do exame
+              </div>
+              <div class="grafico-posicao-canvas-wrap">
+                <canvas id="graficoDistribuicaoGeral"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <div class="grafico-posicao-card">
+            <div class="grafico-posicao-topo">
+              <div>
+                <h6>Comparação com a unidade</h6>
+                <p id="txtDistUnidade">Análise de seu desempenho em relação aos presentes da sua unidade.</p>
+              </div>
+              <div class="badge-pontos">
+                <strong>${aluno.TOTAL}</strong>
+                <span>pontos</span>
+              </div>
+            </div>
+            <div class="grafico-posicao-corpo">
+              <div class="grafico-posicao-texto">
+                desempenho em relação aos participantes da unidade ${aluno.Nome_Unidade}
+              </div>
+              <div class="grafico-posicao-canvas-wrap">
+                <canvas id="graficoDistribuicaoUnidade"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="chartWrap">
+          <canvas id="graficoDesempenho" style="width:100%;max-width:1000px;margin:30px auto;display:block;"></canvas>
+        </div>
       `;
       
       dadosAluno.style.display = 'block';
@@ -585,27 +689,12 @@
         const icone = acertou 
           ? '<span style="color:green;font-weight:bold;font-size:18px;">&#10004;</span>' 
           : `<button class="btn-small blue lighten-1" onclick='abrirModalResolucao(${JSON.stringify(r.LINK || "")})'>Ver resolução</button>`;
-
-        const payloadEstatistica = {
-          evento: dados.evento || 'FUVESTAO0526',
-          codProva: aluno.COD_PROVA || aluno.cod_prova || '',
-          questao: r.QUESTAO_ALUNO,
-          respostaAluno: r.RESPOSTA_ALUNO || '',
-          gabarito: r.GABARITO_CORRETO || ''
-        };
-
-        const btnEstatistica = `
-          <button class="btn-small btn-estatistica" onclick='abrirModalEstatisticas(${JSON.stringify(payloadEstatistica)})'>
-            Estatísticas
-          </button>`;
-
           return `
           <tr class="${classe}">
             <td>${r.QUESTAO_ALUNO}</td>
             <td>${r.RESPOSTA_ALUNO || '-'}</td>
             <td>${r.GABARITO_CORRETO}</td>
             <td>${icone}</td>
-            <td>${btnEstatistica}</td>
           </tr>
         `;
       }).join('');
@@ -613,14 +702,34 @@
 
       
 
-      // === GRÁFICO COMPARATIVO ===
+      // === GRÁFICOS DE POSIÇÃO ESTILO FUVEST ===
+      if (chartDistribuicaoGeral) chartDistribuicaoGeral.destroy();
+      if (chartDistribuicaoUnidade) chartDistribuicaoUnidade.destroy();
+      if (chartDisciplinas) chartDisciplinas.destroy();
+
+      atualizarTextoDistribuicao('txtDistGeral', dados.distribuicao_geral);
+      atualizarTextoDistribuicao('txtDistUnidade', dados.distribuicao_unidade);
+
+      chartDistribuicaoGeral = criarGraficoDistribuicao(
+        'graficoDistribuicaoGeral',
+        dados.distribuicao_geral,
+        'Comparação com todos os participantes'
+      );
+
+      chartDistribuicaoUnidade = criarGraficoDistribuicao(
+        'graficoDistribuicaoUnidade',
+        dados.distribuicao_unidade,
+        'Comparação com a unidade'
+      );
+
+      // === GRÁFICO COMPARATIVO POR DISCIPLINA ===
       const ctx = document.getElementById('graficoDesempenho');
       if (ctx) {
         const disciplinas = ['POR','HIS','ING','SOC','BIO','QUI','FIL','FIS','MAT','GEO'];
         const notasAluno  = disciplinas.map(d => parseFloat(aluno[d]));
         const medias      = disciplinas.map(d => parseFloat(dados.media_geral[d]));
 
-        new Chart(ctx, {
+        chartDisciplinas = new Chart(ctx, {
           type: 'bar',
           data: {
             labels: disciplinas,
@@ -679,147 +788,6 @@
     } catch (e) {
       console.error(e);
       M.toast({html:'Erro ao consultar resultado', classes:'red'});
-    }
-  }
-
-
-
-  function formatarNumeroBR(v) {
-    const n = Number(v || 0);
-    return n.toLocaleString('pt-BR');
-  }
-
-  function escapeHtml(valor) {
-    return String(valor ?? '').replace(/[&<>'"]/g, c => ({
-      '&': '&amp;',
-      '<': '&lt;',
-      '>': '&gt;',
-      "'": '&#39;',
-      '"': '&quot;'
-    }[c]));
-  }
-
-  function montarTextoResposta(dados) {
-    const resp = dados.resposta_aluno || '-';
-    const gab = dados.gabarito || '-';
-
-    if (dados.acertou) {
-      return `Você escolheu a alternativa <b>${escapeHtml(resp)}</b>, que está correta.`;
-    }
-
-    return `Você escolheu a alternativa <b>${escapeHtml(resp)}</b>, mas a correta é <b>${escapeHtml(gab)}</b>.`;
-  }
-
-  function renderizarDistribuicaoAlternativas(dados) {
-    const dist = dados.distribuicao || {};
-    const corretas = Array.isArray(dados.gabaritos_aceitos) ? dados.gabaritos_aceitos : [];
-    const respostaAluno = String(dados.resposta_aluno || '').toUpperCase();
-    const maxQtd = Math.max(...['A','B','C','D','E'].map(alt => Number(dist[alt] || 0)), 1);
-
-    return ['A','B','C','D','E'].map(alt => {
-      const qtd = Number(dist[alt] || 0);
-      const largura = Math.max(2, (qtd / maxQtd) * 100);
-      const escolhida = alt === respostaAluno;
-      const correta = corretas.includes(alt);
-      const classeLetra = escolhida ? 'estat-alt-letra escolhida' : 'estat-alt-letra';
-      const classeBarra = ['estat-barra', correta ? 'correta' : '', escolhida ? 'escolhida' : ''].filter(Boolean).join(' ');
-
-      return `
-        <div class="estat-linha-alt">
-          <div class="${classeLetra}">${alt}</div>
-          <div class="estat-barra-fundo" title="${alt}: ${formatarNumeroBR(qtd)} respostas">
-            <div class="${classeBarra}" style="width:${largura}%;"></div>
-          </div>
-          <div class="estat-qtd">${formatarNumeroBR(qtd)}</div>
-        </div>
-      `;
-    }).join('');
-  }
-
-  function renderizarDificuldade(indice) {
-    const pct = Math.max(0, Math.min(100, Number(indice || 0)));
-
-    return `
-      <div class="dificuldade-box">
-        <h6 class="estat-titulo">Dificuldade da questão</h6>
-        <p class="estat-subtitulo">Índice de acerto da questão entre os participantes.</p>
-        <div class="dificuldade-trilho">
-          <div class="dificuldade-marcador" style="left:${pct}%">
-            <div class="seta"></div>
-            <div>${pct.toLocaleString('pt-BR', { maximumFractionDigits: 1 })}%</div>
-          </div>
-        </div>
-        <div class="dificuldade-labels">
-          <span>difícil</span>
-          <span>fácil</span>
-        </div>
-      </div>
-    `;
-  }
-
-  async function abrirModalEstatisticas(payload) {
-    const modal = document.getElementById('modalEstatisticas');
-    const area = document.getElementById('areaEstatistica');
-    const header = document.getElementById('estatHeaderInfo');
-    const badge = document.getElementById('estatIndiceBadge');
-
-    if (!modal || !area) return;
-
-    area.innerHTML = `<p style="color:#666;">Carregando estatísticas...</p>`;
-    if (header) header.textContent = 'Distribuição das alternativas e índice de acerto';
-    if (badge) badge.textContent = '--';
-
-    let instance = M.Modal.getInstance(modal);
-    if (!instance) {
-      instance = M.Modal.init(modal, { dismissible: true, opacity: 0.6 });
-    }
-    instance.open();
-
-    try {
-      const params = new URLSearchParams({
-        evento: payload.evento || 'FUVESTAO0526',
-        cod_prova: payload.codProva || '',
-        questao: payload.questao || '',
-        resposta_aluno: payload.respostaAluno || ''
-      });
-
-      const url = `https://apisec.secauxiliar.com.br/SIMULADOS/FUVESTAO0526/estatistica_questao_aluno.php?${params.toString()}`;
-      const resp = await fetch(url);
-      const dados = await resp.json();
-
-      if (!dados.ok) {
-        area.innerHTML = `<p style="color:#b71c1c;">${escapeHtml(dados.msg || 'Não foi possível carregar as estatísticas.')}</p>`;
-        return;
-      }
-
-      const indice = Number(dados.indice_acerto || 0);
-      if (badge) badge.textContent = indice.toLocaleString('pt-BR', { maximumFractionDigits: 1 });
-      if (header) {
-        header.textContent = `Questão ${dados.questao_aluno} • canônica ${dados.questao_canonica} • ${dados.disciplina || ''}`;
-      }
-
-      area.innerHTML = `
-        <div class="estat-grid">
-          <div>
-            <h6 class="estat-titulo">Distribuição das respostas à questão</h6>
-            <p class="estat-subtitulo">${montarTextoResposta(dados)}</p>
-            ${renderizarDistribuicaoAlternativas(dados)}
-          </div>
-          <div>
-            ${renderizarDificuldade(indice)}
-            <div class="estat-info-final">
-              <b>Total de respostas:</b> ${formatarNumeroBR(dados.total_respostas)}<br>
-              <b>Gabarito:</b> ${escapeHtml(dados.gabarito || '-')}<br>
-              <b>Acertos:</b> ${formatarNumeroBR(dados.qtd_acertos)} &nbsp; | &nbsp;
-              <b>Erros:</b> ${formatarNumeroBR(dados.qtd_erros)}
-            </div>
-          </div>
-        </div>
-      `;
-
-    } catch (e) {
-      console.error(e);
-      area.innerHTML = `<p style="color:#b71c1c;">Erro ao carregar estatísticas da questão.</p>`;
     }
   }
 
