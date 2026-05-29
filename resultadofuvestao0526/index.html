@@ -948,52 +948,67 @@
         </table>
 
         <div class="graficos-posicao">
-          <div class="grafico-posicao-card">
-            <div class="grafico-posicao-topo">
-              <div>
-                <h6>Comparação com todos os participantes</h6>
-                <p id="txtDistGeral">Análise de seu desempenho em relação a todos os presentes.</p>
-              </div>
-              <div class="badge-pontos">
-                <strong>${aluno.TOTAL}</strong>
-                <span>pontos</span>
-              </div>
+
+        <!-- COMPARAÇÃO GERAL -->
+        <div class="grafico-posicao-card">
+          <div class="grafico-posicao-topo">
+            <div>
+              <h6>Comparação com todos os participantes</h6>
+              <p id="txtDistGeral"></p>
             </div>
-            <div class="grafico-posicao-corpo">
-              <div class="grafico-posicao-texto">
-                desempenho em relação a todos os presentes na aplicação do exame
-              </div>
-              <div class="grafico-posicao-canvas-wrap">
-                <canvas id="graficoDistribuicaoGeral"></canvas>
-              </div>
-            </div>
+            <div class="grafico-posicao-pontos" id="pontosGeral"></div>
           </div>
 
-          <div class="grafico-posicao-card">
-            <div class="grafico-posicao-topo">
-              <div>
-                <h6>Comparação com a unidade</h6>
-                <p id="txtDistUnidade">Análise de seu desempenho em relação aos presentes da sua unidade.</p>
-              </div>
-              <div class="badge-pontos">
-                <strong>${aluno.TOTAL}</strong>
-                <span>pontos</span>
-              </div>
+          <div class="grafico-posicao-corpo">
+            <div class="grafico-posicao-texto">
+              desempenho em relação aos presentes na aplicação do exame
             </div>
-            <div class="grafico-posicao-corpo">
-              <div class="grafico-posicao-texto">
-                desempenho em relação aos participantes da unidade ${aluno.Nome_Unidade}
-              </div>
-              <div class="grafico-posicao-canvas-wrap">
-                <canvas id="graficoDistribuicaoUnidade"></canvas>
-              </div>
+
+            <div class="grafico-posicao-canvas-wrap">
+              <canvas id="graficoDistribuicaoGeral"></canvas>
             </div>
           </div>
         </div>
 
-        <div id="chartWrap">
-          <canvas id="graficoDesempenho" style="width:100%;max-width:1000px;margin:30px auto;display:block;"></canvas>
+        <!-- COMPARAÇÃO UNIDADE -->
+        <div class="grafico-posicao-card">
+          <div class="grafico-posicao-topo">
+            <div>
+              <h6>Comparação com a unidade</h6>
+              <p id="txtDistUnidade"></p>
+            </div>
+            <div class="grafico-posicao-pontos" id="pontosUnidade"></div>
+          </div>
+
+          <div class="grafico-posicao-corpo">
+            <div class="grafico-posicao-texto" id="txtLegendaUnidade">
+              desempenho em relação aos participantes da unidade
+            </div>
+
+            <div class="grafico-posicao-canvas-wrap">
+              <canvas id="graficoDistribuicaoUnidade"></canvas>
+            </div>
+          </div>
         </div>
+
+        <!-- COMPARATIVO POR DISCIPLINA -->
+        <div class="grafico-posicao-card">
+          <div class="grafico-posicao-topo">
+            <div>
+              <h6>Comparativo por Disciplina</h6>
+              <p>Desempenho do aluno em relação à média geral dos participantes</p>
+            </div>
+          </div>
+
+          <div class="grafico-posicao-corpo" style="grid-template-columns:1fr;">
+            <div class="grafico-posicao-canvas-wrap">
+              <canvas id="graficoDesempenho"></canvas>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
       `;
       
       dadosAluno.style.display = 'block';
