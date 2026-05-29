@@ -653,7 +653,7 @@
     if (!el || !dist) return;
 
     const pct = formatarPercentual(dist.percentual_melhores);
-    const total = Number(dist.total_inscritos_evento || dist.total_participantes || 0);
+    const total = Number(dist.total_participantes || 0);
 
     el.innerHTML = `Você está classificado entre os <b>${pct}% melhores</b> neste grupo` +
       (total > 0 ? ` • ${total} Aluno${total === 1 ? '' : 's'}` : '');
@@ -739,11 +739,9 @@
             text: titulo
           },
           legend: { display: false },
-          tooltip: {
-            callbacks: {
-              title: itens => `${itens[0].label} acerto${Number(itens[0].label) === 1 ? '' : 's'}`,
-              label: item => `${item.raw} aluno${Number(item.raw) === 1 ? '' : 's'}`
-            }
+            tooltip: {
+              enabled: false
+            },
           },
           datalabels: { display: false },
           marcadorVocePlugin: { totalAluno }
