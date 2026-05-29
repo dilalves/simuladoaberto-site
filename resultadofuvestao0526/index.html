@@ -828,6 +828,8 @@
       }
 
       const dist = dados.distribuicao || {};
+      const distPct = dados.distribuicao_percentual || {};
+      const totalInscritos = Number(dados.total_inscritos_evento || 0);
       const alternativas = ['A', 'B', 'C', 'D', 'E'];
       const resposta = String(dados.resposta_aluno || '').toUpperCase();
       const corretas = new Set((dados.gabaritos_aceitos || []).map(x => String(x).toUpperCase()));
@@ -840,17 +842,22 @@
         : `Você escolheu a alternativa <b>${escapeHtml(resposta || '-')}</b>, mas a correta é <b>${escapeHtml(dados.gabarito || '-')}</b>.`;
 
       const linhas = alternativas.map(alt => {
-        const qtd = Number(dist[alt] || 0);
-        const largura = Math.max(2, (qtd / maxQtd) * 100);
+      const qtd = Number(dist[alt] || 0);
+      const pct = Number(distPct[alt] || 0);
+      const largura = Math.max(2, (qtd / maxQtd) * 100);
+      const pctTxt = pct.toLocaleString('pt-BR', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }) + '%';
         const ehCorreta = corretas.has(alt);
         const ehEscolhida = resposta === alt;
         return `
           <div class="dist-linha">
             <div class="dist-alt ${ehEscolhida ? 'escolhida' : ''}">${alt}</div>
-            <div class="dist-barra-wrap" title="${qtd} resposta(s)">
+            <div class="dist-barra-wrap">
               <div class="dist-barra ${ehCorreta ? 'correta' : ''} ${ehEscolhida ? 'escolhida' : ''}" style="width:${largura}%;"></div>
             </div>
-            <div class="dist-qtd">${formatarNumeroBR(qtd)}</div>
+            <div class="dist-qtd">${pctTxt}</div>
           </div>
         `;
       }).join('');
@@ -880,7 +887,7 @@
         </div>
 
         <div class="estatisticas-info">
-          Questão canônica: ${escapeHtml(dados.questao_canonica)} • Disciplina: ${escapeHtml(dados.disciplina || '-')} • Total de respostas: ${formatarNumeroBR(dados.total_respostas || 0)}
+          Questão canônica: ${escapeHtml(dados.questao_canonica)} • Disciplina: ${escapeHtml(dados.disciplina || '-')} • Total: ${formatarNumeroBR(totalInscritos)} alunos
         </div>
       `;
 
