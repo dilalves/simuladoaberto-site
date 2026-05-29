@@ -841,7 +841,7 @@
       const linhas = alternativas.map(alt => {
       const qtd = Number(dist[alt] || 0);
       const pct = Number(distPct[alt] || 0);
-      const largura = Math.max(2, (qtd / maxQtd) * 100);
+      const largura = Math.max(2, pct);
       const pctTxt = pct.toLocaleString('pt-BR', {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2
