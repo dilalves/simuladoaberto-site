@@ -163,6 +163,11 @@
       height: 250px !important;
     }
 
+    .grafico-posicao-canvas-wrap #graficoDesempenho {
+      height: 330px !important;
+      min-height: 330px !important;
+    }
+
     #chartWrapDistribuicao {
       width: 100%;
     }
@@ -1088,8 +1093,9 @@
           },
           options: {
             responsive: true,
+            maintainAspectRatio: false,
             plugins: {
-              title: { display: true, text: 'Comparativo por Disciplina', font: { size: 18 } },
+              title: { display: false },
               legend: { position: 'bottom' },
               tooltip: { enabled: true },
               datalabels: { 
