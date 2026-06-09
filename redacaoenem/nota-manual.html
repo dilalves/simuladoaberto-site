@@ -60,6 +60,10 @@
     .empty-box{padding:26px; text-align:center; color:#6b7280}
     .nota-forte{font-weight:800; color:#0b3b78}
     .loading{display:none; margin-left:10px; vertical-align:middle}
+    .candidate-status{font-size:12px; margin-top:-12px; min-height:18px}
+    .candidate-ok{color:#127c46; font-weight:600}
+    .candidate-warn{color:#b54708; font-weight:600}
+    .candidate-err{color:#b42318; font-weight:600}
 
     @media (max-width:992px){
       .app{grid-template-columns:1fr}
@@ -123,17 +127,23 @@
             <input id="evento" type="hidden" value="ENEM0526">
 
             <div class="row">
-              <div class="input-field col s12 m4">
+              <div class="input-field col s12 m2">
                 <input id="inscricao" type="text" maxlength="16" autocomplete="off">
                 <label for="inscricao">Inscrição</label>
               </div>
 
               <div class="input-field col s12 m4">
+                <input id="nomeCandidato" type="text" readonly>
+                <label for="nomeCandidato" class="active">Nome do candidato</label>
+                <div id="statusCandidato" class="candidate-status muted">Digite a inscrição para buscar o candidato.</div>
+              </div>
+
+              <div class="input-field col s12 m3">
                 <input id="nota" type="number" min="0" max="1000" step="1">
                 <label for="nota">Nota da redação</label>
               </div>
 
-              <div class="input-field col s12 m4">
+              <div class="input-field col s12 m3">
                 <input id="eventoVisual" type="text" value="ENEM0526" readonly>
                 <label for="eventoVisual" class="active">Evento</label>
               </div>
@@ -182,8 +192,12 @@ const EVENTO_FIXO = 'ENEM0526';
 
 const ENDPOINT_SALVAR = `${API_BASE}salvar_nota_manual_redacao.php`;
 const ENDPOINT_LISTAR = `${API_BASE}listar_notas_manuais_redacao.php`;
+const ENDPOINT_BUSCAR = `${API_BASE}buscar_candidato_redacao.php`;
 
 let contexto = null;
+let candidatoAtual = null;
+let timerBuscaCandidato = null;
+const cacheCandidatos = new Map();
 
 function getSession(){
   try { return JSON.parse(localStorage.getItem(SESS_KEY) || '{}'); }
@@ -299,6 +313,90 @@ function getCodun(){
          '';
 }
 
+function setCandidatoStatus(texto, classe='muted'){
+  const el = document.getElementById('statusCandidato');
+  if (!el) return;
+  el.className = `candidate-status ${classe}`;
+  el.textContent = texto;
+}
+
+function limparCandidato(){
+  candidatoAtual = null;
+  const nomeEl = document.getElementById('nomeCandidato');
+  if (nomeEl) nomeEl.value = '';
+  setCandidatoStatus('Digite a inscrição para buscar o candidato.', 'muted');
+  window.M && M.updateTextFields();
+}
+
+async function buscarCandidatoPorInscricao(inscricao, {silent=false} = {}){
+  inscricao = somenteNumeros(inscricao);
+  const token = getToken();
+  const codun = getCodun();
+
+  if (!inscricao) {
+    limparCandidato();
+    return null;
+  }
+
+  if (!codun) {
+    candidatoAtual = null;
+    setCandidatoStatus('Unidade não identificada para buscar o candidato.', 'candidate-err');
+    return null;
+  }
+
+  const cacheKey = `${EVENTO_FIXO}|${codun}|${inscricao}`;
+  if (cacheCandidatos.has(cacheKey)) {
+    const cached = cacheCandidatos.get(cacheKey);
+    aplicarCandidatoNaTela(cached, silent);
+    return cached;
+  }
+
+  setCandidatoStatus('Buscando candidato...', 'muted');
+
+  try {
+    const url = `${ENDPOINT_BUSCAR}?evento=${encodeURIComponent(EVENTO_FIXO)}&codun=${encodeURIComponent(codun)}&inscricao=${encodeURIComponent(inscricao)}`;
+    const resp = await fetch(url, {
+      method: 'GET',
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+
+    const json = await resp.json();
+
+    if (!json.ok) {
+      throw new Error(json.error || 'Erro ao buscar candidato.');
+    }
+
+    cacheCandidatos.set(cacheKey, json);
+    aplicarCandidatoNaTela(json, silent);
+    return json;
+
+  } catch (err) {
+    console.error(err);
+    candidatoAtual = null;
+    document.getElementById('nomeCandidato').value = '';
+    setCandidatoStatus('Erro ao buscar candidato.', 'candidate-err');
+    window.M && M.updateTextFields();
+    return null;
+  }
+}
+
+function aplicarCandidatoNaTela(json, silent=false){
+  const nomeEl = document.getElementById('nomeCandidato');
+
+  if (json?.found && json?.candidato?.nome) {
+    candidatoAtual = json.candidato;
+    nomeEl.value = json.candidato.nome;
+    setCandidatoStatus(`Candidato localizado (${json.origem || 'cadastro'}).`, 'candidate-ok');
+  } else {
+    candidatoAtual = null;
+    nomeEl.value = '';
+    setCandidatoStatus('Candidato não encontrado nesta unidade/evento.', 'candidate-warn');
+    if (!silent) toast('Candidato não encontrado para esta inscrição.', 'orange darken-2');
+  }
+
+  window.M && M.updateTextFields();
+}
+
 async function salvarNota(e){
   e.preventDefault();
 
@@ -316,6 +414,14 @@ async function salvarNota(e){
   if (!inscricao) {
     toast('Informe a inscrição.', 'orange darken-2');
     return;
+  }
+
+  if (!candidatoAtual || String(candidatoAtual.inscricao) !== String(inscricao)) {
+    const busca = await buscarCandidatoPorInscricao(inscricao, {silent:true});
+    if (!busca?.found) {
+      toast('Confira a inscrição: candidato não encontrado.', 'orange darken-2');
+      return;
+    }
   }
 
   if (nota === '') {
@@ -359,6 +465,7 @@ async function salvarNota(e){
 
     document.getElementById('inscricao').value = '';
     document.getElementById('nota').value = '';
+    limparCandidato();
     M.updateTextFields();
 
     await listarNotas();
@@ -369,6 +476,42 @@ async function salvarNota(e){
   } finally {
     document.getElementById('loadingSalvar').style.display = 'none';
   }
+}
+
+async function preencherNomesNaLista(dados){
+  const token = getToken();
+  const codun = getCodun();
+
+  if (!Array.isArray(dados) || !dados.length || !codun) return dados;
+
+  await Promise.all(dados.map(async item => {
+    const inscricao = somenteNumeros(item.inscricao);
+    if (!inscricao) return;
+
+    const cacheKey = `${EVENTO_FIXO}|${codun}|${inscricao}`;
+
+    try {
+      let json = cacheCandidatos.get(cacheKey);
+
+      if (!json) {
+        const url = `${ENDPOINT_BUSCAR}?evento=${encodeURIComponent(EVENTO_FIXO)}&codun=${encodeURIComponent(codun)}&inscricao=${encodeURIComponent(inscricao)}`;
+        const resp = await fetch(url, {
+          method: 'GET',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        json = await resp.json();
+        if (json?.ok) cacheCandidatos.set(cacheKey, json);
+      }
+
+      if (json?.found && json?.candidato?.nome) {
+        item.nome_candidato = json.candidato.nome;
+      }
+    } catch (err) {
+      console.warn('Não foi possível buscar nome para inscrição', inscricao, err);
+    }
+  }));
+
+  return dados;
 }
 
 async function listarNotas(){
@@ -404,12 +547,15 @@ async function listarNotas(){
       return;
     }
 
+    await preencherNomesNaLista(dados);
+
     let html = `
       <div class="table-wrapper">
         <table class="striped responsive-table">
           <thead>
             <tr>
               <th>Inscrição</th>
+              <th>Nome</th>
               <th>Nota</th>
               <th>Cadastrado em</th>
               <th>Atualizado em</th>
@@ -422,6 +568,7 @@ async function listarNotas(){
       html += `
         <tr>
           <td>${escapeHtml(item.inscricao)}</td>
+          <td>${escapeHtml(item.nome_candidato || item.nome || '—')}</td>
           <td class="nota-forte">${escapeHtml(item.nota)}</td>
           <td>${escapeHtml(formatarData(item.criado_em))}</td>
           <td>${escapeHtml(formatarData(item.atualizado_em))}</td>
@@ -478,6 +625,29 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   document.getElementById('inscricao').addEventListener('input', function(){
     this.value = somenteNumeros(this.value);
+
+    clearTimeout(timerBuscaCandidato);
+
+    if (!this.value) {
+      limparCandidato();
+      return;
+    }
+
+    if (this.value.length < 5) {
+      candidatoAtual = null;
+      document.getElementById('nomeCandidato').value = '';
+      setCandidatoStatus('Digite a inscrição completa para buscar.', 'muted');
+      window.M && M.updateTextFields();
+      return;
+    }
+
+    timerBuscaCandidato = setTimeout(() => {
+      buscarCandidatoPorInscricao(this.value, {silent:true});
+    }, 450);
+  });
+
+  document.getElementById('inscricao').addEventListener('blur', function(){
+    if (this.value) buscarCandidatoPorInscricao(this.value, {silent:true});
   });
 
   await listarNotas();
