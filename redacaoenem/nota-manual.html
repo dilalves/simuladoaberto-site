@@ -417,11 +417,7 @@ async function salvarNota(e){
   }
 
   if (!candidatoAtual || String(candidatoAtual.inscricao) !== String(inscricao)) {
-    const busca = await buscarCandidatoPorInscricao(inscricao, {silent:true});
-    if (!busca?.found) {
-      toast('Confira a inscrição: candidato não encontrado.', 'orange darken-2');
-      return;
-    }
+   await buscarCandidatoPorInscricao(inscricao, {silent:true});
   }
 
   if (nota === '') {
@@ -568,7 +564,9 @@ async function listarNotas(){
       html += `
         <tr>
           <td>${escapeHtml(item.inscricao)}</td>
-          <td>${escapeHtml(item.nome_candidato || item.nome || '—')}</td>
+          <td class="${item.origem_candidato === 'nao_encontrado' ? 'candidate-err' : ''}">
+            ${escapeHtml(item.nome_candidato || item.nome || 'NÃO ENCONTRADO')}
+          </td>
           <td class="nota-forte">${escapeHtml(item.nota)}</td>
           <td>${escapeHtml(formatarData(item.criado_em))}</td>
           <td>${escapeHtml(formatarData(item.atualizado_em))}</td>
