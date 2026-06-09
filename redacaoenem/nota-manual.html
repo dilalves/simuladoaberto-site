@@ -133,7 +133,7 @@
               </div>
 
               <div class="input-field col s12 m4">
-                <input id="nomeCandidato" type="text" readonly>
+                <input id="nomeCandidato" type="text" readonly tabindex="-1">
                 <label for="nomeCandidato" class="active">Nome do candidato</label>
                 <div id="statusCandidato" class="candidate-status muted">Digite a inscrição para buscar o candidato.</div>
               </div>
@@ -624,6 +624,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('inscricao').addEventListener('input', function(){
     this.value = somenteNumeros(this.value);
 
+    if (this.value.length >= 7) {
+    buscarCandidatoPorInscricao(this.value, {silent:true});
+    document.getElementById('nota').focus();
+    return;
+    }
+    
     clearTimeout(timerBuscaCandidato);
 
     if (!this.value) {
