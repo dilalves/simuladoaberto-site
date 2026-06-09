@@ -1,434 +1,487 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Nota Manual - Redação ENEM</title>
+  <link rel="icon" type="image/x-icon" href="https://www.curso-objetivo.br/assets/img/favicon.ico" />
+  <title>Nota Manual • Redação Online</title>
 
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
 
   <style>
-    body {
-      background: #f5f7fb;
-      color: #071b3a;
+    :root{
+      --bg:#f7f8fb; --card:#ffffff; --line:#e9edf3; --ink:#0f172a; --muted:#6b7280; --primary:#0b3b78; --accent:#2563eb;
+      --aside-w:260px;
+      --topbar-h:64px;
     }
 
-    .topbar {
-      background: #0d47a1;
-      color: white;
-      padding: 18px 28px;
-      font-size: 22px;
-      font-weight: 700;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+    html,body{height:100%}
+    body{background:var(--bg); color:var(--ink)}
+
+    .app{display:grid; grid-template-columns:var(--aside-w) 1fr; min-height:100vh}
+
+    header.topbar{
+      position:fixed; top:0; left:0; right:0; height:var(--topbar-h); z-index:20;
+      background:var(--primary); color:#fff; display:flex; align-items:center;
+      padding:12px 24px; padding-left:0; box-shadow:0 2px 10px rgba(16,24,40,.12);
     }
 
-    .topbar a {
-      color: white;
-      font-size: 14px;
-      font-weight: 600;
+    header.topbar > .topbar{background:transparent!important; box-shadow:none!important}
+    header.topbar h5{margin:0; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+
+    aside{
+      background:#fff; border-right:1px solid var(--line); position:sticky; top:var(--topbar-h);
+      height:calc(100vh - var(--topbar-h)); overflow:auto; align-self:start; z-index:6;
     }
 
-    .container-main {
-      max-width: 1150px;
-      margin: 32px auto;
-      padding: 0 18px;
+    main{display:flex; flex-direction:column; padding-top:calc(var(--topbar-h) + 8px)}
+    .page{padding:24px}
+    .muted{color:var(--muted)}
+    .card{border-radius:14px; box-shadow:0 6px 18px rgba(16,24,40,.06)}
+    .card-title{font-weight:600}
+    .table-wrapper{overflow:auto; border:1px solid var(--line); border-radius:10px; background:#fff}
+    table.striped>tbody>tr:nth-child(odd){background:#fafbff}
+    th{white-space:nowrap}
+    td{vertical-align:middle}
+
+    .menu{list-style:none; padding:0; margin:0}
+    .menu a{display:block; padding:12px 16px; color:#111827}
+    .menu a:hover{background:#f4f6fb}
+    .menu .active>a{background:#eef3ff; font-weight:600}
+    .menu .icon{font-size:20px; vertical-align:middle; margin-right:8px; color:#64748b}
+
+    .badge-status{
+      background:#e3f2fd; color:#0b3b78; padding:4px 10px;
+      border-radius:999px; font-size:12px; font-weight:700; margin-left:8px;
     }
 
-    .card {
-      border-radius: 14px;
-    }
+    .empty-box{padding:26px; text-align:center; color:#6b7280}
+    .nota-forte{font-weight:800; color:#0b3b78}
+    .loading{display:none; margin-left:10px; vertical-align:middle}
 
-    .card-title-custom {
-      font-size: 20px;
-      font-weight: 700;
-      margin-bottom: 8px;
-    }
-
-    .btn-blue {
-      background: #1565c0;
-    }
-
-    .btn-blue:hover {
-      background: #0d47a1;
-    }
-
-    table.striped > tbody > tr:nth-child(odd) {
-      background-color: #f7f9fc;
-    }
-
-    .empty-box {
-      padding: 28px;
-      text-align: center;
-      color: #777;
-    }
-
-    .badge-status {
-      background: #e3f2fd;
-      color: #0d47a1;
-      padding: 4px 10px;
-      border-radius: 999px;
-      font-size: 12px;
-      font-weight: 700;
-    }
-
-    .input-field input:focus + label,
-    .input-field textarea:focus + label {
-      color: #0d47a1 !important;
-    }
-
-    .input-field input:focus,
-    .input-field textarea:focus {
-      border-bottom: 1px solid #0d47a1 !important;
-      box-shadow: 0 1px 0 0 #0d47a1 !important;
-    }
-
-    .loading {
-      display: none;
-      margin-left: 10px;
-      vertical-align: middle;
-    }
-
-    .nota-forte {
-      font-weight: 800;
-      color: #0d47a1;
+    @media (max-width:992px){
+      .app{grid-template-columns:1fr}
+      header.topbar{padding-left:16px}
+      aside{display:none}
     }
   </style>
 </head>
 
 <body>
+<div class="app">
 
-  <div class="topbar">
-    <div>
-      <i class="material-icons left">edit_note</i>
-      Nota Manual de Redação
+  <aside>
+    <div class="center" style="padding:18px 0 8px">
+      <span class="title" style="font-weight:700;color:#0b3b78">Redação</span>
     </div>
+    <ul class="menu">
+      <li><a href="/redacaoenem/painel.html"><span class="icon material-icons">dashboard</span>Início</a></li>
+      <li><a href="/redacaoenem/envio.html"><span class="icon material-icons">cloud_upload</span>Envio de Redações</a></li>
+      <li class="active"><a href="/redacaoenem/nota-manual.html"><span class="icon material-icons">edit_note</span>Nota Manual</a></li>
+      <li><a href="/redacaoenem/professores.html"><span class="icon material-icons">group</span>Professores</a></li>
+      <li><a href="/redacaoenem/relatorios.html"><span class="icon material-icons">bar_chart</span>Relatório</a></li>
+    </ul>
+  </aside>
 
-    <div>
-      <a href="/redacaoenem/painel.html">
-        <i class="material-icons left">arrow_back</i> Voltar
-      </a>
-    </div>
-  </div>
-
-  <div class="container-main">
-
-    <div class="card">
-      <div class="card-content">
-        <div class="card-title-custom">Cadastrar nota manual</div>
-        <p class="grey-text">
-          Use esta tela para lançar a nota de redação corrigida manualmente pela unidade.
-        </p>
-
-        <form id="formNotaManual" style="margin-top: 25px;">
-
-          <div class="row">
-            <div class="input-field col s12 m4">
-              <input id="inscricao" type="text" maxlength="16" autocomplete="off">
-              <label for="inscricao">Inscrição</label>
-            </div>
-
-            <div class="input-field col s12 m4">
-              <input id="nota" type="number" min="0" max="1000" step="1">
-              <label for="nota">Nota da redação</label>
-            </div>
-
-            <div class="input-field col s12 m4">
-              <input id="evento" type="text" readonly>
-              <label for="evento" class="active">Evento</label>
-            </div>
-          </div>
-
-          <div class="row">
-            <div class="input-field col s12">
-              <textarea id="observacao" class="materialize-textarea"></textarea>
-              <label for="observacao">Observação opcional</label>
-            </div>
-          </div>
-
-          <button type="submit" class="btn btn-blue waves-effect waves-light">
-            <i class="material-icons left">save</i>
-            Salvar nota
-          </button>
-
-          <div class="preloader-wrapper small active loading" id="loadingSalvar">
-            <div class="spinner-layer spinner-blue-only">
-              <div class="circle-clipper left"><div class="circle"></div></div>
-              <div class="gap-patch"><div class="circle"></div></div>
-              <div class="circle-clipper right"><div class="circle"></div></div>
-            </div>
-          </div>
-
-        </form>
-      </div>
-    </div>
-
-
-    <div class="card">
-      <div class="card-content">
-        <div class="card-title-custom">
-          Notas cadastradas
-          <span class="badge-status" id="totalRegistros">0 registros</span>
+  <main>
+    <header class="topbar">
+      <div class="topbar blue darken-3 white-text" style="display:flex; align-items:center; justify-content:space-between; padding:0 24px; width:100%;">
+        <div style="display:flex; align-items:center; gap:12px; min-width:0;">
+          <img src="/redacaoenem/logo-mini.png" alt="Logo" style="height:28px; width:auto; margin-left:8px;">
+          <h5>
+            Simulado Aberto ENEM - Redação – <span id="unitLabel">—</span>
+          </h5>
         </div>
 
-        <div id="listaNotas">
-          <div class="empty-box">Carregando notas cadastradas...</div>
+        <div style="display:flex; gap:8px; align-items:center">
+          <a id="btnLogout" class="btn-flat waves-effect white-text" href="#!" onclick="logout()">
+            <i class="material-icons left">exit_to_app</i>Sair
+          </a>
         </div>
       </div>
-    </div>
+    </header>
 
-  </div>
+    <section class="page">
 
+      <div class="row" style="margin-bottom:0">
+        <div class="col s12">
+          <a href="/redacaoenem/painel.html" class="breadcrumb">Dashboard</a>
+          <a href="#!" class="breadcrumb">Nota Manual</a>
+        </div>
+      </div>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+      <div class="card">
+        <div class="card-content">
+          <span class="card-title">Cadastrar nota manual</span>
+          <p class="muted" style="margin-top:6px">
+            Informe a inscrição e a nota da redação corrigida manualmente pela unidade.
+          </p>
 
-  <script>
-    const API_BASE = 'https://apisec.secauxiliar.com.br/redacaoenem';
+          <form id="formNotaManual" style="margin-top:22px;">
+            <input id="evento" type="hidden" value="ENEM0526">
 
-    const ENDPOINT_SALVAR = `${API_BASE}/salvar_nota_manual_redacao.php`;
-    const ENDPOINT_LISTAR = `${API_BASE}/listar_notas_manuais_redacao.php`;
+            <div class="row">
+              <div class="input-field col s12 m4">
+                <input id="inscricao" type="text" maxlength="16" autocomplete="off">
+                <label for="inscricao">Inscrição</label>
+              </div>
 
-    let usuarioLogado = null;
+              <div class="input-field col s12 m4">
+                <input id="nota" type="number" min="0" max="1000" step="1">
+                <label for="nota">Nota da redação</label>
+              </div>
 
-    function getToken() {
-      return localStorage.getItem('token') ||
-             localStorage.getItem('jwt') ||
-             sessionStorage.getItem('token') ||
-             sessionStorage.getItem('jwt') ||
-             '';
-    }
+              <div class="input-field col s12 m4">
+                <input id="eventoVisual" type="text" value="ENEM0526" readonly>
+                <label for="eventoVisual" class="active">Evento</label>
+              </div>
+            </div>
 
-    function parseJwt(token) {
-      try {
-        const base64Url = token.split('.')[1];
-        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-        const jsonPayload = decodeURIComponent(
-          atob(base64)
-            .split('')
-            .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-            .join('')
-        );
-        return JSON.parse(jsonPayload);
-      } catch (e) {
-        return null;
-      }
-    }
+            <button type="submit" class="btn blue darken-2 waves-effect waves-light">
+              <i class="material-icons left">save</i>
+              Salvar nota
+            </button>
 
-    function escapeHtml(str) {
-      return String(str ?? '')
-        .replaceAll('&', '&amp;')
-        .replaceAll('<', '&lt;')
-        .replaceAll('>', '&gt;')
-        .replaceAll('"', '&quot;')
-        .replaceAll("'", '&#039;');
-    }
+            <a href="/redacaoenem/painel.html" class="btn-flat">Voltar</a>
 
-    function somenteNumeros(valor) {
-      return String(valor ?? '').replace(/\D+/g, '');
-    }
+            <div class="preloader-wrapper small active loading" id="loadingSalvar">
+              <div class="spinner-layer spinner-blue-only">
+                <div class="circle-clipper left"><div class="circle"></div></div>
+                <div class="gap-patch"><div class="circle"></div></div>
+                <div class="circle-clipper right"><div class="circle"></div></div>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
 
-    function formatarData(data) {
-      if (!data) return '';
-      const d = new Date(data.replace(' ', 'T'));
-      if (isNaN(d.getTime())) return data;
-      return d.toLocaleString('pt-BR');
-    }
+      <div class="card" style="margin-top:14px">
+        <div class="card-content">
+          <span class="card-title">
+            Notas cadastradas
+            <span class="badge-status" id="totalRegistros">0 registros</span>
+          </span>
 
-    function toast(msg, classe = 'blue darken-2') {
-      M.toast({
-        html: msg,
-        classes: classe
-      });
-    }
+          <div id="listaNotas" style="margin-top:14px">
+            <div class="empty-box">Carregando notas cadastradas...</div>
+          </div>
+        </div>
+      </div>
 
-    function carregarUsuario() {
-      const token = getToken();
+    </section>
+  </main>
+</div>
 
-      if (!token) {
-        toast('Sessão expirada. Faça login novamente.', 'red darken-2');
-        setTimeout(() => {
-          window.location.href = '/redacaoenem/index.html';
-        }, 1200);
-        return;
-      }
+<script>
+const API_BASE = 'https://apisec.secauxiliar.com.br/redacaoenem/';
+const LOGIN_URL = '/redacaoenem/index.html';
+const SESS_KEY = 'sessao_redacao';
+const EVENTO_FIXO = 'ENEM0526';
 
-      usuarioLogado = parseJwt(token);
+const ENDPOINT_SALVAR = `${API_BASE}salvar_nota_manual_redacao.php`;
+const ENDPOINT_LISTAR = `${API_BASE}listar_notas_manuais_redacao.php`;
 
-      if (!usuarioLogado) {
-        toast('Token inválido. Faça login novamente.', 'red darken-2');
-        setTimeout(() => {
-          window.location.href = '/redacaoenem/index.html';
-        }, 1200);
-        return;
-      }
+let contexto = null;
 
-      const evento = usuarioLogado.evento || usuarioLogado.EVENTO || 'ENEM';
-      document.getElementById('evento').value = evento;
-      M.updateTextFields();
-    }
+function getSession(){
+  try { return JSON.parse(localStorage.getItem(SESS_KEY) || '{}'); }
+  catch(_) { return {}; }
+}
 
-    async function salvarNota(e) {
-      e.preventDefault();
+function setSession(s){
+  localStorage.setItem(SESS_KEY, JSON.stringify(s || {}));
+}
 
-      const token = getToken();
+function getToken(){
+  const s = getSession();
+  return (s && s.token) || localStorage.getItem('token') || '';
+}
 
-      const evento = document.getElementById('evento').value.trim();
-      const inscricao = somenteNumeros(document.getElementById('inscricao').value);
-      const nota = document.getElementById('nota').value;
-      const observacao = document.getElementById('observacao').value.trim();
+function authHeaders(){
+  const t = getToken();
+  return t ? { 'Authorization': 'Bearer ' + t } : {};
+}
 
-      if (!inscricao) {
-        toast('Informe a inscrição.', 'orange darken-2');
-        return;
-      }
+function redirectToLogin(){
+  const next = encodeURIComponent(location.pathname + location.search + location.hash);
+  location.replace(`${LOGIN_URL}?next=${next}`);
+}
 
-      if (nota === '') {
-        toast('Informe a nota.', 'orange darken-2');
-        return;
-      }
+async function apiFetch(pathNoPhp, { method='GET', headers={}, body, cache='no-store' } = {}){
+  const baseHeaders = { Accept:'application/json', ...authHeaders(), ...headers };
+  const opts = { method, cache, headers: baseHeaders, body };
 
-      const notaNum = Number(nota);
+  if (body && typeof body === 'string' && !baseHeaders['Content-Type']) {
+    baseHeaders['Content-Type'] = 'application/json';
+  }
 
-      if (notaNum < 0 || notaNum > 1000) {
-        toast('A nota deve estar entre 0 e 1000.', 'orange darken-2');
-        return;
-      }
+  let res;
+  try {
+    res = await fetch(`${API_BASE}${pathNoPhp}`, opts);
+  } catch(_) {
+    res = null;
+  }
 
-      const codun =
-        usuarioLogado?.codun ||
-        usuarioLogado?.login ||
-        usuarioLogado?.unidade ||
-        usuarioLogado?.CODUN ||
-        '';
+  if (!res || res.status === 404) {
+    const withPhp = pathNoPhp.endsWith('.php') ? pathNoPhp : pathNoPhp + '.php';
+    try { res = await fetch(`${API_BASE}${withPhp}`, opts); } catch(_) {}
+  }
 
-      const payload = {
-        evento,
-        codun,
-        inscricao,
-        nota: notaNum,
-        observacao
-      };
+  if (!res) throw new Error('NETWORK_FAIL');
+  if (res.status === 401 || res.status === 403) throw new Error('UNAUTHORIZED');
 
-      document.getElementById('loadingSalvar').style.display = 'inline-block';
+  if (!res.ok) {
+    const txt = await res.text().catch(() => '');
+    throw new Error(`API_${res.status}: ${txt || res.statusText}`);
+  }
 
-      try {
-        const resp = await fetch(ENDPOINT_SALVAR, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify(payload)
-        });
+  return res.json();
+}
 
-        const json = await resp.json();
+function setUnitHeader(unit){
+  const el = document.getElementById('unitLabel');
+  if (!el) return;
 
-        if (!json.ok) {
-          throw new Error(json.error || 'Erro ao salvar nota.');
-        }
+  if (unit?.codigo && unit?.nome) el.textContent = `${unit.codigo} - ${unit.nome}`;
+  else if (unit?.codigo) el.textContent = unit.codigo;
+  else if (unit?.nome) el.textContent = unit.nome;
+  else el.textContent = '—';
+}
 
-        toast('Nota salva com sucesso!', 'green darken-2');
+async function carregarContexto(){
+  const data = await apiFetch('/auth_me.php');
 
-        document.getElementById('formNotaManual').reset();
-        document.getElementById('evento').value = evento;
-        M.updateTextFields();
+  if (data?.user && !data?.usuario && !data?.unidade) {
+    const u = data.user;
+    data.usuario = { nome: u.nome || u.login || 'Usuário' };
+    data.unidade = { codigo: u.login || '', nome: u.unidade || '' };
+  }
 
-        await listarNotas();
+  setSession({ ...getSession(), ...data });
+  setUnitHeader(data.unidade);
+  contexto = data;
 
-      } catch (err) {
-        console.error(err);
-        toast('Erro ao salvar nota.', 'red darken-2');
-      } finally {
-        document.getElementById('loadingSalvar').style.display = 'none';
-      }
-    }
+  return data;
+}
 
-    async function listarNotas() {
-      const token = getToken();
-      const evento = document.getElementById('evento').value.trim();
+function somenteNumeros(valor){
+  return String(valor ?? '').replace(/\D+/g, '');
+}
 
-      const lista = document.getElementById('listaNotas');
-      lista.innerHTML = `<div class="empty-box">Carregando notas cadastradas...</div>`;
+function escapeHtml(str){
+  return String(str ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;');
+}
 
-      try {
-        const url = `${ENDPOINT_LISTAR}?evento=${encodeURIComponent(evento)}`;
+function formatarData(data){
+  if (!data) return '';
+  const d = new Date(String(data).replace(' ', 'T'));
+  if (isNaN(d.getTime())) return data;
+  return d.toLocaleString('pt-BR');
+}
 
-        const resp = await fetch(url, {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
+function toast(msg, classe='blue darken-2'){
+  if (window.M?.toast) M.toast({ html: msg, classes: classe });
+  else alert(msg);
+}
 
-        const json = await resp.json();
+function getCodun(){
+  return contexto?.unidade?.codigo ||
+         contexto?.user?.login ||
+         contexto?.usuario?.login ||
+         getSession()?.unidade?.codigo ||
+         '';
+}
 
-        if (!json.ok) {
-          throw new Error(json.error || 'Erro ao listar notas.');
-        }
+async function salvarNota(e){
+  e.preventDefault();
 
-        const dados = json.dados || json.notas || [];
+  const token = getToken();
+  const evento = EVENTO_FIXO;
+  const codun = getCodun();
+  const inscricao = somenteNumeros(document.getElementById('inscricao').value);
+  const nota = document.getElementById('nota').value;
 
-        document.getElementById('totalRegistros').textContent =
-          `${dados.length} registro${dados.length === 1 ? '' : 's'}`;
+  if (!codun) {
+    toast('Não foi possível identificar a unidade logada.', 'red darken-2');
+    return;
+  }
 
-        if (!dados.length) {
-          lista.innerHTML = `<div class="empty-box">Nenhuma nota manual cadastrada ainda.</div>`;
-          return;
-        }
+  if (!inscricao) {
+    toast('Informe a inscrição.', 'orange darken-2');
+    return;
+  }
 
-        let html = `
-          <table class="striped responsive-table">
-            <thead>
-              <tr>
-                <th>Inscrição</th>
-                <th>Nota</th>
-                <th>Observação</th>
-                <th>Cadastrado em</th>
-                <th>Atualizado em</th>
-              </tr>
-            </thead>
-            <tbody>
-        `;
+  if (nota === '') {
+    toast('Informe a nota.', 'orange darken-2');
+    return;
+  }
 
-        dados.forEach(item => {
-          html += `
-            <tr>
-              <td>${escapeHtml(item.inscricao)}</td>
-              <td class="nota-forte">${escapeHtml(item.nota)}</td>
-              <td>${escapeHtml(item.observacao || '')}</td>
-              <td>${escapeHtml(formatarData(item.criado_em))}</td>
-              <td>${escapeHtml(formatarData(item.atualizado_em))}</td>
-            </tr>
-          `;
-        });
+  const notaNum = Number(nota);
 
-        html += `
-            </tbody>
-          </table>
-        `;
+  if (!Number.isFinite(notaNum) || notaNum < 0 || notaNum > 1000) {
+    toast('A nota deve estar entre 0 e 1000.', 'orange darken-2');
+    return;
+  }
 
-        lista.innerHTML = html;
+  const payload = {
+    evento,
+    codun,
+    inscricao,
+    nota: notaNum
+  };
 
-      } catch (err) {
-        console.error(err);
-        lista.innerHTML = `<div class="empty-box red-text">Erro ao carregar notas cadastradas.</div>`;
-      }
-    }
+  document.getElementById('loadingSalvar').style.display = 'inline-block';
 
-    document.addEventListener('DOMContentLoaded', async () => {
-      carregarUsuario();
-
-      document.getElementById('formNotaManual').addEventListener('submit', salvarNota);
-
-      document.getElementById('inscricao').addEventListener('input', function () {
-        this.value = somenteNumeros(this.value);
-      });
-
-      await listarNotas();
+  try {
+    const resp = await fetch(ENDPOINT_SALVAR, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(payload)
     });
-  </script>
 
+    const json = await resp.json();
+
+    if (!json.ok) {
+      throw new Error(json.error || 'Erro ao salvar nota.');
+    }
+
+    toast('Nota salva com sucesso!', 'green darken-2');
+
+    document.getElementById('inscricao').value = '';
+    document.getElementById('nota').value = '';
+    M.updateTextFields();
+
+    await listarNotas();
+
+  } catch (err) {
+    console.error(err);
+    toast('Erro ao salvar nota.', 'red darken-2');
+  } finally {
+    document.getElementById('loadingSalvar').style.display = 'none';
+  }
+}
+
+async function listarNotas(){
+  const token = getToken();
+  const evento = EVENTO_FIXO;
+
+  const lista = document.getElementById('listaNotas');
+  lista.innerHTML = '<div class="empty-box">Carregando notas cadastradas...</div>';
+
+  try {
+    const url = `${ENDPOINT_LISTAR}?evento=${encodeURIComponent(evento)}`;
+
+    const resp = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+
+    const json = await resp.json();
+
+    if (!json.ok) {
+      throw new Error(json.error || 'Erro ao listar notas.');
+    }
+
+    const dados = json.dados || json.notas || [];
+
+    document.getElementById('totalRegistros').textContent =
+      `${dados.length} registro${dados.length === 1 ? '' : 's'}`;
+
+    if (!dados.length) {
+      lista.innerHTML = '<div class="empty-box">Nenhuma nota manual cadastrada ainda.</div>';
+      return;
+    }
+
+    let html = `
+      <div class="table-wrapper">
+        <table class="striped responsive-table">
+          <thead>
+            <tr>
+              <th>Inscrição</th>
+              <th>Nota</th>
+              <th>Cadastrado em</th>
+              <th>Atualizado em</th>
+            </tr>
+          </thead>
+          <tbody>
+    `;
+
+    dados.forEach(item => {
+      html += `
+        <tr>
+          <td>${escapeHtml(item.inscricao)}</td>
+          <td class="nota-forte">${escapeHtml(item.nota)}</td>
+          <td>${escapeHtml(formatarData(item.criado_em))}</td>
+          <td>${escapeHtml(formatarData(item.atualizado_em))}</td>
+        </tr>
+      `;
+    });
+
+    html += `
+          </tbody>
+        </table>
+      </div>
+    `;
+
+    lista.innerHTML = html;
+
+  } catch (err) {
+    console.error(err);
+    if (String(err.message).includes('UNAUTHORIZED')) return redirectToLogin();
+    lista.innerHTML = '<div class="empty-box red-text">Erro ao carregar notas cadastradas.</div>';
+  }
+}
+
+function wipeSession(){
+  try {
+    localStorage.removeItem(SESS_KEY);
+    localStorage.removeItem('token');
+    if (window.caches && caches.keys) {
+      caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
+    }
+  } catch(_) {}
+}
+
+function logout(){
+  wipeSession();
+  location.replace('/redacaoenem/index.html');
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+  window.M && M.AutoInit();
+
+  document.getElementById('evento').value = EVENTO_FIXO;
+  document.getElementById('eventoVisual').value = EVENTO_FIXO;
+
+  if (!getToken()) return redirectToLogin();
+
+  try {
+    await carregarContexto();
+  } catch (e) {
+    console.error(e);
+    if (String(e.message).includes('UNAUTHORIZED')) return redirectToLogin();
+  }
+
+  document.getElementById('formNotaManual').addEventListener('submit', salvarNota);
+
+  document.getElementById('inscricao').addEventListener('input', function(){
+    this.value = somenteNumeros(this.value);
+  });
+
+  await listarNotas();
+});
+</script>
 </body>
 </html>
