@@ -193,6 +193,7 @@ const EVENTO_FIXO = 'ENEM0526';
 const ENDPOINT_SALVAR = `${API_BASE}salvar_nota_manual_redacao.php`;
 const ENDPOINT_LISTAR = `${API_BASE}listar_notas_manuais_redacao.php`;
 const ENDPOINT_BUSCAR = `${API_BASE}buscar_candidato_redacao.php`;
+const ENDPOINT_EXCLUIR = `${API_BASE}excluir_nota_manual_redacao.php`;
 
 let contexto = null;
 let candidatoAtual = null;
@@ -510,6 +511,60 @@ async function preencherNomesNaLista(dados){
   return dados;
 }
 
+
+async function excluirNotaManual(id, inscricao){
+  id = Number(id || 0);
+
+  if (!id) {
+    toast('Registro inválido para exclusão.', 'red darken-2');
+    return;
+  }
+
+  const confirma = confirm(`Confirma excluir a nota da inscrição ${inscricao}?`);
+  if (!confirma) return;
+
+  const token = getToken();
+  const codun = getCodun();
+
+  if (!codun) {
+    toast('Não foi possível identificar a unidade logada.', 'red darken-2');
+    return;
+  }
+
+  try {
+    const resp = await fetch(ENDPOINT_EXCLUIR, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        id,
+        evento: EVENTO_FIXO,
+        codun
+      })
+    });
+
+    const json = await resp.json();
+
+    if (!json.ok) {
+      throw new Error(json.error || 'Erro ao excluir nota.');
+    }
+
+    if (!json.apagados) {
+      toast('Nenhuma nota foi excluída. Verifique se o registro pertence à unidade.', 'orange darken-2');
+      return;
+    }
+
+    toast('Nota excluída com sucesso!', 'green darken-2');
+    await listarNotas();
+
+  } catch (err) {
+    console.error(err);
+    toast('Erro ao excluir nota.', 'red darken-2');
+  }
+}
+
 async function listarNotas(){
   const token = getToken();
   const evento = EVENTO_FIXO;
@@ -555,6 +610,7 @@ async function listarNotas(){
               <th>Nota</th>
               <th>Cadastrado em</th>
               <th>Atualizado em</th>
+              <th class="center-align">Ação</th>
             </tr>
           </thead>
           <tbody>
@@ -562,7 +618,7 @@ async function listarNotas(){
 
     dados.forEach(item => {
       const nome = String(item.nome_candidato || item.nome || 'NÃO ENCONTRADO').toUpperCase();
-      const nomeClasse = nome === 'NÃO ENCONTRADO' ? 'candidate-err' : '';
+      const nomeClasse = item.origem_candidato === 'nao_encontrado' ? 'candidate-err' : '';
 
       html += `
         <tr>
@@ -571,6 +627,16 @@ async function listarNotas(){
           <td class="nota-forte">${escapeHtml(item.nota)}</td>
           <td>${escapeHtml(formatarData(item.criado_em))}</td>
           <td>${escapeHtml(formatarData(item.atualizado_em))}</td>
+          <td class="center-align">
+            <button
+              type="button"
+              class="btn-flat red-text text-darken-2 tooltipped"
+              data-position="top"
+              data-tooltip="Excluir nota"
+              onclick="excluirNotaManual(${Number(item.id)}, '${escapeHtml(item.inscricao)}')">
+              <i class="material-icons">delete</i>
+            </button>
+          </td>
         </tr>
       `;
     });
@@ -582,6 +648,9 @@ async function listarNotas(){
     `;
 
     lista.innerHTML = html;
+    if (window.M?.Tooltip) {
+      M.Tooltip.init(document.querySelectorAll('.tooltipped'));
+    }
 
   } catch (err) {
     console.error(err);
