@@ -561,12 +561,13 @@ async function listarNotas(){
     `;
 
     dados.forEach(item => {
+      const nome = String(item.nome_candidato || item.nome || 'NÃO ENCONTRADO').toUpperCase();
+      const nomeClasse = item.origem_candidato === 'nao_encontrado' ? 'candidate-err' : '';
+
       html += `
         <tr>
           <td>${escapeHtml(item.inscricao)}</td>
-          <td class="${item.origem_candidato === 'nao_encontrado' ? 'candidate-err' : ''}">
-            ${escapeHtml(item.nome_candidato || item.nome || 'NÃO ENCONTRADO')}
-          </td>
+          <td class="${nomeClasse}">${escapeHtml(nome)}</td>
           <td class="nota-forte">${escapeHtml(item.nota)}</td>
           <td>${escapeHtml(formatarData(item.criado_em))}</td>
           <td>${escapeHtml(formatarData(item.atualizado_em))}</td>
