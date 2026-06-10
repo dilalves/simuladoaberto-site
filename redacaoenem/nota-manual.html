@@ -618,7 +618,7 @@ async function listarNotas(){
 
     dados.forEach(item => {
       const nome = String(item.nome_candidato || item.nome || 'NÃO ENCONTRADO').toUpperCase();
-      const nomeClasse = item.origem_candidato === 'nao_encontrado' ? 'candidate-err' : '';
+      const nomeClasse = nome === 'NÃO ENCONTRADO' ? 'candidate-err' : '';
 
       html += `
         <tr>
