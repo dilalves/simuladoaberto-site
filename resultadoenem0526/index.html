@@ -76,6 +76,13 @@
     overflow:visible;
     text-align:center;
   }
+  .redacao-stage{
+    position:relative;
+    display:inline-block;
+    width:100%;
+    max-width:100%;
+    line-height:0;
+  }
   .redacao{
     width:100%;
     max-width:100%;
@@ -86,6 +93,45 @@
     border-radius:4px;
     cursor:default;
     user-select:none;
+  }
+  .redacao-pin{
+    position:absolute;
+    width:26px;
+    height:26px;
+    border-radius:50%;
+    border:2px solid #fff;
+    background:#d32f2f;
+    color:#fff;
+    font-size:13px;
+    font-weight:800;
+    line-height:22px;
+    text-align:center;
+    transform:translate(-50%, -100%);
+    box-shadow:0 2px 7px rgba(0,0,0,.35);
+    cursor:pointer;
+    z-index:5;
+  }
+  .redacao-pin::after{
+    content:"";
+    position:absolute;
+    left:50%;
+    bottom:-8px;
+    transform:translateX(-50%);
+    width:0;
+    height:0;
+    border-left:6px solid transparent;
+    border-right:6px solid transparent;
+    border-top:9px solid #d32f2f;
+  }
+  .redacao-pin:hover,
+  .redacao-pin:focus{
+    background:#b71c1c;
+    outline:none;
+    transform:translate(-50%, -100%) scale(1.12);
+  }
+  .redacao-pin:hover::after,
+  .redacao-pin:focus::after{
+    border-top-color:#b71c1c;
   }
   .obs-redacao{
     margin-top:16px;
@@ -106,6 +152,25 @@
   .obs-lista li{
     margin:8px 0;
     line-height:1.35;
+    padding:6px 8px;
+    border-radius:6px;
+  }
+  .obs-lista li.obs-ativa{
+    background:#fff3cd;
+    box-shadow:inset 0 0 0 1px #ffe08a;
+  }
+  .obs-num{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-width:22px;
+    height:22px;
+    border-radius:50%;
+    background:#d32f2f;
+    color:#fff;
+    font-size:12px;
+    font-weight:800;
+    margin-right:7px;
   }
 
     /* MOBILE: empilha rótulo, nota e mensagem; desliga hífens */
@@ -147,6 +212,14 @@
         overflow-wrap: break-word;  /* quebra só quando precisa */
       }
     
+      .redacao-wrap{ padding:6px; }
+      .redacao-pin{
+        width:22px;
+        height:22px;
+        font-size:11px;
+        line-height:18px;
+      }
+
       /* dá um respiro geral na card */
       .card-content{ padding:14px }
     }
@@ -345,9 +418,9 @@
     document.getElementById('out_red_comp').textContent  = comps;
     document.getElementById('blocoRedacao').style.display = 'block';
 
-    // Imagem/preview da Redação
+    // Imagem fixa da Redação + pins/observações do corretor
     const L = j.links || {};
-    montarRedacao(L.imagemRedacao);
+    montarRedacao(L.imagemRedacao, j.observacoesRedacao || []);
     montarObservacoes(j.observacoesRedacao || []);
 
     resDiv.style.display = 'block';
@@ -372,15 +445,38 @@
     el.innerHTML = `<span class="nota">${nota}</span>${msgHtml}`;
   }
 
-  /* ===== Redação: imagem fixa + observações do corretor ===== */
-  function montarRedacao(link){
+  /* ===== Redação: imagem fixa + pins/observações do corretor ===== */
+  function normalizarObservacoes(observacoes){
+    if (!Array.isArray(observacoes)) return [];
+
+    return observacoes
+      .map((o, idx) => {
+        const texto = String(o?.texto ?? '').trim();
+        const x = Number(String(o?.x_pct ?? o?.x ?? '').replace(',', '.'));
+        const y = Number(String(o?.y_pct ?? o?.y ?? '').replace(',', '.'));
+
+        return {
+          ...o,
+          numero: idx + 1,
+          texto,
+          x_pct: Number.isFinite(x) ? Math.max(0, Math.min(100, x)) : null,
+          y_pct: Number.isFinite(y) ? Math.max(0, Math.min(100, y)) : null,
+        };
+      })
+      .filter(o => o.texto || (o.x_pct !== null && o.y_pct !== null));
+  }
+
+  function montarRedacao(link, observacoes = []){
     const box = document.getElementById('imgBox');
     if (!box) return;
     box.innerHTML = '';
+
     if (!link) {
       box.innerHTML = '<p class="grey-text">Imagem da redação não disponível.</p>';
       return;
     }
+
+    const obs = normalizarObservacoes(observacoes);
 
     const idMatch1 = String(link).match(/\/file\/d\/([^/]+)\//);
     const idMatch2 = String(link).match(/[?&]id=([^&]+)/);
@@ -395,6 +491,9 @@
     const wrap = document.createElement('div');
     wrap.className = 'redacao-wrap';
 
+    const stage = document.createElement('div');
+    stage.className = 'redacao-stage';
+
     const img = new Image();
     img.className = 'redacao';
     img.alt = 'Redação';
@@ -408,7 +507,24 @@
       `;
     };
 
-    wrap.appendChild(img);
+    stage.appendChild(img);
+
+    obs.forEach(o => {
+      if (o.x_pct === null || o.y_pct === null) return;
+
+      const pin = document.createElement('button');
+      pin.type = 'button';
+      pin.className = 'redacao-pin';
+      pin.textContent = String(o.numero);
+      pin.title = o.texto || `Observação ${o.numero}`;
+      pin.style.left = `${o.x_pct}%`;
+      pin.style.top = `${o.y_pct}%`;
+      pin.setAttribute('aria-label', `Observação ${o.numero}: ${o.texto || ''}`);
+      pin.addEventListener('click', () => focarObservacao(o.numero));
+      stage.appendChild(pin);
+    });
+
+    wrap.appendChild(stage);
     box.appendChild(wrap);
 
     const p = document.createElement('p');
@@ -427,24 +543,36 @@
     if (!box) return;
     box.innerHTML = '';
 
-    if (!Array.isArray(observacoes) || observacoes.length === 0) {
-      return;
-    }
-
-    const itens = observacoes
-      .map(o => String(o?.texto ?? '').trim())
-      .filter(Boolean);
-
-    if (itens.length === 0) return;
+    const obs = normalizarObservacoes(observacoes).filter(o => o.texto);
+    if (obs.length === 0) return;
 
     box.innerHTML = `
       <div class="obs-redacao">
         <h6>Observações do corretor</h6>
         <ol class="obs-lista">
-          ${itens.map(t => `<li>${escapeHtml(t)}</li>`).join('')}
+          ${obs.map(o => `
+            <li id="obs-redacao-${o.numero}">
+              <span class="obs-num">${o.numero}</span>${escapeHtml(o.texto)}
+            </li>
+          `).join('')}
         </ol>
       </div>
     `;
+  }
+
+  function focarObservacao(numero){
+    const el = document.getElementById(`obs-redacao-${numero}`);
+    if (!el) return;
+
+    document.querySelectorAll('.obs-lista li.obs-ativa')
+      .forEach(item => item.classList.remove('obs-ativa'));
+
+    el.classList.add('obs-ativa');
+    el.scrollIntoView({ behavior:'smooth', block:'center' });
+
+    window.setTimeout(() => {
+      el.classList.remove('obs-ativa');
+    }, 2200);
   }
 
   function escapeHtml(value){
