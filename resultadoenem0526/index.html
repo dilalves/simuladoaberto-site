@@ -65,6 +65,49 @@
     table.striped td, table.striped th{ padding:10px 14px }
   .card-content{ padding:18px } /* um pouco mais compacto */
 
+
+  /* Redação fixa na página, sem zoom/preview do Drive */
+  .redacao-wrap{
+    width:100%;
+    background:#111;
+    border-radius:8px;
+    padding:10px;
+    box-sizing:border-box;
+    overflow:visible;
+    text-align:center;
+  }
+  .redacao{
+    width:100%;
+    max-width:100%;
+    height:auto;
+    display:block;
+    margin:0 auto;
+    background:#fff;
+    border-radius:4px;
+    cursor:default;
+    user-select:none;
+  }
+  .obs-redacao{
+    margin-top:16px;
+    background:#fff;
+    border:1px solid #e3e9f5;
+    border-radius:8px;
+    padding:14px;
+  }
+  .obs-redacao h6{
+    margin:0 0 10px 0;
+    color:#002776;
+    font-weight:700;
+  }
+  .obs-lista{
+    margin:0;
+    padding-left:22px;
+  }
+  .obs-lista li{
+    margin:8px 0;
+    line-height:1.35;
+  }
+
     /* MOBILE: empilha rótulo, nota e mensagem; desliga hífens */
     @media (max-width: 600px){
       /* a tabela vira “cards” por linha */
@@ -188,6 +231,7 @@
           <div style="margin-top:16px">
             <h6 class="blue-text text-darken-2">Imagem da Redação</h6>
             <div id="imgBox"></div>
+            <div id="obsBox"></div>
             
           </div>
 
@@ -304,6 +348,7 @@
     // Imagem/preview da Redação
     const L = j.links || {};
     montarRedacao(L.imagemRedacao);
+    montarObservacoes(j.observacoesRedacao || []);
 
     resDiv.style.display = 'block';
     btnPdf.disabled = false; btnPdf.classList.remove('grey');
@@ -327,50 +372,88 @@
     el.innerHTML = `<span class="nota">${nota}</span>${msgHtml}`;
   }
 
-  /* ===== Redação: imagem/iframe + link ===== */
+  /* ===== Redação: imagem fixa + observações do corretor ===== */
   function montarRedacao(link){
     const box = document.getElementById('imgBox');
     if (!box) return;
     box.innerHTML = '';
-    if (!link) return;
+    if (!link) {
+      box.innerHTML = '<p class="grey-text">Imagem da redação não disponível.</p>';
+      return;
+    }
 
     const idMatch1 = String(link).match(/\/file\/d\/([^/]+)\//);
     const idMatch2 = String(link).match(/[?&]id=([^&]+)/);
     const id = idMatch1 ? idMatch1[1] : (idMatch2 ? idMatch2[1] : null);
 
-    const direct  = id ? `https://drive.google.com/uc?id=${id}&export=view`  : link;
-    const preview = id ? `https://drive.google.com/file/d/${id}/preview`     : link;
-    const view    = id ? `https://drive.google.com/file/d/${id}/view`        : link;
+    const direct = id ? `https://drive.google.com/uc?id=${id}&export=view` : link;
+    const view   = id ? `https://drive.google.com/file/d/${id}/view`       : link;
+
+    // Usa o proxy do próprio PHP para evitar o preview do Drive, que dá zoom ao mexer o mouse.
+    const proxied = `${ENDPOINT}?action=img&u=${encodeURIComponent(direct)}`;
+
+    const wrap = document.createElement('div');
+    wrap.className = 'redacao-wrap';
 
     const img = new Image();
     img.className = 'redacao';
     img.alt = 'Redação';
-    img.src = direct;
+    img.src = proxied;
+    img.draggable = false;
 
     img.onerror = () => {
-      box.innerHTML = '';
-      const ifr = document.createElement('iframe');
-      ifr.style.width = '100%';
-      ifr.style.height = '820px';
-      ifr.style.border = '0';
-      ifr.src = preview;
-      box.appendChild(ifr);
-
-      const p = document.createElement('p'); p.style.marginTop = '8px';
-      const a = document.createElement('a'); a.href = view; a.target = '_blank'; a.rel = 'noopener'; a.textContent = 'Abrir no Google Drive';
-      p.append('Não carregou como imagem? ', a);
-      box.appendChild(p);
+      box.innerHTML = `
+        <p style="color:#b71c1c;">Não foi possível carregar a imagem da redação nesta tela.</p>
+        <p><a href="${view}" target="_blank" rel="noopener">Abrir no Google Drive</a></p>
+      `;
     };
 
-    img.onload = () => {
-      box.appendChild(img);
-      const p = document.createElement('p'); p.style.marginTop = '8px';
-      const a = document.createElement('a'); a.href = view; a.target = '_blank'; a.rel = 'noopener'; a.textContent = 'Abrir no Google Drive';
-      p.append('Não carregou como imagem? ', a);
-      box.appendChild(p);
-    };
+    wrap.appendChild(img);
+    box.appendChild(wrap);
 
-    box.appendChild(img);
+    const p = document.createElement('p');
+    p.style.marginTop = '8px';
+    const a = document.createElement('a');
+    a.href = view;
+    a.target = '_blank';
+    a.rel = 'noopener';
+    a.textContent = 'Abrir imagem em nova aba';
+    p.appendChild(a);
+    box.appendChild(p);
+  }
+
+  function montarObservacoes(observacoes){
+    const box = document.getElementById('obsBox');
+    if (!box) return;
+    box.innerHTML = '';
+
+    if (!Array.isArray(observacoes) || observacoes.length === 0) {
+      return;
+    }
+
+    const itens = observacoes
+      .map(o => String(o?.texto ?? '').trim())
+      .filter(Boolean);
+
+    if (itens.length === 0) return;
+
+    box.innerHTML = `
+      <div class="obs-redacao">
+        <h6>Observações do corretor</h6>
+        <ol class="obs-lista">
+          ${itens.map(t => `<li>${escapeHtml(t)}</li>`).join('')}
+        </ol>
+      </div>
+    `;
+  }
+
+  function escapeHtml(value){
+    return String(value ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
   }
 
   /* ===== MENSAGENS POR NOTA (mesmo conteúdo que já usamos) ===== */
