@@ -882,8 +882,7 @@ function getFeedbackCompetencias(R){
         drawTextLine('Redação - Imagem', 50, page3.getHeight() - 60, 14);
     
         // pega via proxy do Apps Script (libera CORS)
-        const proxUrl = `${ENDPOINT}?action=img&u=${encodeURIComponent(imgTag.src)}`;
-        const resp    = await fetch(proxUrl, { cache:'no-store' });
+        const resp = await fetch(imgTag.src, { cache:'no-store' });
         if (!resp.ok) throw new Error('proxy resp not ok');
         const imgBytes = new Uint8Array(await resp.arrayBuffer());
     
