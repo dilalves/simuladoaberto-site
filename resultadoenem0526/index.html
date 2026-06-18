@@ -392,7 +392,7 @@
     /* === /MÉDIAS === */
 
     // Cabeçalho
-    document.getElementById('alunoNome').textContent = (j.aluno && j.aluno.nome) ? j.aluno.nome : `Inscrição ${j.inscricao}`;
+    document.getElementById('alunoNome').textContent = ((j.aluno && j.aluno.nome) ? j.aluno.nome : `Inscrição ${j.inscricao}`).toUpperCase();
     document.getElementById('inscOut').textContent = j.inscricao;
     document.getElementById('unidOut').textContent = (j.aluno && j.aluno.unidadeNome) ? j.aluno.unidadeNome : '-';
 
@@ -486,10 +486,17 @@
     const id = idMatch1 ? idMatch1[1] : (idMatch2 ? idMatch2[1] : null);
 
     const direct = id ? `https://drive.google.com/uc?id=${id}&export=view` : linkStr;
-    const view   = id ? `https://drive.google.com/file/d/${id}/view`       : linkStr;
+
+    const urlProxyR2 = isProxyR2
+      ? new URL(linkStr, ENDPOINT).href
+      : null;
+
+    const view = id
+      ? `https://drive.google.com/file/d/${id}/view`
+      : (urlProxyR2 || linkStr);
 
     const proxied = isProxyR2
-      ? new URL(linkStr, ENDPOINT).href
+      ? urlProxyR2
       : `${ENDPOINT}?action=img&u=${encodeURIComponent(direct)}`;
 
     const wrap = document.createElement('div');
