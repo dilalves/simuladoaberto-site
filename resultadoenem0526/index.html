@@ -477,16 +477,20 @@
     }
 
     const obs = normalizarObservacoes(observacoes);
+    const linkStr = String(link);
 
-    const idMatch1 = String(link).match(/\/file\/d\/([^/]+)\//);
-    const idMatch2 = String(link).match(/[?&]id=([^&]+)/);
+    const isProxyR2 = linkStr.includes('ver_imagem.php');
+
+    const idMatch1 = linkStr.match(/\/file\/d\/([^/]+)\//);
+    const idMatch2 = linkStr.match(/[?&]id=([^&]+)/);
     const id = idMatch1 ? idMatch1[1] : (idMatch2 ? idMatch2[1] : null);
 
-    const direct = id ? `https://drive.google.com/uc?id=${id}&export=view` : link;
-    const view   = id ? `https://drive.google.com/file/d/${id}/view`       : link;
+    const direct = id ? `https://drive.google.com/uc?id=${id}&export=view` : linkStr;
+    const view   = id ? `https://drive.google.com/file/d/${id}/view`       : linkStr;
 
-    // Usa o proxy do próprio PHP para evitar o preview do Drive, que dá zoom ao mexer o mouse.
-    const proxied = `${ENDPOINT}?action=img&u=${encodeURIComponent(direct)}`;
+    const proxied = isProxyR2
+      ? new URL(linkStr, ENDPOINT).href
+      : `${ENDPOINT}?action=img&u=${encodeURIComponent(direct)}`;
 
     const wrap = document.createElement('div');
     wrap.className = 'redacao-wrap';
@@ -503,7 +507,7 @@
     img.onerror = () => {
       box.innerHTML = `
         <p style="color:#b71c1c;">Não foi possível carregar a imagem da redação nesta tela.</p>
-        <p><a href="${view}" target="_blank" rel="noopener">Abrir no Google Drive</a></p>
+        <p><a href="${view}" target="_blank" rel="noopener">Abrir imagem em nova aba</a></p>
       `;
     };
 
@@ -529,11 +533,13 @@
 
     const p = document.createElement('p');
     p.style.marginTop = '8px';
+
     const a = document.createElement('a');
     a.href = view;
     a.target = '_blank';
     a.rel = 'noopener';
     a.textContent = 'Abrir imagem em nova aba';
+
     p.appendChild(a);
     box.appendChild(p);
   }
