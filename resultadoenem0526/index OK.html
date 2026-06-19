@@ -173,96 +173,6 @@
     margin-right:7px;
   }
 
-
-  /* ===== SISU ===== */
-  .sisu-actions{
-    margin-top:16px;
-    text-align:center;
-  }
-  #btnSisu{
-    margin-top:8px;
-    border-radius:999px;
-    background:#0b3f7f;
-  }
-  #btnSisu:hover{ background:#07366d; }
-  .sisu-note{
-    font-size:13px;
-    color:#607d8b;
-    margin-top:8px;
-    line-height:1.35;
-  }
-  .sisu-result-card{
-    border:1px solid #e3e9f5;
-    border-radius:8px;
-    padding:12px;
-    margin:10px 0;
-    background:#fff;
-  }
-  .sisu-result-title{
-    font-weight:700;
-    color:#002776;
-    margin-bottom:4px;
-  }
-  .sisu-meta{
-    font-size:13px;
-    color:#455a64;
-    line-height:1.45;
-  }
-  .sisu-pill{
-    display:inline-block;
-    border-radius:999px;
-    padding:4px 10px;
-    font-size:12px;
-    font-weight:700;
-    margin-top:6px;
-  }
-  .sisu-acima{
-    background:#e8f5e9;
-    color:#1b5e20;
-  }
-  .sisu-abaixo{
-    background:#ffebee;
-    color:#b71c1c;
-  }
-  .sisu-grid{
-    display:grid;
-    grid-template-columns:repeat(3, 1fr);
-    gap:10px;
-    margin-top:10px;
-  }
-  .sisu-box{
-    background:#f7f9fc;
-    border-radius:8px;
-    padding:10px;
-    text-align:center;
-    border:1px solid #e3e9f5;
-  }
-  .sisu-box strong{
-    display:block;
-    font-size:18px;
-    color:#002776;
-  }
-  .sisu-box span{
-    font-size:12px;
-    color:#607d8b;
-  }
-  #modalSisu{
-    max-height:88%;
-    width:92%;
-    max-width:980px;
-  }
-  #sisuLoading{
-    display:none;
-    margin:10px 0;
-    color:#1565c0;
-    font-weight:700;
-  }
-  #sisuMsg{
-    margin:10px 0;
-    color:#b71c1c;
-    font-weight:700;
-  }
-
     /* MOBILE: empilha rótulo, nota e mensagem; desliga hífens */
     @media (max-width: 600px){
       /* a tabela vira “cards” por linha */
@@ -310,14 +220,6 @@
         line-height:18px;
       }
 
-
-      .sisu-grid{
-        grid-template-columns:1fr;
-      }
-      #modalSisu{
-        width:96%;
-      }
-
       /* dá um respiro geral na card */
       .card-content{ padding:14px }
     }
@@ -357,9 +259,6 @@
             </button>
             <button id="btnPdf" class="btn blue waves-effect waves-light" disabled>
               Baixar PDF
-            </button>
-            <button id="btnSisu" class="btn waves-effect waves-light" disabled>
-              Simular SISU
             </button>
             <span id="status" class="grey-text text-darken-1" style="margin-left:12px"></span>
           </div>
@@ -401,15 +300,6 @@
             <div class="item"><strong>Competências (C1–C5):</strong> <span id="out_red_comp">-</span></div>
           </div>
 
-          <div class="sisu-actions">
-            <button id="btnSisuResultado" class="btn waves-effect waves-light" type="button">
-              Simular média no SISU
-            </button>
-            <div class="sisu-note">
-              Simulação baseada nos pesos e notas de corte cadastrados. A nota oficial depende do processo seletivo vigente.
-            </div>
-          </div>
-
           <!-- Imagem da redação vem depois -->
           <div style="margin-top:16px">
             <h6 class="blue-text text-darken-2">Imagem da Redação</h6>
@@ -435,61 +325,6 @@
       </div>
     </div>
 
-
-    <!-- Modal SISU -->
-    <div id="modalSisu" class="modal">
-      <div class="modal-content">
-        <h5 class="blue-text text-darken-2" style="margin-top:0">Simular média no SISU</h5>
-        <p class="grey-text text-darken-1" style="margin-top:0">
-          Informe o curso desejado e, se quiser, filtre por UF ou instituição.
-        </p>
-
-        <div class="row">
-          <div class="input-field col s12 m5">
-            <input id="sisuCurso" type="text" placeholder="Ex.: Medicina, Direito, Engenharia">
-            <label for="sisuCurso">Curso</label>
-          </div>
-
-          <div class="input-field col s12 m2">
-            <select id="sisuUf">
-              <option value="" selected>Todas</option>
-              <option value="AC">AC</option><option value="AL">AL</option><option value="AP">AP</option>
-              <option value="AM">AM</option><option value="BA">BA</option><option value="CE">CE</option>
-              <option value="DF">DF</option><option value="ES">ES</option><option value="GO">GO</option>
-              <option value="MA">MA</option><option value="MT">MT</option><option value="MS">MS</option>
-              <option value="MG">MG</option><option value="PA">PA</option><option value="PB">PB</option>
-              <option value="PR">PR</option><option value="PE">PE</option><option value="PI">PI</option>
-              <option value="RJ">RJ</option><option value="RN">RN</option><option value="RS">RS</option>
-              <option value="RO">RO</option><option value="RR">RR</option><option value="SC">SC</option>
-              <option value="SP">SP</option><option value="SE">SE</option><option value="TO">TO</option>
-            </select>
-            <label>UF</label>
-          </div>
-
-          <div class="input-field col s12 m5">
-            <input id="sisuIes" type="text" placeholder="Ex.: USP, UFRJ, UNIFESP">
-            <label for="sisuIes">Instituição</label>
-          </div>
-        </div>
-
-        <div class="center-align">
-          <button id="btnRodarSisu" class="btn blue darken-2 waves-effect waves-light" type="button">
-            Calcular simulação
-          </button>
-        </div>
-
-        <div id="sisuLoading">Calculando...</div>
-        <div id="sisuMsg"></div>
-        <div id="sisuResumo"></div>
-        <div id="sisuResultados"></div>
-      </div>
-
-      <div class="modal-footer">
-        <a href="#!" class="modal-close waves-effect waves-blue btn-flat">Fechar</a>
-      </div>
-    </div>
-
-
     <!-- Canvas escondido para gerar gráfico para o PDF -->
     <div id="chartWrap" style="display:none">
       <canvas id="grafico"  width="900" height="420"></canvas>   <!-- comparativo Aluno x Média -->
@@ -506,21 +341,12 @@
   <script>
   /* ===== CONFIG BÁSICA ===== */
   const ENDPOINT = 'https://apisec.secauxiliar.com.br/SIMULADOS/ENEM0526/psq_resultado_enem_0526.php' //TESTAR ESSE NOVO LINK
-  const SISU_ENDPOINT = 'https://apisec.secauxiliar.com.br/sim_adm/simular_sisu.php';
   const TEMPLATE_URL = 'https://raw.githubusercontent.com/dilalves/simuladoaberto-site/main/resultadoenem0526/RESULTADO_PADRAO_0825.pdf';
 
   let ultimoResultado = null;
 
   document.getElementById('btnConsultar').addEventListener('click', consultar);
   document.getElementById('btnPdf').addEventListener('click', gerarPDF);
-  document.getElementById('btnSisu').addEventListener('click', abrirModalSisu);
-  document.getElementById('btnSisuResultado').addEventListener('click', abrirModalSisu);
-  document.getElementById('btnRodarSisu').addEventListener('click', simularSisu);
-
-  document.addEventListener('DOMContentLoaded', () => {
-    M.Modal.init(document.querySelectorAll('.modal'));
-    M.FormSelect.init(document.querySelectorAll('select'));
-  });
 
   /* ===== CONSULTA ===== */
   async function consultar(){
@@ -528,13 +354,11 @@
   const msg = document.getElementById('msg');
   const resDiv = document.getElementById('resultado');
   const btnPdf = document.getElementById('btnPdf');
-  const btnSisu = document.getElementById('btnSisu');
 
   status.textContent = 'Consultando...';
   msg.textContent = '';
   resDiv.style.display = 'none';
   btnPdf.disabled = true; btnPdf.classList.add('grey');
-  btnSisu.disabled = true; btnSisu.classList.add('grey');
 
   const insc = document.getElementById('inscricao').value.replace(/\D/g,'');
   const cpf  = document.getElementById('cpf').value.replace(/\D/g,'');
@@ -601,7 +425,6 @@
 
     resDiv.style.display = 'block';
     btnPdf.disabled = false; btnPdf.classList.remove('grey');
-    btnSisu.disabled = false; btnSisu.classList.remove('grey');
     status.textContent = '';
   }catch(e){
     msg.textContent = 'Erro ao consultar. Tente novamente.';
@@ -929,168 +752,6 @@ function getFeedbackCompetencias(R){
 }
 
     
-
-
-
-  /* ===== SISU ===== */
-  function abrirModalSisu(){
-    if (!ultimoResultado) {
-      M.toast({ html: 'Consulte o resultado antes de simular o SISU.' });
-      return;
-    }
-
-    document.getElementById('sisuMsg').textContent = '';
-    document.getElementById('sisuResumo').innerHTML = '';
-    document.getElementById('sisuResultados').innerHTML = '';
-
-    const modal = M.Modal.getInstance(document.getElementById('modalSisu'));
-    modal.open();
-
-    setTimeout(() => {
-      const curso = document.getElementById('sisuCurso');
-      if (curso) curso.focus();
-    }, 250);
-  }
-
-  function notaNumero(v){
-    if (v == null || v === '') return 0;
-    const n = Number(String(v).replace(',', '.'));
-    return Number.isFinite(n) ? n : 0;
-  }
-
-  async function simularSisu(){
-    if (!ultimoResultado) return;
-
-    const curso = document.getElementById('sisuCurso').value.trim();
-    const uf = document.getElementById('sisuUf').value.trim();
-    const ies = document.getElementById('sisuIes').value.trim();
-
-    const msg = document.getElementById('sisuMsg');
-    const loading = document.getElementById('sisuLoading');
-    const resumo = document.getElementById('sisuResumo');
-    const resultados = document.getElementById('sisuResultados');
-
-    msg.textContent = '';
-    resumo.innerHTML = '';
-    resultados.innerHTML = '';
-
-    if (!curso) {
-      msg.textContent = 'Digite o nome do curso para simular.';
-      return;
-    }
-
-    const A = ultimoResultado.areas || {};
-    const R = ultimoResultado.redacao || {};
-
-    const params = new URLSearchParams();
-    params.set('action', 'simular');
-    params.set('curso', curso);
-    params.set('uf', uf);
-    params.set('ies', ies);
-    params.set('linguagens', notaNumero(A.linguagens));
-    params.set('humanas', notaNumero(A.humanas));
-    params.set('natureza', notaNumero(A.natureza));
-    params.set('matematica', notaNumero(A.matematica));
-    params.set('redacao', notaNumero(R.total));
-
-    loading.style.display = 'block';
-
-    try {
-      const resp = await fetch(`${SISU_ENDPOINT}?${params.toString()}`, {
-        method: 'GET',
-        cache: 'no-store'
-      });
-
-      const json = await resp.json();
-
-      if (!json.ok) {
-        throw new Error(json.message || json.error || 'Erro ao simular SISU.');
-      }
-
-      montarResumoSisu(json.notas_usadas || {
-        linguagens: notaNumero(A.linguagens),
-        humanas: notaNumero(A.humanas),
-        natureza: notaNumero(A.natureza),
-        matematica: notaNumero(A.matematica),
-        redacao: notaNumero(R.total)
-      });
-
-      montarResultadosSisu(json.dados || []);
-
-    } catch (e) {
-      msg.textContent = e.message || 'Erro ao simular SISU.';
-      console.error(e);
-    } finally {
-      loading.style.display = 'none';
-    }
-  }
-
-  function montarResumoSisu(notas){
-    const resumo = document.getElementById('sisuResumo');
-
-    resumo.innerHTML = `
-      <div class="sisu-grid">
-        <div class="sisu-box"><strong>${fmt2(notas.linguagens)}</strong><span>Linguagens</span></div>
-        <div class="sisu-box"><strong>${fmt2(notas.humanas)}</strong><span>Humanas</span></div>
-        <div class="sisu-box"><strong>${fmt2(notas.natureza)}</strong><span>Natureza</span></div>
-        <div class="sisu-box"><strong>${fmt2(notas.matematica)}</strong><span>Matemática</span></div>
-        <div class="sisu-box"><strong>${fmt2(notas.redacao)}</strong><span>Redação</span></div>
-      </div>
-    `;
-  }
-
-  function montarResultadosSisu(dados){
-    const resultados = document.getElementById('sisuResultados');
-
-    if (!dados.length) {
-      resultados.innerHTML = `
-        <div class="card-panel yellow lighten-5" style="margin-top:14px">
-          Nenhum curso encontrado com os filtros informados.
-        </div>
-      `;
-      return;
-    }
-
-    resultados.innerHTML = `
-      <h6 class="blue-text text-darken-2" style="margin-top:18px">
-        Cursos encontrados: ${dados.length}
-      </h6>
-      ${dados.map(item => {
-        const acima = item.situacao === 'acima';
-        const diff = Number(item.diferenca || 0);
-        const diffTxt = diff >= 0 ? `+${fmt2(diff)}` : fmt2(diff);
-
-        return `
-          <div class="sisu-result-card">
-            <div class="sisu-result-title">${escapeHtml(item.curso || '-')}</div>
-            <div class="sisu-meta">
-              <strong>${escapeHtml(item.sigla_ies || item.ies || '-')}</strong>
-              ${item.ies && item.sigla_ies ? ` - ${escapeHtml(item.ies)}` : ''}
-              <br>
-              ${escapeHtml(item.municipio || '-')} / ${escapeHtml(item.uf || '-')}
-              ${item.campus ? ` - Campus: ${escapeHtml(item.campus)}` : ''}
-              <br>
-              ${escapeHtml(item.grau || '')}
-              ${item.turno ? ` - ${escapeHtml(item.turno)}` : ''}
-              ${item.modalidade ? `<br>Modalidade: ${escapeHtml(item.modalidade)}` : ''}
-              ${item.vagas ? `<br>Vagas: ${escapeHtml(item.vagas)}` : ''}
-            </div>
-
-            <div class="sisu-grid">
-              <div class="sisu-box"><strong>${fmt2(item.media_calculada)}</strong><span>Sua média ponderada</span></div>
-              <div class="sisu-box"><strong>${fmt2(item.nota_corte)}</strong><span>Nota de corte</span></div>
-              <div class="sisu-box"><strong>${diffTxt}</strong><span>Diferença</span></div>
-            </div>
-
-            <span class="sisu-pill ${acima ? 'sisu-acima' : 'sisu-abaixo'}">
-              ${acima ? 'Acima da nota de corte anterior' : 'Abaixo da nota de corte anterior'}
-            </span>
-          </div>
-        `;
-      }).join('')}
-    `;
-  }
-
 
   //* ===== PDF (pdf-lib) com template + comparativo + mini C1..C5 ===== */
   async function gerarPDF(){
