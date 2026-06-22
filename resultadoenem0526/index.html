@@ -710,9 +710,16 @@
   // Mostra pontuação + caixinha com a mensagem logo abaixo
   function setScoreWithMsg(id, score, message){
     const el = document.getElementById(id);
-    const nota = (score==null?'-':score);
+
+    const n = Number(String(score ?? '').replace(',', '.'));
+
+    if (score == null || score === '' || n === 0) {
+      el.innerHTML = `<span class="nota grey-text text-darken-1">Sem nota disponível</span>`;
+      return;
+    }
+
     const msgHtml = message ? `<div class="mini-msg">${message}</div>` : '';
-    el.innerHTML = `<span class="nota">${nota}</span>${msgHtml}`;
+    el.innerHTML = `<span class="nota">${score}</span>${msgHtml}`;
   }
 
   /* ===== Redação: imagem fixa + pins/observações do corretor ===== */
