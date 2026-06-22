@@ -179,12 +179,12 @@
     margin-top:16px;
     text-align:center;
   }
-  #btnSisu{
+  #btnSisuResultado{
     margin-top:8px;
     border-radius:999px;
     background:#0b3f7f;
   }
-  #btnSisu:hover{ background:#07366d; }
+  #btnSisuResultado:hover{ background:#07366d; }
   .sisu-note{
     font-size:13px;
     color:#607d8b;
@@ -251,6 +251,66 @@
     width:92%;
     max-width:980px;
   }
+  #modalSisuAviso{
+    width:92%;
+    max-width:720px;
+    border-radius:8px;
+  }
+  #modalSisuDetalhe{
+    max-height:88%;
+    width:92%;
+    max-width:980px;
+  }
+  .sisu-disclaimer{
+    background:#f7f9fc;
+    border:1px solid #e3e9f5;
+    border-left:5px solid #1976d2;
+    border-radius:8px;
+    padding:14px 16px;
+    color:#37474f;
+    line-height:1.45;
+  }
+  .sisu-disclaimer ul{ margin-top:8px; }
+  .sisu-more{
+    margin-top:12px;
+    border-radius:999px;
+    background:#00695c;
+  }
+  .sisu-more:hover{ background:#004d40; }
+  .sisu-detail-head{
+    border-bottom:1px solid #e3e9f5;
+    padding-bottom:12px;
+    margin-bottom:14px;
+  }
+  .sisu-detail-title{
+    color:#002776;
+    font-weight:700;
+    font-size:20px;
+    margin-bottom:4px;
+  }
+  .sisu-detail-sub{
+    color:#455a64;
+    line-height:1.35;
+  }
+  .sisu-table th, .sisu-table td{ padding:8px 10px; }
+  .sisu-table th{ width:auto; color:#002776; }
+  .sisu-analise{
+    background:#fff8e1;
+    border:1px solid #ffe082;
+    border-radius:8px;
+    padding:12px 14px;
+    margin-top:14px;
+    color:#5d4037;
+    line-height:1.45;
+  }
+  .sisu-chart-wrap{
+    margin-top:14px;
+    background:#fff;
+    border:1px solid #e3e9f5;
+    border-radius:8px;
+    padding:12px;
+    height:340px;
+  }
   #sisuLoading{
     display:none;
     margin:10px 0;
@@ -314,7 +374,7 @@
       .sisu-grid{
         grid-template-columns:1fr;
       }
-      #modalSisu{
+      #modalSisu, #modalSisuAviso, #modalSisuDetalhe{
         width:96%;
       }
 
@@ -357,9 +417,6 @@
             </button>
             <button id="btnPdf" class="btn blue waves-effect waves-light" disabled>
               Baixar PDF
-            </button>
-            <button id="btnSisu" class="btn waves-effect waves-light" disabled>
-              Simular SISU
             </button>
             <span id="status" class="grey-text text-darken-1" style="margin-left:12px"></span>
           </div>
@@ -436,6 +493,34 @@
     </div>
 
 
+    <!-- Modal aviso SISU -->
+    <div id="modalSisuAviso" class="modal">
+      <div class="modal-content">
+        <h5 class="blue-text text-darken-2" style="margin-top:0">Antes de simular</h5>
+        <div class="sisu-disclaimer">
+          <p style="margin-top:0">
+            Esta ferramenta usa as notas do <strong>Simulado Aberto ENEM</strong> e compara com os
+            pesos e notas de corte cadastrados com base no <strong>último SISU disponível</strong>.
+          </p>
+          <p>
+            A simulação serve apenas como uma referência de estudo e orientação. Ela
+            <strong>não representa aprovação</strong>, não garante vaga e não prevê o resultado oficial,
+            pois as notas de corte podem mudar a cada edição conforme curso, instituição,
+            modalidade, número de inscritos e desempenho dos candidatos.
+          </p>
+          <ul class="browser-default">
+            <li>A média é calculada usando os pesos do curso selecionado.</li>
+            <li>A comparação usa a nota de corte anterior cadastrada.</li>
+            <li>Use o resultado para entender quais áreas podem merecer mais atenção.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <a href="#!" class="modal-close waves-effect waves-blue btn-flat">Cancelar</a>
+        <a href="#!" id="btnSisuContinuar" class="waves-effect waves-light btn blue darken-2">Entendi, continuar</a>
+      </div>
+    </div>
+
     <!-- Modal SISU -->
     <div id="modalSisu" class="modal">
       <div class="modal-content">
@@ -489,6 +574,16 @@
       </div>
     </div>
 
+    <!-- Modal Detalhes SISU -->
+    <div id="modalSisuDetalhe" class="modal">
+      <div class="modal-content">
+        <div id="sisuDetalheConteudo"></div>
+      </div>
+      <div class="modal-footer">
+        <a href="#!" id="btnVoltarSisuLista" class="waves-effect waves-light btn blue darken-2">Voltar aos cursos</a>
+        <a href="#!" class="modal-close waves-effect waves-blue btn-flat">Fechar</a>
+      </div>
+    </div>
 
     <!-- Canvas escondido para gerar gráfico para o PDF -->
     <div id="chartWrap" style="display:none">
@@ -513,8 +608,9 @@
 
   document.getElementById('btnConsultar').addEventListener('click', consultar);
   document.getElementById('btnPdf').addEventListener('click', gerarPDF);
-  document.getElementById('btnSisu').addEventListener('click', abrirModalSisu);
-  document.getElementById('btnSisuResultado').addEventListener('click', abrirModalSisu);
+  document.getElementById('btnSisuResultado').addEventListener('click', abrirAvisoSisu);
+  document.getElementById('btnSisuContinuar').addEventListener('click', continuarSisu);
+  document.getElementById('btnVoltarSisuLista').addEventListener('click', voltarListaSisu);
   document.getElementById('btnRodarSisu').addEventListener('click', simularSisu);
 
   document.addEventListener('DOMContentLoaded', () => {
@@ -528,13 +624,11 @@
   const msg = document.getElementById('msg');
   const resDiv = document.getElementById('resultado');
   const btnPdf = document.getElementById('btnPdf');
-  const btnSisu = document.getElementById('btnSisu');
 
   status.textContent = 'Consultando...';
   msg.textContent = '';
   resDiv.style.display = 'none';
   btnPdf.disabled = true; btnPdf.classList.add('grey');
-  btnSisu.disabled = true; btnSisu.classList.add('grey');
 
   const insc = document.getElementById('inscricao').value.replace(/\D/g,'');
   const cpf  = document.getElementById('cpf').value.replace(/\D/g,'');
@@ -601,7 +695,6 @@
 
     resDiv.style.display = 'block';
     btnPdf.disabled = false; btnPdf.classList.remove('grey');
-    btnSisu.disabled = false; btnSisu.classList.remove('grey');
     status.textContent = '';
   }catch(e){
     msg.textContent = 'Erro ao consultar. Tente novamente.';
@@ -933,6 +1026,25 @@ function getFeedbackCompetencias(R){
 
 
   /* ===== SISU ===== */
+  let ultimoSisuDados = [];
+  let sisuChartDetalhe = null;
+
+  function abrirAvisoSisu(){
+    if (!ultimoResultado) {
+      M.toast({ html: 'Consulte o resultado antes de simular o SISU.' });
+      return;
+    }
+
+    const aviso = M.Modal.getInstance(document.getElementById('modalSisuAviso'));
+    aviso.open();
+  }
+
+  function continuarSisu(){
+    const aviso = M.Modal.getInstance(document.getElementById('modalSisuAviso'));
+    aviso.close();
+    setTimeout(abrirModalSisu, 180);
+  }
+
   function abrirModalSisu(){
     if (!ultimoResultado) {
       M.toast({ html: 'Consulte o resultado antes de simular o SISU.' });
@@ -940,8 +1052,6 @@ function getFeedbackCompetencias(R){
     }
 
     document.getElementById('sisuMsg').textContent = '';
-    document.getElementById('sisuResumo').innerHTML = '';
-    document.getElementById('sisuResultados').innerHTML = '';
 
     const modal = M.Modal.getInstance(document.getElementById('modalSisu'));
     modal.open();
@@ -950,6 +1060,15 @@ function getFeedbackCompetencias(R){
       const curso = document.getElementById('sisuCurso');
       if (curso) curso.focus();
     }, 250);
+  }
+
+  function voltarListaSisu(){
+    const detalhe = M.Modal.getInstance(document.getElementById('modalSisuDetalhe'));
+    detalhe.close();
+    setTimeout(() => {
+      const lista = M.Modal.getInstance(document.getElementById('modalSisu'));
+      lista.open();
+    }, 180);
   }
 
   function notaNumero(v){
@@ -973,6 +1092,7 @@ function getFeedbackCompetencias(R){
     msg.textContent = '';
     resumo.innerHTML = '';
     resultados.innerHTML = '';
+    ultimoSisuDados = [];
 
     if (!curso) {
       msg.textContent = 'Digite o nome do curso para simular.';
@@ -1015,7 +1135,8 @@ function getFeedbackCompetencias(R){
         redacao: notaNumero(R.total)
       });
 
-      montarResultadosSisu(json.dados || []);
+      ultimoSisuDados = (json.dados || []).map((item, idx) => ({ ...item, _idx: idx }));
+      montarResultadosSisu(ultimoSisuDados);
 
     } catch (e) {
       msg.textContent = e.message || 'Erro ao simular SISU.';
@@ -1051,11 +1172,13 @@ function getFeedbackCompetencias(R){
       return;
     }
 
+    const ordenados = [...dados].sort((a, b) => Number(b.diferenca || 0) - Number(a.diferenca || 0));
+
     resultados.innerHTML = `
       <h6 class="blue-text text-darken-2" style="margin-top:18px">
         Cursos encontrados: ${dados.length}
       </h6>
-      ${dados.map(item => {
+      ${ordenados.map(item => {
         const acima = item.situacao === 'acima';
         const diff = Number(item.diferenca || 0);
         const diffTxt = diff >= 0 ? `+${fmt2(diff)}` : fmt2(diff);
@@ -1078,19 +1201,206 @@ function getFeedbackCompetencias(R){
 
             <div class="sisu-grid">
               <div class="sisu-box"><strong>${fmt2(item.media_calculada)}</strong><span>Sua média ponderada</span></div>
-              <div class="sisu-box"><strong>${fmt2(item.nota_corte)}</strong><span>Nota de corte</span></div>
+              <div class="sisu-box"><strong>${fmt2(item.nota_corte)}</strong><span>Nota de corte anterior</span></div>
               <div class="sisu-box"><strong>${diffTxt}</strong><span>Diferença</span></div>
             </div>
 
             <span class="sisu-pill ${acima ? 'sisu-acima' : 'sisu-abaixo'}">
               ${acima ? 'Acima da nota de corte anterior' : 'Abaixo da nota de corte anterior'}
             </span>
+
+            <div>
+              <button class="btn-small waves-effect waves-light sisu-more" type="button" onclick="abrirDetalheSisu(${Number(item._idx)})">
+                Mais informações
+              </button>
+            </div>
           </div>
         `;
       }).join('')}
     `;
   }
 
+  function abrirDetalheSisu(idx){
+    const item = ultimoSisuDados.find(x => Number(x._idx) === Number(idx));
+    if (!item) return;
+
+    const lista = M.Modal.getInstance(document.getElementById('modalSisu'));
+    lista.close();
+
+    const conteudo = document.getElementById('sisuDetalheConteudo');
+    const A = ultimoResultado.areas || {};
+    const R = ultimoResultado.redacao || {};
+    const notas = {
+      linguagens: notaNumero(A.linguagens),
+      humanas: notaNumero(A.humanas),
+      natureza: notaNumero(A.natureza),
+      matematica: notaNumero(A.matematica),
+      redacao: notaNumero(R.total)
+    };
+
+    const pesos = normalizarPesosSisu(item.pesos || {});
+    const maiorPeso = Math.max(...Object.values(pesos));
+    const areasMaisImportantes = Object.entries(pesos)
+      .filter(([, peso]) => Number(peso) === maiorPeso && maiorPeso > 0)
+      .map(([area]) => nomeAreaSisu(area));
+
+    const diff = Number(item.diferenca || 0);
+    const diffTxt = diff >= 0 ? `+${fmt2(diff)}` : fmt2(diff);
+    const acima = item.situacao === 'acima';
+
+    conteudo.innerHTML = `
+      <div class="sisu-detail-head">
+        <div class="sisu-detail-title">${escapeHtml(item.curso || '-')}</div>
+        <div class="sisu-detail-sub">
+          <strong>${escapeHtml(item.sigla_ies || item.ies || '-')}</strong>
+          ${item.ies && item.sigla_ies ? ` - ${escapeHtml(item.ies)}` : ''}<br>
+          ${escapeHtml(item.municipio || '-')} / ${escapeHtml(item.uf || '-')}
+          ${item.campus ? ` - Campus: ${escapeHtml(item.campus)}` : ''}<br>
+          ${escapeHtml(item.grau || '')}${item.turno ? ` - ${escapeHtml(item.turno)}` : ''}
+          ${item.modalidade ? `<br>Modalidade: ${escapeHtml(item.modalidade)}` : ''}
+        </div>
+      </div>
+
+      <div class="sisu-grid">
+        <div class="sisu-box"><strong>${fmt2(item.media_calculada)}</strong><span>Sua média ponderada</span></div>
+        <div class="sisu-box"><strong>${fmt2(item.nota_corte)}</strong><span>Nota de corte anterior</span></div>
+        <div class="sisu-box"><strong>${diffTxt}</strong><span>Diferença</span></div>
+      </div>
+
+      <span class="sisu-pill ${acima ? 'sisu-acima' : 'sisu-abaixo'}">
+        ${acima ? 'Acima da nota de corte anterior' : 'Abaixo da nota de corte anterior'}
+      </span>
+
+      <h6 class="blue-text text-darken-2" style="margin-top:18px">Pesos usados neste curso</h6>
+      <table class="striped responsive-table sisu-table">
+        <thead>
+          <tr>
+            <th>Área</th>
+            <th>Sua nota</th>
+            <th>Peso</th>
+            <th>Contribuição</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${linhaPesoSisu('Linguagens', notas.linguagens, pesos.linguagens)}
+          ${linhaPesoSisu('Humanas', notas.humanas, pesos.humanas)}
+          ${linhaPesoSisu('Natureza', notas.natureza, pesos.natureza)}
+          ${linhaPesoSisu('Matemática', notas.matematica, pesos.matematica)}
+          ${linhaPesoSisu('Redação', notas.redacao, pesos.redacao)}
+        </tbody>
+      </table>
+
+      <div class="sisu-chart-wrap">
+        <canvas id="sisuGraficoDetalhe" width="850" height="360"></canvas>
+      </div>
+
+      <div class="sisu-analise">
+        <strong>Análise para este curso:</strong><br>
+        ${montarAnaliseSisu(pesos, notas, areasMaisImportantes)}
+      </div>
+    `;
+
+    setTimeout(() => {
+      const detalhe = M.Modal.getInstance(document.getElementById('modalSisuDetalhe'));
+      detalhe.open();
+      setTimeout(() => montarGraficoDetalheSisu(notas, pesos), 250);
+    }, 180);
+  }
+
+  function normalizarPesosSisu(p){
+    return {
+      linguagens: notaNumero(p.linguagens),
+      humanas: notaNumero(p.humanas),
+      natureza: notaNumero(p.natureza),
+      matematica: notaNumero(p.matematica),
+      redacao: notaNumero(p.redacao)
+    };
+  }
+
+  function nomeAreaSisu(area){
+    const map = {
+      linguagens: 'Linguagens',
+      humanas: 'Humanas',
+      natureza: 'Natureza',
+      matematica: 'Matemática',
+      redacao: 'Redação'
+    };
+    return map[area] || area;
+  }
+
+  function linhaPesoSisu(area, nota, peso){
+    const contribuicao = notaNumero(nota) * notaNumero(peso);
+    return `
+      <tr>
+        <td><strong>${escapeHtml(area)}</strong></td>
+        <td>${fmt2(nota)}</td>
+        <td>${fmt2(peso)}</td>
+        <td>${fmt2(contribuicao)}</td>
+      </tr>
+    `;
+  }
+
+  function montarAnaliseSisu(pesos, notas, areasMaisImportantes){
+    const pesosValidos = Object.values(pesos).some(p => Number(p) > 0);
+    if (!pesosValidos) {
+      return 'Não há pesos suficientes cadastrados para montar uma análise detalhada deste curso.';
+    }
+
+    const areasTxt = areasMaisImportantes.length
+      ? areasMaisImportantes.join(', ')
+      : 'as áreas com maior peso cadastrado';
+
+    const ordenadas = Object.entries(pesos)
+      .filter(([, peso]) => Number(peso) > 0)
+      .map(([area, peso]) => ({ area, peso, nota: notas[area] ?? 0 }))
+      .sort((a, b) => b.peso - a.peso || a.nota - b.nota);
+
+    const menorNotaEntrePesosAltos = ordenadas
+      .filter(x => x.peso === ordenadas[0].peso)
+      .sort((a, b) => a.nota - b.nota)[0];
+
+    return `
+      Neste curso, ${areasTxt} ${areasMaisImportantes.length > 1 ? 'têm' : 'tem'} maior influência na média ponderada.
+      ${menorNotaEntrePesosAltos ? `Entre as áreas mais importantes, <strong>${nomeAreaSisu(menorNotaEntrePesosAltos.area)}</strong> aparece como ponto estratégico de atenção, porque combina peso alto com a nota atual do aluno.` : ''}
+      Melhorar uma área com peso maior costuma gerar mais efeito na média final do que melhorar uma área com peso menor.
+    `;
+  }
+
+  function montarGraficoDetalheSisu(notas, pesos){
+    const canvas = document.getElementById('sisuGraficoDetalhe');
+    if (!canvas || !window.Chart) return;
+
+    if (sisuChartDetalhe) {
+      sisuChartDetalhe.destroy();
+      sisuChartDetalhe = null;
+    }
+
+    const labels = ['Linguagens', 'Humanas', 'Natureza', 'Matemática', 'Redação'];
+    const notasData = [notas.linguagens, notas.humanas, notas.natureza, notas.matematica, notas.redacao];
+    const pesosData = [pesos.linguagens, pesos.humanas, pesos.natureza, pesos.matematica, pesos.redacao];
+
+    sisuChartDetalhe = new Chart(canvas.getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [
+          { label: 'Sua nota', data: notasData, yAxisID: 'y' },
+          { label: 'Peso do curso', data: pesosData, yAxisID: 'y1' }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: { beginAtZero: true, suggestedMax: 1000, position: 'left' },
+          y1: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false } }
+        },
+        plugins: {
+          legend: { display: true, position: 'top' }
+        }
+      }
+    });
+  }
 
   //* ===== PDF (pdf-lib) com template + comparativo + mini C1..C5 ===== */
   async function gerarPDF(){
