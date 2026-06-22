@@ -1042,6 +1042,15 @@ function getFeedbackCompetencias(R){
       return;
     }
 
+    const faltantes = validarNotasParaSisu();
+
+    if (faltantes.length > 0) {
+      M.toast({
+        html: `Simulação SISU indisponível: não há nota válida em ${faltantes.join(', ')}.`
+      });
+      return;
+    }
+
     const aviso = M.Modal.getInstance(document.getElementById('modalSisuAviso'));
     aviso.open();
   }
@@ -1082,6 +1091,21 @@ function getFeedbackCompetencias(R){
     if (v == null || v === '') return 0;
     const n = Number(String(v).replace(',', '.'));
     return Number.isFinite(n) ? n : 0;
+  }
+
+  function validarNotasParaSisu(){
+    const A = ultimoResultado?.areas || {};
+    const R = ultimoResultado?.redacao || {};
+
+    const faltantes = [];
+
+    if (notaNumero(A.linguagens) <= 0) faltantes.push('Linguagens');
+    if (notaNumero(A.humanas) <= 0) faltantes.push('Humanas');
+    if (notaNumero(A.natureza) <= 0) faltantes.push('Natureza');
+    if (notaNumero(A.matematica) <= 0) faltantes.push('Matemática');
+    if (notaNumero(R.total) <= 0) faltantes.push('Redação');
+
+    return faltantes;
   }
 
   async function simularSisu(){
