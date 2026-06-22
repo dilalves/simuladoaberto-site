@@ -1350,6 +1350,26 @@ function getFeedbackCompetencias(R){
       ? areasMaisImportantes.join(', ')
       : 'as áreas com maior peso cadastrado';
 
+    const pesosLista = Object.values(pesos)
+      .map(Number)
+      .filter(p => p > 0);
+
+    const todosPesosIguais = pesosLista.length > 0 && pesosLista.every(p => p === pesosLista[0]);
+
+    if (todosPesosIguais) {
+      const menorArea = Object.entries(notas)
+        .map(([area, nota]) => ({ area, nota: notaNumero(nota) }))
+        .filter(x => x.nota > 0)
+        .sort((a, b) => a.nota - b.nota)[0];
+
+      return `
+        Neste curso, todas as áreas possuem o mesmo peso. Isso significa que nenhuma área tem influência maior que outra no cálculo da média ponderada.
+        <br><br>
+        Nesse cenário, melhorar qualquer uma das notas ajuda a aumentar a média final.
+        ${menorArea ? `Como <strong>${nomeAreaSisu(menorArea.area)}</strong> é a menor nota atual do aluno, ela aparece como o ponto mais estratégico de atenção neste momento.` : ''}
+      `;
+    }  
+
     const ordenadas = Object.entries(pesos)
       .filter(([, peso]) => Number(peso) > 0)
       .map(([area, peso]) => ({ area, peso, nota: notas[area] ?? 0 }))
