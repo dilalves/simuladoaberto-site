@@ -175,6 +175,30 @@
 
 
   /* ===== SISU ===== */
+  .sisu-field{
+    margin-top: 8px;
+  }
+
+  .sisu-label-fixa{
+    display:block;
+    position:static !important;
+    transform:none !important;
+    color:#1976d2 !important;
+    font-size:13px;
+    font-weight:700;
+    margin-bottom:6px;
+  }
+
+  #sisuUf.browser-default{
+    display:block;
+    width:100%;
+    height:48px;
+    padding:0 10px;
+    border:1px solid #ddd;
+    background:#fff;
+    font-size:16px;
+  }
+
   .sisu-actions{
     margin-top:16px;
     text-align:center;
@@ -535,7 +559,8 @@
             <label for="sisuCurso">Curso</label>
           </div>
 
-          <div class="input-field col s12 m2">
+            <div class="input-field col s12 m2 sisu-field">
+              <label class="sisu-label-fixa" for="sisuUf">UF</label>
               <select id="sisuUf" class="browser-default">
               <option value="" selected>Todas</option>
               <option value="AC">AC</option><option value="AL">AL</option><option value="AP">AP</option>
@@ -548,7 +573,6 @@
               <option value="RO">RO</option><option value="RR">RR</option><option value="SC">SC</option>
               <option value="SP">SP</option><option value="SE">SE</option><option value="TO">TO</option>
             </select>
-            <label>UF</label>
           </div>
 
           <div class="input-field col s12 m5">
