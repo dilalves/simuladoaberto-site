@@ -175,11 +175,12 @@
 
 
   /* ===== SISU ===== */
-  .sisu-field{
+  #modalSisu .sisu-field{
     margin-top: 8px;
   }
 
-  .sisu-label-fixa{
+  #modalSisu .sisu-field label,
+  #modalSisu .sisu-label-fixa{
     display:block;
     position:static !important;
     transform:none !important;
@@ -554,9 +555,10 @@
         </p>
 
         <div class="row">
-          <div class="input-field col s12 m5">
-            <input id="sisuCurso" type="text" placeholder="Ex.: Medicina, Direito, Engenharia">
+          
+          <div class="input-field col s12 m5 sisu-field">
             <label for="sisuCurso">Curso</label>
+            <input id="sisuCurso" type="text" placeholder="Ex.: Medicina, Direito, Engenharia">
           </div>
 
             <div class="input-field col s12 m2 sisu-field">
@@ -575,9 +577,9 @@
             </select>
           </div>
 
-          <div class="input-field col s12 m5">
-            <input id="sisuIes" type="text" placeholder="Ex.: USP, UFRJ, UNIFESP">
+          <div class="input-field col s12 m5 sisu-field">
             <label for="sisuIes">Instituição</label>
+            <input id="sisuIes" type="text" placeholder="Ex.: USP, UFRJ, UNIFESP">
           </div>
         </div>
 
