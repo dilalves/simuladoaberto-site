@@ -447,8 +447,8 @@
               <tr id="row_red_total" class="hide-row"><th>Redação (Total)</th><td id="n_red_total"></td></tr>
               <tr id="row_red_comp"  class="hide-row"><th>Competências (C1–C5)</th><td id="n_red_comp"></td></tr>
 
-              <tr><th>CLS_G</th><td id="n_CLS_G"></td></tr>
-              <tr><th>CLS_U</th><td id="n_CLS_U"></td></tr>
+              <tr><th>Classificação Geral</th><td id="n_CLS_G"></td></tr>
+              <tr><th>Classificação por Unidade</th><td id="n_CLS_U"></td></tr>
             </tbody>
           </table>
 
@@ -536,7 +536,7 @@
           </div>
 
           <div class="input-field col s12 m2">
-            <select id="sisuUf">
+              <select id="sisuUf" class="browser-default">
               <option value="" selected>Todas</option>
               <option value="AC">AC</option><option value="AL">AL</option><option value="AP">AP</option>
               <option value="AM">AM</option><option value="BA">BA</option><option value="CE">CE</option>
@@ -615,7 +615,12 @@
 
   document.addEventListener('DOMContentLoaded', () => {
     M.Modal.init(document.querySelectorAll('.modal'));
-    M.FormSelect.init(document.querySelectorAll('select'));
+
+    // inicializa somente selects do Materialize
+    // UF fica nativo no celular
+    M.FormSelect.init(
+      document.querySelectorAll('select:not(.browser-default)')
+    );
   });
 
   /* ===== CONSULTA ===== */
