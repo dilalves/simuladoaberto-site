@@ -15,6 +15,15 @@
     footer{text-align:center;padding:20px;font-size:14px;color:#888}
     #chartWrap{display:none} /* canvas oculto só p/ gráfico do PDF */
 
+    .banner-simulado{
+      display:block;
+      margin:20px auto;
+      max-width:728px;
+      width:100%;
+      height:auto;
+    }
+
+
     /* mensagem embutida abaixo da nota */
     .mini-msg{
       margin-top:6px;
@@ -356,6 +365,11 @@
         margin:14px 0;
         padding:10px 0 12px;
         border-top:1px solid #eee;
+      /* banner na versão celular */
+        .banner-simulado{
+          margin:12px auto 18px;
+          max-width:360px;
+        }
       }
       table.striped th{
         display:block;        /* rótulo acima */
@@ -425,9 +439,15 @@
     <h1>Simulado Aberto ENEM Maio/2026</h1>
   </header>
 
-   <img src="https://raw.githubusercontent.com/dilalves/simuladoaberto-site/main/resultadoenem0526/Digital---Simulado-Aberto-728X90.jpg" 
-     alt="Banner Simulado Aberto"
-     style="display:block; margin:20px auto;">
+  <picture>
+    <source
+      media="(max-width: 600px)"
+      srcset="https://raw.githubusercontent.com/dilalves/simuladoaberto-site/main/resultadoenem0526/Simulado_Aberto-Celular.jpg">
+    <img
+      src="https://raw.githubusercontent.com/dilalves/simuladoaberto-site/main/resultadoenem0526/Digital---Simulado-Aberto-728X90.jpg"
+      alt="Banner Simulado Aberto"
+      class="banner-simulado">
+  </picture>
 
   <div class="container" style="max-width:900px; margin-top:28px">
     <h5 class="blue-text text-darken-2">Consultar Resultado</h5>
