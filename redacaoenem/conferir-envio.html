@@ -67,7 +67,7 @@
     .err{background:#fdecec; color:#b42318}
     .pend{background:#fff7e6; color:#b54708}
 
-    .search-row{display:grid; grid-template-columns: 1fr 160px 140px; gap:12px}
+    .search-row{display:grid; grid-template-columns: 1fr 170px 160px 140px; gap:12px}
 
     @media (max-width: 992px){
       .app{ grid-template-columns: 1fr; }
@@ -160,6 +160,12 @@
                   <input id="q" type="text" placeholder="Buscar por inscrição ou nome do arquivo…">
                 </div>
                 <div class="input-field" style="margin-top:0">
+                  <select id="eventoFilter">
+                    <option value="ENEM0826" selected>ENEM0826 (atual)</option>
+                  </select>
+                  <label>Evento</label>
+                </div>
+                <div class="input-field" style="margin-top:0">
                   <select id="statusFilter">
                     <option value="">Todos os status</option>
                     <option value="PENDENTE">PENDENTE</option>
@@ -215,6 +221,7 @@ const API_BASE     = 'https://apisec.secauxiliar.com.br/redacaoenem/';
 const API_UPLOAD   = 'https://apisec.secauxiliar.com.br/redacaoenem/upload.php';
 const API_CONFERIR = 'https://apisec.secauxiliar.com.br/redacaoenem/logs_list.php'; 
 const API_ATUALIZA = 'https://apisec.secauxiliar.com.br/redacaoenem/update_inscricao.php';
+const EVENTO_ATIVO = 'ENEM0826';
 const LOGIN_URL  = '/redacaoenem/index.html';
 const SESS_KEY   = 'sessao_redacao';
 function getSession(){ try{ return JSON.parse(localStorage.getItem(SESS_KEY) || '{}'); }catch(_){ return {}; } }
@@ -325,9 +332,10 @@ async function load(){
   const codUnd = sess?.unidade?.codigo || '';
   const q      = (document.getElementById('q').value||'').trim();
   const status = document.getElementById('statusFilter').value;
+  const evento = document.getElementById('eventoFilter').value || EVENTO_ATIVO;
 
   // Back-end esperado: POST /logs_list com {codUnd, q, status, page, pageSize}
-  const payload = { codUnd, q, status, page: PAGE, pageSize: PAGE_SIZE };
+  const payload = { codUnd, evento, q, status, page: PAGE, pageSize: PAGE_SIZE };
   const data = await apiFetch(API_CONFERIR, { method:'POST', body: JSON.stringify(payload) });
 
   // Aceita formatos: {ok, data:{items,total}} ou {items,total} ou array simples
@@ -340,6 +348,27 @@ async function load(){
 
   render(items);
   info.textContent = TOTAL ? `Mostrando página ${PAGE} • ${items.length} itens • Total: ${TOTAL}` : 'Nenhum registro.';
+}
+
+async function carregarEventos(){
+  const sess = getSession();
+  const codUnd = sess?.unidade?.codigo || '';
+  if (!codUnd) return;
+
+  try {
+    const data = await apiFetch(API_CONFERIR, {
+      method:'POST',
+      body: JSON.stringify({ codUnd, acao:'eventos' })
+    });
+    const eventos = data?.data?.eventos || [EVENTO_ATIVO];
+    const select = document.getElementById('eventoFilter');
+    select.innerHTML = eventos.map(ev =>
+      `<option value="${ev}"${ev === EVENTO_ATIVO ? ' selected' : ''}>${ev}${ev === EVENTO_ATIVO ? ' (atual)' : ''}</option>`
+    ).join('');
+    M.FormSelect.init(select);
+  } catch (e) {
+    console.warn('Não foi possível carregar a lista de eventos.', e);
+  }
 }
 
 function debounce(fn, ms){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), ms); }; }
@@ -366,10 +395,12 @@ document.addEventListener('DOMContentLoaded', async ()=>{
   window.M && M.AutoInit();
   if (!getToken()) return redirectToLogin();
   try { await carregarContexto(); } catch(e){ if (String(e.message).includes('UNAUTHORIZED')) return redirectToLogin(); }
+  await carregarEventos();
 
   document.getElementById('btnRefresh').addEventListener('click', ()=> load());
   document.getElementById('q').addEventListener('input', debounce(()=>{ PAGE=1; load(); }, 300));
   document.getElementById('statusFilter').addEventListener('change', ()=>{ PAGE=1; load(); });
+  document.getElementById('eventoFilter').addEventListener('change', ()=>{ PAGE=1; load(); });
   document.getElementById('btnCsv').addEventListener('click', exportCsv);
   document.getElementById('prev').addEventListener('click', ()=>{ if (PAGE>1){ PAGE--; load(); }});
   document.getElementById('next').addEventListener('click', ()=>{ PAGE++; load(); });

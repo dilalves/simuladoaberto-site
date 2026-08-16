@@ -134,7 +134,10 @@
       <!-- Card principal -->
       <div class="card">
         <div class="card-content">
-          <span class="card-title">Envio de arquivos</span>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+            <span class="card-title" style="margin:0">Envio de arquivos</span>
+            <span class="new badge blue darken-3" data-badge-caption="">Evento atual: ENEM0826</span>
+          </div>
           <p class="muted" style="margin-top:6px">
             Selecione imagens (JPG ou JPEG). Cada arquivo será validado na API de resolução.
             Aprovados são enviados ao Drive e salvos no LOG.
@@ -213,6 +216,7 @@ function purgeEnviadosDaTela(){                     // [+] novo
 
 /* ===================== SESSÃO / CONTEXTO (igual ao professores.html) ===================== */
 const API_BASE   = 'https://apisec.secauxiliar.com.br/redacaoenem/'; // ou seu subdomínio da API
+const EVENTO_ATIVO = 'ENEM0826';
 const LOGIN_URL  = '/redacaoenem/index.html';
 const SESS_KEY   = 'sessao_redacao';
 function novoTimestamp(){
@@ -418,6 +422,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const form = new FormData();
       form.append('file',   item.file);
       form.append('codUnd', codUnd);
+      form.append('evento', EVENTO_ATIVO); // informativo; o PHP fixa o evento no servidor
 
       const ts = document.getElementById('ts').value;   // vem do lote atual
       form.append('ts',      ts);
