@@ -161,7 +161,7 @@
                 </div>
                 <div class="input-field" style="margin-top:0">
                   <select id="eventoFilter">
-                    <option value="ENEM0826" selected>ENEM0826 (atual)</option>
+                    <option value="" selected>Carregando...</option>
                   </select>
                   <label>Evento</label>
                 </div>
@@ -221,12 +221,14 @@ const API_BASE     = 'https://apisec.secauxiliar.com.br/redacaoenem/';
 const API_UPLOAD   = 'https://apisec.secauxiliar.com.br/redacaoenem/upload.php';
 const API_CONFERIR = 'https://apisec.secauxiliar.com.br/redacaoenem/logs_list.php'; 
 const API_ATUALIZA = 'https://apisec.secauxiliar.com.br/redacaoenem/update_inscricao.php';
-const EVENTO_ATIVO = 'ENEM0826';
+const EVENTO_ATIVO = getSession().evento_mais_recente || 'ENEM0926';
 const LOGIN_URL  = '/redacaoenem/index.html';
 const SESS_KEY   = 'sessao_redacao';
 function getSession(){ try{ return JSON.parse(localStorage.getItem(SESS_KEY) || '{}'); }catch(_){ return {}; } }
 function setSession(s){ localStorage.setItem(SESS_KEY, JSON.stringify(s||{})); }
 function getToken(){ const s=getSession(); return (s && s.token) || localStorage.getItem('token') || ''; }
+function eventoSelecionado(){ return document.getElementById('eventoFilter')?.value || getSession().evento || EVENTO_ATIVO; }
+function somenteConsulta(){ return eventoSelecionado() !== getSession().evento_mais_recente; }
 function authHeaders(){ const t=getToken(); return t ? { 'Authorization':'Bearer '+t } : {}; }
 function redirectToLogin(){ const next = encodeURIComponent(location.pathname+location.search+location.hash); location.replace(`${LOGIN_URL}?next=${next}`); }
 async function apiFetch(pathOrUrl, { method='GET', headers={}, body, cache='no-store' } = {}) {
@@ -361,9 +363,10 @@ async function carregarEventos(){
       body: JSON.stringify({ codUnd, acao:'eventos' })
     });
     const eventos = data?.data?.eventos || [EVENTO_ATIVO];
+    const eventoSessao = getSession().evento || EVENTO_ATIVO;
     const select = document.getElementById('eventoFilter');
     select.innerHTML = eventos.map(ev =>
-      `<option value="${ev}"${ev === EVENTO_ATIVO ? ' selected' : ''}>${ev}${ev === EVENTO_ATIVO ? ' (atual)' : ''}</option>`
+      `<option value="${ev}"${ev === eventoSessao ? ' selected' : ''}>${ev}${ev === getSession().evento_mais_recente ? ' (mais recente)' : ''}</option>`
     ).join('');
     M.FormSelect.init(select);
   } catch (e) {
@@ -400,7 +403,10 @@ document.addEventListener('DOMContentLoaded', async ()=>{
   document.getElementById('btnRefresh').addEventListener('click', ()=> load());
   document.getElementById('q').addEventListener('input', debounce(()=>{ PAGE=1; load(); }, 300));
   document.getElementById('statusFilter').addEventListener('change', ()=>{ PAGE=1; load(); });
-  document.getElementById('eventoFilter').addEventListener('change', ()=>{ PAGE=1; load(); });
+  document.getElementById('eventoFilter').addEventListener('change', ()=>{
+    setSession({ ...getSession(), evento:eventoSelecionado() });
+    PAGE=1; load();
+  });
   document.getElementById('btnCsv').addEventListener('click', exportCsv);
   document.getElementById('prev').addEventListener('click', ()=>{ if (PAGE>1){ PAGE--; load(); }});
   document.getElementById('next').addEventListener('click', ()=>{ PAGE++; load(); });
@@ -418,6 +424,7 @@ document.addEventListener('DOMContentLoaded', () => {
   tbody.addEventListener('click', (ev) => {
     const a = ev.target.closest('.manual-link');
     if (!a) return;
+    if (somenteConsulta()) { M.toast({html:'Evento anterior disponível somente para consulta.'}); return; }
 
     // 1) capturar os dados do registro clicado
     const tr = a.closest('tr');                       // fallback
@@ -548,6 +555,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 4) salvar
   document.getElementById('mm-salvar').addEventListener('click', async () => {
+    if (somenteConsulta()) { M.toast({html:'Evento anterior disponível somente para consulta.'}); return; }
     if (!currentRecord) return;
     const btn   = document.getElementById('mm-salvar');
     const inscr = (document.getElementById('mm-inscricao').value || '').trim();
@@ -582,6 +590,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   //5) RECUSAR IMAGEM INUTILIZADA
     document.getElementById('mm-recusar')?.addEventListener('click', () => {
+      if (somenteConsulta()) { M.toast({html:'Evento anterior disponível somente para consulta.'}); return; }
       const id = Number(
         (currentRecord && currentRecord.id) ||
         document.getElementById('modalManual').dataset.id ||
@@ -784,6 +793,7 @@ let filaOMR = [], OMR_EM_ANDAMENTO = false;
 const elFila = document.getElementById('omr-progress');
 
 function tentarFilaOMR(btn, fileId, id) {
+  if (somenteConsulta()) { M.toast({html:'Evento anterior disponível somente para consulta.'}); return; }
   filaOMR.push({ btn, fileId, id });
   processarFilaOMR();
 }

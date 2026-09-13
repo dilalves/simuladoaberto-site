@@ -124,7 +124,7 @@
           </p>
 
           <form id="formNotaManual" style="margin-top:22px;">
-            <input id="evento" type="hidden" value="ENEM0826">
+            <input id="evento" type="hidden" value="">
 
             <div class="row">
               <div class="input-field col s12 m2">
@@ -144,7 +144,7 @@
               </div>
 
               <div class="input-field col s12 m3">
-                <input id="eventoVisual" type="text" value="ENEM0826" readonly>
+                <input id="eventoVisual" type="text" value="" readonly>
                 <label for="eventoVisual" class="active">Evento</label>
               </div>
             </div>
@@ -188,7 +188,8 @@
 const API_BASE = 'https://apisec.secauxiliar.com.br/redacaoenem/';
 const LOGIN_URL = '/redacaoenem/index.html';
 const SESS_KEY = 'sessao_redacao';
-const EVENTO_FIXO = 'ENEM0826';
+const EVENTO_FIXO = getSession().evento || '';
+const SOMENTE_CONSULTA = EVENTO_FIXO !== getSession().evento_mais_recente;
 
 const ENDPOINT_SALVAR = `${API_BASE}salvar_nota_manual_redacao.php`;
 const ENDPOINT_LISTAR = `${API_BASE}listar_notas_manuais_redacao.php`;
@@ -400,6 +401,7 @@ function aplicarCandidatoNaTela(json, silent=false){
 
 async function salvarNota(e){
   e.preventDefault();
+  if (SOMENTE_CONSULTA) return toast('Evento anterior disponível somente para consulta.', 'orange darken-2');
 
   const token = getToken();
   const evento = EVENTO_FIXO;
@@ -513,6 +515,7 @@ async function preencherNomesNaLista(dados){
 
 
 async function excluirNotaManual(id, inscricao){
+  if (SOMENTE_CONSULTA) return toast('Evento anterior disponível somente para consulta.', 'orange darken-2');
   id = Number(id || 0);
 
   if (!id) {
@@ -628,14 +631,14 @@ async function listarNotas(){
           <td>${escapeHtml(formatarData(item.criado_em))}</td>
           <td>${escapeHtml(formatarData(item.atualizado_em))}</td>
           <td class="center-align">
-            <button
+            ${SOMENTE_CONSULTA ? '<span class="grey-text">Somente consulta</span>' : `<button
               type="button"
               class="btn-flat red-text text-darken-2 tooltipped"
               data-position="top"
               data-tooltip="Excluir nota"
               onclick="excluirNotaManual(${Number(item.id)}, '${escapeHtml(item.inscricao)}')">
               <i class="material-icons">delete</i>
-            </button>
+            </button>`}
           </td>
         </tr>
       `;
@@ -681,6 +684,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('eventoVisual').value = EVENTO_FIXO;
 
   if (!getToken()) return redirectToLogin();
+  if (!EVENTO_FIXO) return location.replace('/redacaoenem/painel.html');
+
+  if (SOMENTE_CONSULTA) {
+    const form = document.getElementById('formNotaManual');
+    form.querySelectorAll('input:not([readonly]),button[type="submit"]').forEach(el => el.disabled = true);
+    form.insertAdjacentHTML('afterbegin', '<div class="card-panel amber lighten-4">Evento anterior: notas disponíveis somente para consulta.</div>');
+  }
 
   try {
     await carregarContexto();

@@ -234,7 +234,7 @@ async function load(){
   if (!codUnd) return redirectToLogin();
 
   const res = await apiFetch('/relatorio_list.php', {
-    body: JSON.stringify({ codUnd, q, page: PAGE, pageSize: SIZE })
+    body: JSON.stringify({ codUnd, evento:sess.evento || '', q, page: PAGE, pageSize: SIZE })
   });
 
   const items = res?.data?.items || [];

@@ -47,6 +47,15 @@
   #btn:disabled{ opacity:.6; cursor:default; }
   button{background:#0d6efd;border:none;color:#fff;cursor:pointer}
   .msg{margin-top:12px;color:#b00}
+  .evento-overlay{position:fixed;inset:0;background:rgba(15,23,42,.55);display:none;align-items:center;justify-content:center;z-index:100;padding:20px}
+  .evento-overlay.aberto{display:flex}
+  .evento-modal{width:min(520px,100%);background:#fff;border-radius:14px;padding:24px;box-shadow:0 24px 70px rgba(0,0,0,.25)}
+  .evento-modal h3{margin:0 0 6px;color:#0b3b78}
+  .evento-opcoes{display:grid;gap:10px;margin:20px 0}
+  .evento-opcao{display:flex;align-items:center;gap:12px;border:1px solid #dbe2ea;border-radius:10px;padding:12px;cursor:pointer}
+  .evento-opcao input{width:auto;margin:0}
+  .evento-opcao small{display:block;color:#6b7280;margin-top:2px}
+  #btnEvento{width:auto;min-width:180px}
 </style>
 
 <body>
@@ -72,8 +81,57 @@
     <div id="msg" class="msg"></div>
   </div>
 
+  <div id="eventoOverlay" class="evento-overlay" role="dialog" aria-modal="true" aria-labelledby="eventoTitulo">
+    <div class="evento-modal">
+      <h3 id="eventoTitulo">Selecione o evento</h3>
+      <div style="color:#6b7280">Escolha qual Simulado ENEM deseja acessar.</div>
+      <div id="eventoOpcoes" class="evento-opcoes"></div>
+      <button id="btnEvento" disabled>Acessar evento</button>
+      <div id="eventoMsg" class="msg"></div>
+    </div>
+  </div>
+
 <script>
 const API = 'https://apisec.secauxiliar.com.br/redacaoenem/'; // ou seu subdomínio da API
+const STORAGE_KEY = 'sessao_redacao';
+
+function dataBr(valor){
+  if (!valor) return '';
+  const [a,m,d] = String(valor).slice(0,10).split('-');
+  return a && m && d ? `${d}/${m}/${a}` : valor;
+}
+
+async function selecionarEvento(sessao){
+  const overlay = document.getElementById('eventoOverlay');
+  const opcoes = document.getElementById('eventoOpcoes');
+  const btn = document.getElementById('btnEvento');
+  const msgEvento = document.getElementById('eventoMsg');
+  overlay.classList.add('aberto');
+
+  const r = await fetch(`${API}eventos_list.php`, {
+    headers:{'Authorization':`Bearer ${sessao.token}`,'Accept':'application/json'}
+  });
+  const data = await r.json();
+  if (!r.ok || !data.ok) throw new Error(data.error || 'Não foi possível carregar os eventos.');
+
+  const eventos = data?.data?.eventos || [];
+  opcoes.innerHTML = eventos.map((item, i) => `
+    <label class="evento-opcao">
+      <input type="radio" name="eventoSelecionado" value="${item.evento}" ${i===0?'checked':''}>
+      <span><strong>${item.evento}</strong>${item.permite_envio?' — mais recente':''}
+        <small>${item.data_aplicacao ? `Aplicação: ${dataBr(item.data_aplicacao)}` : ''}${item.permite_envio ? ' • envio e consulta' : ' • somente consulta'}</small>
+      </span>
+    </label>`).join('');
+  btn.disabled = eventos.length === 0;
+
+  return new Promise(resolve => {
+    btn.onclick = () => {
+      const escolhido = document.querySelector('input[name="eventoSelecionado"]:checked')?.value;
+      if (!escolhido) { msgEvento.textContent = 'Selecione um evento.'; return; }
+      resolve({ evento: escolhido, evento_mais_recente: data.data.evento_mais_recente });
+    };
+  });
+}
 
 document.getElementById('btn').onclick = async () => {
   const login = document.getElementById('login').value.trim();
@@ -92,10 +150,21 @@ document.getElementById('btn').onclick = async () => {
       msg.textContent = data.error || 'Falha no login';
       return;
     }
-    // guarda token
+    // mantém as chaves antigas para compatibilidade com as telas atuais
     localStorage.setItem('token', data.token);
     localStorage.setItem('unidade', data.unidade);
     localStorage.setItem('login', data.login);
+
+    const sessao = {
+      token: data.token,
+      unidade: { codigo: data.login, nome: data.unidade },
+      login: data.login
+    };
+
+    const selecao = await selecionarEvento(sessao);
+    sessao.evento = selecao.evento;
+    sessao.evento_mais_recente = selecao.evento_mais_recente;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(sessao));
 
     // vai para página protegida
     location.href = './painel.html';

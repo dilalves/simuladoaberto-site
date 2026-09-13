@@ -136,7 +136,7 @@
         <div class="card-content">
           <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
             <span class="card-title" style="margin:0">Envio de arquivos</span>
-            <span class="new badge blue darken-3" data-badge-caption="">Evento atual: ENEM0826</span>
+            <span id="eventoBadge" class="new badge blue darken-3" data-badge-caption="">Evento: —</span>
           </div>
           <p class="muted" style="margin-top:6px">
             Selecione imagens (JPG ou JPEG). Cada arquivo será validado na API de resolução.
@@ -216,7 +216,6 @@ function purgeEnviadosDaTela(){                     // [+] novo
 
 /* ===================== SESSÃO / CONTEXTO (igual ao professores.html) ===================== */
 const API_BASE   = 'https://apisec.secauxiliar.com.br/redacaoenem/'; // ou seu subdomínio da API
-const EVENTO_ATIVO = 'ENEM0826';
 const LOGIN_URL  = '/redacaoenem/index.html';
 const SESS_KEY   = 'sessao_redacao';
 function novoTimestamp(){
@@ -236,6 +235,7 @@ function startNewBatch(){
 
 
 function getSession(){ try{ return JSON.parse(localStorage.getItem(SESS_KEY) || '{}'); }catch(_){ return {}; } }
+const EVENTO_ATIVO = getSession().evento || '';
 function setSession(s){ localStorage.setItem(SESS_KEY, JSON.stringify(s||{})); }
 function getToken(){ const s=getSession(); return (s && s.token) || localStorage.getItem('token') || ''; }
 function authHeaders(){ const t=getToken(); return t ? { 'Authorization':'Bearer '+t } : {}; }
@@ -306,6 +306,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // exige login
   if (!getToken()) return redirectToLogin();
+  if (!EVENTO_ATIVO) return location.replace('/redacaoenem/painel.html');
+
+  const sessaoEvento = getSession();
+  document.getElementById('eventoBadge').textContent = `Evento: ${EVENTO_ATIVO}`;
+  if (EVENTO_ATIVO !== sessaoEvento.evento_mais_recente) {
+    alert('Este evento está disponível somente para consulta. Selecione o evento mais recente no painel para enviar redações.');
+    return location.replace('/redacaoenem/painel.html');
+  }
 
   // carrega contexto (topo + codUnd)
   try { await carregarContexto(); }
@@ -389,6 +397,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   btnSend.addEventListener('click', async (e) => {
     e.preventDefault();
+    if (!confirm(`Confirma o envio das redações para o evento ${EVENTO_ATIVO}?`)) return;
     const codUnd = (codUndEl.value || '').trim();
     if (!codUnd) { M?.toast ? M.toast({html:'Informe o código da unidade'}) : alert('Informe o código da unidade'); return; }
 
@@ -422,7 +431,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const form = new FormData();
       form.append('file',   item.file);
       form.append('codUnd', codUnd);
-      form.append('evento', EVENTO_ATIVO); // informativo; o PHP fixa o evento no servidor
+      form.append('evento', EVENTO_ATIVO);
 
       const ts = document.getElementById('ts').value;   // vem do lote atual
       form.append('ts',      ts);
@@ -430,6 +439,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       form.append('seq',     String(item._seq));        // 🔹 novo (_1, _2, ...)
 
       xhr.open('POST', API_UPLOAD, true);
+      xhr.setRequestHeader('Authorization', 'Bearer ' + getToken());
 
       xhr.upload.onprogress = (e) => {
         if (e.lengthComputable) item.bar.style.width = ((e.loaded/e.total)*100).toFixed(0) + '%';

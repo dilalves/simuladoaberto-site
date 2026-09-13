@@ -74,6 +74,13 @@
     .menu a:hover{background:#f4f6fb}
     .menu .active>a{background:#eef3ff; font-weight:600}
     .menu .icon{font-size:20px; vertical-align:middle; margin-right:8px; color:#64748b}
+    #eventoBadge{cursor:pointer}
+    .evento-overlay{position:fixed;inset:0;background:rgba(15,23,42,.55);display:none;align-items:center;justify-content:center;z-index:100;padding:20px}
+    .evento-overlay.aberto{display:flex}
+    .evento-modal-box{width:min(520px,100%);background:#fff;border-radius:14px;padding:24px;box-shadow:0 24px 70px rgba(0,0,0,.25)}
+    .evento-opcoes{display:grid;gap:10px;margin:20px 0}
+    .evento-opcao{display:flex;align-items:center;gap:12px;border:1px solid #dbe2ea;border-radius:10px;padding:12px;cursor:pointer}
+    .evento-opcao small{display:block;color:#6b7280;margin-top:2px}
   </style>
 </head>
 
@@ -121,7 +128,7 @@
     <!-- ===== Conteúdo do seu painel, preservado ===== -->
     <section class="page">
       <div class="right-align" style="margin-bottom:8px">
-        <span class="new badge blue darken-3" data-badge-caption="">Evento atual: ENEM0826</span>
+        <span id="eventoBadge" class="new badge blue darken-3" data-badge-caption="" title="Clique para trocar o evento">Evento: — ▾</span>
       </div>
       
       <!-- KPIs: 4 em uma única linha no desktop -->
@@ -264,10 +271,22 @@
   </main>
 </div>
 
+<div id="eventoOverlay" class="evento-overlay" role="dialog" aria-modal="true" aria-labelledby="eventoTitulo">
+  <div class="evento-modal-box">
+    <h5 id="eventoTitulo" style="margin-top:0;color:#0b3b78">Selecionar evento</h5>
+    <div class="grey-text">O evento mais recente permite envio. Os anteriores são somente para consulta.</div>
+    <div id="eventoOpcoes" class="evento-opcoes"></div>
+    <div class="right-align">
+      <button id="btnCancelarEvento" class="btn-flat">Cancelar</button>
+      <button id="btnConfirmarEvento" class="btn blue darken-2">Acessar evento</button>
+    </div>
+  </div>
+</div>
+
 <script>
 /* ===== CONFIG ===== */
 const API = 'https://apisec.secauxiliar.com.br/redacaoenem/';
-const EVENTO_ATIVO = 'ENEM0826';
+let EVENTO_ATIVO = '';
 const LOGIN_URL = '/redacaoenem/index.html';
 const SESS_KEY = 'sessao_redacao';
 
@@ -290,6 +309,45 @@ function authHeaders(){ const t=getToken(); return t ? { Authorization: 'Bearer 
 function redirectToLogin(){
   const next = encodeURIComponent(location.pathname+location.search+location.hash);
   location.replace(`${LOGIN_URL}?next=${next}`);
+}
+function dataBr(valor){
+  if (!valor) return '';
+  const [a,m,d] = String(valor).slice(0,10).split('-');
+  return a && m && d ? `${d}/${m}/${a}` : valor;
+}
+function aplicarEventoNaTela(){
+  const sess = getSession();
+  EVENTO_ATIVO = sess.evento || sess.evento_mais_recente || '';
+  const badge = document.getElementById('eventoBadge');
+  if (badge) badge.textContent = `Evento: ${EVENTO_ATIVO || '—'} ▾`;
+  const somenteConsulta = !!EVENTO_ATIVO && EVENTO_ATIVO !== sess.evento_mais_recente;
+  document.querySelectorAll('a[href="/redacaoenem/envio.html"]').forEach(a => {
+    a.style.pointerEvents = somenteConsulta ? 'none' : '';
+    a.style.opacity = somenteConsulta ? '.45' : '';
+    a.title = somenteConsulta ? 'Evento anterior: somente consulta' : '';
+  });
+}
+async function carregarEventos(){
+  const data = await apiFetch('/eventos_list.php');
+  const eventos = data?.data?.eventos || [];
+  const sess = getSession();
+  setSession({ ...sess, evento_mais_recente:data.data.evento_mais_recente, eventos });
+  return eventos;
+}
+async function abrirSeletorEvento(obrigatorio=false){
+  const overlay = document.getElementById('eventoOverlay');
+  const cancelar = document.getElementById('btnCancelarEvento');
+  let eventos = getSession().eventos || [];
+  if (!eventos.length) eventos = await carregarEventos();
+  document.getElementById('eventoOpcoes').innerHTML = eventos.map(item => `
+    <label class="evento-opcao">
+      <input type="radio" name="eventoSelecionado" value="${item.evento}" ${item.evento===EVENTO_ATIVO?'checked':''}>
+      <span><strong>${item.evento}</strong>${item.permite_envio?' — mais recente':''}
+        <small>${item.data_aplicacao?`Aplicação: ${dataBr(item.data_aplicacao)}`:''}${item.permite_envio?' • envio e consulta':' • somente consulta'}</small>
+      </span>
+    </label>`).join('');
+  cancelar.style.display = obrigatorio ? 'none' : '';
+  overlay.classList.add('aberto');
 }
 
 /* ===== Util: garantir .php ANTES do ? ===== */
@@ -345,6 +403,9 @@ async function initPainel(){
     const sess = getSession();
     if (sess?.unidade) setUnitHeader(sess.unidade);
     await carregarContextoDaAPI();
+    await carregarEventos();
+    aplicarEventoNaTela();
+    if (!EVENTO_ATIVO) return abrirSeletorEvento(true);
 
     // ➜ novo: carrega os KPIs
     await carregarKPIs();
@@ -355,6 +416,18 @@ async function initPainel(){
     if (String(err.message).includes('UNAUTHORIZED')) return redirectToLogin();
   }
 }
+
+document.getElementById('eventoBadge').addEventListener('click', ()=>abrirSeletorEvento(false));
+document.getElementById('btnCancelarEvento').addEventListener('click', ()=>document.getElementById('eventoOverlay').classList.remove('aberto'));
+document.getElementById('btnConfirmarEvento').addEventListener('click', async ()=>{
+  const evento = document.querySelector('input[name="eventoSelecionado"]:checked')?.value;
+  if (!evento) return;
+  setSession({ ...getSession(), evento });
+  EVENTO_ATIVO = evento;
+  document.getElementById('eventoOverlay').classList.remove('aberto');
+  aplicarEventoNaTela();
+  await carregarKPIs();
+});
 
 
 /* ===== Contexto (/auth_me.php) ===== */
