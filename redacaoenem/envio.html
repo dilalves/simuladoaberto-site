@@ -416,9 +416,29 @@ document.addEventListener('DOMContentLoaded', async () => {
     let seq = 1;
     for (const it of pendentes) it._seq = seq++;
 
-    for (const item of pendentes) {
-      try { await sendOne(item, codUnd, batchId); } catch(e){ console.error(e); }
+    // Envia no máximo 2 arquivos simultaneamente.
+    // Mantém o mesmo upload.php, batchId, seq e todo o restante do fluxo.
+    const CONCORRENCIA_UPLOAD = 2;
+    let proximoIndice = 0;
+
+    async function workerUpload(){
+      while (true) {
+        const indice = proximoIndice++;
+        if (indice >= pendentes.length) return;
+
+        const item = pendentes[indice];
+        try {
+          await sendOne(item, codUnd, batchId);
+        } catch(e) {
+          console.error(e);
+        }
+      }
     }
+
+    const quantidadeWorkers = Math.min(CONCORRENCIA_UPLOAD, pendentes.length);
+    await Promise.all(
+      Array.from({ length: quantidadeWorkers }, () => workerUpload())
+    );
 
     statusEl.textContent = 'Envio concluído.';
     updateSendButton(); // vai ficar desabilitado se não sobrar pendente
