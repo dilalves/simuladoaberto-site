@@ -119,7 +119,7 @@ async function selecionarEvento(sessao){
     <label class="evento-opcao">
       <input type="radio" name="eventoSelecionado" value="${item.evento}" ${i===0?'checked':''}>
       <span><strong>${item.evento}</strong>${item.permite_envio?' — mais recente':''}
-        <small>${item.data_aplicacao ? `Aplicação: ${dataBr(item.data_aplicacao)}` : ''}${item.permite_envio ? ' • envio e consulta' : ' • somente consulta'}</small>
+        <small>${item.data_aplicacao ? `Aplicação: ${dataBr(item.data_aplicacao)}` : ''}${item.permite_envio ? ' • envio de imagens e notas manuais' : ' • notas manuais e consulta'}</small>
       </span>
     </label>`).join('');
   btn.disabled = eventos.length === 0;
