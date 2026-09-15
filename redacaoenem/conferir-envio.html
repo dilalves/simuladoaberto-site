@@ -495,7 +495,7 @@ document.addEventListener('DOMContentLoaded', () => {
             callback_url: 'https://apisec.secauxiliar.com.br/redacaoenem/omr-callback.php'
             };
 
-            const res = await fetch('https://omr.secauxiliar.com.br/omr_job', {
+            const res = await fetch('https://apisec.secauxiliar.com.br/redacaoenem/omr_inscricao.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
@@ -748,7 +748,7 @@ async function tentarOMR(btn, fileId){
   statusCell.innerHTML = '<span class="orange-text">Verificando...</span>';
 
   try {
-    const r = await fetch('https://omr.secauxiliar.com.br/omr_job', {
+    const r = await fetch('https://apisec.secauxiliar.com.br/redacaoenem/omr_inscricao.php', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
@@ -819,7 +819,7 @@ async function processarFilaOMR() {
   statusCell.innerHTML = '<span class="orange-text">Verificando…</span>';
 
   try {
-    const r = await fetch('https://omr.secauxiliar.com.br/omr_job', {
+    const r = await fetch('https://apisec.secauxiliar.com.br/redacaoenem/omr_inscricao.php', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
