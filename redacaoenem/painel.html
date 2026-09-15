@@ -79,8 +79,36 @@
     .evento-overlay.aberto{display:flex}
     .evento-modal-box{width:min(520px,100%);background:#fff;border-radius:14px;padding:24px;box-shadow:0 24px 70px rgba(0,0,0,.25)}
     .evento-opcoes{display:grid;gap:10px;margin:20px 0}
-    .evento-opcao{display:flex;align-items:center;gap:12px;border:1px solid #dbe2ea;border-radius:10px;padding:12px;cursor:pointer}
-    .evento-opcao small{display:block;color:#6b7280;margin-top:2px}
+    .evento-opcao{
+      display:flex; align-items:center; gap:12px;
+      border:1px solid #dbe2ea; border-radius:10px;
+      padding:12px; cursor:pointer; min-height:58px;
+    }
+    .evento-opcao:hover{background:#f8fafc;border-color:#b9c7d8}
+    .evento-opcao input[type="radio"]{
+      position:static !important;
+      opacity:1 !important;
+      pointer-events:auto !important;
+      width:16px; height:16px;
+      margin:0 !important;
+      flex:0 0 auto;
+    }
+    .evento-opcao > span{
+      display:block !important;
+      position:static !important;
+      padding-left:0 !important;
+      height:auto !important;
+      line-height:1.25 !important;
+      color:#0f172a;
+      flex:1;
+    }
+    .evento-opcao > span:before,
+    .evento-opcao > span:after{display:none !important}
+    .evento-opcao strong{font-weight:700}
+    .evento-opcao small{
+      display:block; color:#6b7280; margin-top:4px;
+      font-size:12px; line-height:1.3;
+    }
   </style>
 </head>
 
@@ -274,7 +302,7 @@
 <div id="eventoOverlay" class="evento-overlay" role="dialog" aria-modal="true" aria-labelledby="eventoTitulo">
   <div class="evento-modal-box">
     <h5 id="eventoTitulo" style="margin-top:0;color:#0b3b78">Selecionar evento</h5>
-    <div class="grey-text">O evento mais recente permite envio. Os anteriores são somente para consulta.</div>
+    <div class="grey-text">O evento mais recente permite envio de imagens. Nos anteriores, o envio fica bloqueado, mas consultas e notas manuais continuam disponíveis.</div>
     <div id="eventoOpcoes" class="evento-opcoes"></div>
     <div class="right-align">
       <button id="btnCancelarEvento" class="btn-flat">Cancelar</button>
