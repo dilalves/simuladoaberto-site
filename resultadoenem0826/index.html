@@ -412,7 +412,7 @@
     text-transform:uppercase;
   }
   .banner-frame{
-    width:min(760px, calc(100% - 32px));
+    width:min(880px, calc(100% - 32px));
     margin:24px auto 0;
     padding:5px;
     background:#fff;
@@ -431,7 +431,10 @@
     padding-bottom:12px;
   }
   .consulta-heading{
+    max-width:760px;
     margin:0 0 12px;
+    margin-left:auto;
+    margin-right:auto;
     color:var(--texto) !important;
     font-size:22px;
     font-weight:700;
@@ -448,7 +451,9 @@
     vertical-align:-4px;
   }
   .consulta-card{
-    margin:0;
+    width:100%;
+    max-width:760px;
+    margin:0 auto;
     overflow:hidden;
     border:1px solid rgba(210,222,236,.95);
     border-radius:16px;
@@ -461,19 +466,32 @@
     height:4px;
     background:linear-gradient(90deg, #002776, #0a7de8 62%, #54b3ff);
   }
-  .consulta-card .card-content{ padding:28px 34px 26px; }
+  .consulta-card .card-content{ padding:23px 30px 21px; }
   .consulta-intro{
-    margin:0 0 17px;
+    margin:0 0 14px;
     color:var(--texto-suave);
     font-size:14px;
     line-height:1.5;
   }
-  .consulta-card .row.campos-consulta{ margin-bottom:5px; }
-  .consulta-card .input-field{ margin-top:10px; margin-bottom:16px; }
+  .consulta-card .row.campos-consulta{
+    display:grid;
+    grid-template-columns:minmax(210px, 260px) minmax(245px, 300px);
+    justify-content:center;
+    gap:22px;
+    margin:0 auto 5px;
+  }
+  .consulta-card .campos-consulta .col{
+    float:none;
+    width:auto;
+    padding:0;
+  }
+  .consulta-card .input-field{ margin-top:10px; margin-bottom:13px; }
   .consulta-card .input-field input{
-    height:48px;
+    display:block;
+    width:100% !important;
+    height:46px;
     margin:0;
-    padding:0 13px;
+    padding:0 12px;
     border:1px solid var(--borda) !important;
     border-radius:9px;
     background:#fbfdff;
@@ -635,6 +653,10 @@
       .consulta-card{ border-radius:14px; }
       .consulta-card .card-content{ padding:24px 18px 20px; }
       .consulta-intro{ margin-bottom:17px; }
+      .consulta-card .row.campos-consulta{
+        grid-template-columns:1fr;
+        gap:6px;
+      }
       .consulta-card .input-field{ margin-bottom:18px; }
       .consulta-actions{
         align-items:stretch;
