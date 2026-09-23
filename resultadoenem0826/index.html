@@ -18,7 +18,7 @@
     .banner-simulado{
       display:block;
       margin:20px auto;
-      max-width:728px;
+      max-width:1000px;
       width:100%;
       height:auto;
     }
@@ -357,213 +357,6 @@
     font-weight:700;
   }
 
-  /* ===== VISUAL MODERNO DA TELA INICIAL =====
-     Regras isoladas do conteudo de consulta. Os modais permanecem inalterados. */
-  :root{
-    --azul-objetivo:#002776;
-    --azul-vivo:#0874e7;
-    --azul-claro:#eaf3ff;
-    --texto:#17243d;
-    --texto-suave:#64748b;
-    --borda:#dbe5f1;
-  }
-  *{ box-sizing:border-box; }
-  body{
-    min-height:100vh;
-    margin:0;
-    color:var(--texto);
-    background:
-      radial-gradient(circle at 8% 18%, rgba(8,116,231,.08), transparent 28%),
-      radial-gradient(circle at 92% 82%, rgba(0,39,118,.07), transparent 30%),
-      #f6f9fd;
-  }
-  body > header{
-    position:relative;
-    overflow:hidden;
-    padding:22px 20px 24px;
-    background:linear-gradient(120deg, #001d5a 0%, #002f8f 56%, #075ab6 100%);
-    box-shadow:0 5px 22px rgba(0,39,118,.22);
-  }
-  body > header::before,
-  body > header::after{
-    content:"";
-    position:absolute;
-    border:1px solid rgba(255,255,255,.10);
-    border-radius:50%;
-  }
-  body > header::before{ width:220px; height:220px; right:8%; top:-165px; }
-  body > header::after{ width:140px; height:140px; left:7%; bottom:-118px; }
-  body > header h1{
-    position:relative;
-    z-index:1;
-    font-size:clamp(21px, 2.1vw, 28px);
-    font-weight:600;
-    letter-spacing:-.35px;
-  }
-  .header-kicker{
-    position:relative;
-    z-index:1;
-    display:block;
-    margin-top:5px;
-    color:rgba(255,255,255,.72);
-    font-size:12px;
-    font-weight:500;
-    letter-spacing:1.4px;
-    text-transform:uppercase;
-  }
-  .banner-frame{
-    width:min(880px, calc(100% - 32px));
-    margin:24px auto 0;
-    padding:5px;
-    background:#fff;
-    border:1px solid rgba(207,219,234,.9);
-    border-radius:13px;
-    box-shadow:0 12px 32px rgba(31,55,90,.10);
-    line-height:0;
-  }
-  .banner-simulado{
-    margin:0 auto;
-    border-radius:8px;
-  }
-  .page-shell{
-    max-width:900px !important;
-    margin-top:25px !important;
-    padding-bottom:12px;
-  }
-  .consulta-heading{
-    max-width:760px;
-    margin:0 0 12px;
-    margin-left:auto;
-    margin-right:auto;
-    color:var(--texto) !important;
-    font-size:22px;
-    font-weight:700;
-    letter-spacing:-.25px;
-  }
-  .consulta-heading::before{
-    content:"";
-    display:inline-block;
-    width:5px;
-    height:23px;
-    margin-right:10px;
-    border-radius:999px;
-    background:linear-gradient(180deg, #1393ff, var(--azul-objetivo));
-    vertical-align:-4px;
-  }
-  .consulta-card{
-    width:100%;
-    max-width:760px;
-    margin:0 auto;
-    overflow:hidden;
-    border:1px solid rgba(210,222,236,.95);
-    border-radius:16px;
-    background:rgba(255,255,255,.97);
-    box-shadow:0 16px 42px rgba(31,55,90,.11);
-  }
-  .consulta-card::before{
-    content:"";
-    display:block;
-    height:4px;
-    background:linear-gradient(90deg, #002776, #0a7de8 62%, #54b3ff);
-  }
-  .consulta-card .card-content{ padding:23px 30px 21px; }
-  .consulta-intro{
-    margin:0 0 14px;
-    color:var(--texto-suave);
-    font-size:14px;
-    line-height:1.5;
-  }
-  .consulta-card .row.campos-consulta{
-    display:grid;
-    grid-template-columns:minmax(210px, 260px) minmax(245px, 300px);
-    justify-content:center;
-    gap:22px;
-    margin:0 auto 5px;
-  }
-  .consulta-card .campos-consulta .col{
-    float:none;
-    width:auto;
-    padding:0;
-  }
-  .consulta-card .input-field{ margin-top:10px; margin-bottom:13px; }
-  .consulta-card .input-field input{
-    display:block;
-    width:100% !important;
-    height:46px;
-    margin:0;
-    padding:0 12px;
-    border:1px solid var(--borda) !important;
-    border-radius:9px;
-    background:#fbfdff;
-    box-shadow:none !important;
-    transition:border-color .2s, box-shadow .2s, background .2s;
-  }
-  .consulta-card .input-field input:focus{
-    border-color:var(--azul-vivo) !important;
-    background:#fff;
-    box-shadow:0 0 0 4px rgba(8,116,231,.11) !important;
-  }
-  .consulta-card .input-field label{
-    top:-10px;
-    left:1.5rem;
-    padding:0 6px;
-    color:#60738d;
-    background:#fff;
-    font-size:13px;
-    font-weight:600;
-    transform:none !important;
-  }
-  .consulta-card .input-field label.active{ transform:none !important; }
-  .consulta-actions{
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    flex-wrap:wrap;
-    gap:10px;
-  }
-  .consulta-actions .btn{
-    height:43px;
-    padding:0 23px;
-    border-radius:9px;
-    font-weight:700;
-    letter-spacing:.35px;
-    line-height:43px;
-    box-shadow:none;
-    transition:transform .18s, box-shadow .18s, background .18s;
-  }
-  .consulta-actions .btn:not(:disabled):hover{
-    transform:translateY(-1px);
-    box-shadow:0 8px 18px rgba(0,39,118,.18);
-  }
-  #btnConsultar{
-    min-width:132px;
-    background:linear-gradient(105deg, #003486, #0874e7) !important;
-  }
-  #btnPdf:not(:disabled){
-    color:#064a99;
-    background:#e9f3ff !important;
-  }
-  #btnPdf:disabled{
-    color:#93a1b2 !important;
-    background:#edf1f5 !important;
-  }
-  .consulta-card #status{
-    flex-basis:100%;
-    margin:3px 0 0 !important;
-    text-align:center;
-    font-size:13px;
-  }
-  .consulta-card #msg{
-    margin-top:15px !important;
-    text-align:center;
-    font-size:14px;
-    font-weight:600;
-  }
-  body > footer{
-    padding:23px 20px 28px;
-    color:#7a899d;
-  }
-
     /* MOBILE: empilha rótulo, nota e mensagem; desliga hífens */
     @media (max-width: 600px){
       /* a tabela vira “cards” por linha */
@@ -572,6 +365,11 @@
         margin:14px 0;
         padding:10px 0 12px;
         border-top:1px solid #eee;
+      /* banner na versão celular */
+        .banner-simulado{
+          margin:12px auto 18px;
+          max-width:360px;
+        }
       }
       table.striped th{
         display:block;        /* rótulo acima */
@@ -631,39 +429,6 @@
         height:50px;
       }
 
-      body > header{ padding:18px 14px 20px; }
-      .header-kicker{ font-size:10px; letter-spacing:1.05px; }
-      .banner-frame{
-        width:calc(100% - 24px);
-        margin-top:16px;
-        padding:4px;
-        border-radius:11px;
-      }
-      .banner-frame .banner-simulado{
-        width:100%;
-        max-width:none;
-        margin:0;
-        border-radius:7px;
-      }
-      .page-shell{
-        width:calc(100% - 24px);
-        margin-top:20px !important;
-      }
-      .consulta-heading{ margin-bottom:10px; font-size:20px; }
-      .consulta-card{ border-radius:14px; }
-      .consulta-card .card-content{ padding:24px 18px 20px; }
-      .consulta-intro{ margin-bottom:17px; }
-      .consulta-card .row.campos-consulta{
-        grid-template-columns:1fr;
-        gap:6px;
-      }
-      .consulta-card .input-field{ margin-bottom:18px; }
-      .consulta-actions{
-        align-items:stretch;
-        flex-direction:column;
-      }
-      .consulta-actions .btn{ width:100%; }
-
     }
     
   </style>
@@ -672,29 +437,24 @@
  
   <header>
     <h1>Simulado Aberto ENEM Agosto/2026</h1>
-    <span class="header-kicker">Consulta individual de desempenho</span>
   </header>
 
-  <div class="banner-frame">
-    <picture>
-      <source
-        media="(max-width: 600px)"
-        srcset="https://raw.githubusercontent.com/dilalves/simuladoaberto-site/main/resultadoenem0826/Simulado-Aberto-Celular.jpg">
-      <img
-        src="https://raw.githubusercontent.com/dilalves/simuladoaberto-site/main/resultadoenem0826/Digital---Simulado-Aberto-728X90.jpg"
-        alt="Banner Simulado Aberto"
-        class="banner-simulado">
-    </picture>
-  </div>
+  <picture>
+    <source
+      media="(max-width: 600px)"
+      srcset="https://raw.githubusercontent.com/dilalves/simuladoaberto-site/main/resultadoenem0826/Simulado-Aberto-Celular.jpg">
+    <img
+      src="https://raw.githubusercontent.com/dilalves/simuladoaberto-site/main/resultadoenem0826/Digital---Simulado-Aberto-728X90.jpg"
+      alt="Banner Simulado Aberto"
+      class="banner-simulado">
+  </picture>
 
-  <div class="container page-shell" style="max-width:900px; margin-top:28px">
-    <h5 class="blue-text text-darken-2 consulta-heading">Consultar resultado</h5>
+  <div class="container" style="max-width:900px; margin-top:28px">
+    <h5 class="blue-text text-darken-2">Consultar Resultado</h5>
 
-    <div class="card consulta-card">
+    <div class="card">
       <div class="card-content">
-        <p class="consulta-intro">Informe seus dados abaixo para acessar as notas, a classificação e o resultado completo do simulado.</p>
-
-        <div class="row campos-consulta">
+        <div class="row">
           <div class="input-field col s12 m6">
             <input id="inscricao" type="text" required>
             <label for="inscricao">Inscrição</label>
@@ -706,7 +466,7 @@
         </div>
 
         <div class="row" style="margin-bottom:0">
-          <div class="col s12 center-align consulta-actions">
+          <div class="col s12 center-align">
             <button id="btnConsultar" class="btn waves-effect waves-light blue darken-2">
               Consultar
             </button>
