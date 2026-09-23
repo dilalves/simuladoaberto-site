@@ -18,7 +18,7 @@
     .banner-simulado{
       display:block;
       margin:20px auto;
-      max-width:1000px;
+      max-width:900px;
       width:100%;
       height:auto;
     }
@@ -1721,7 +1721,7 @@ function getFeedbackCompetencias(R){
     const blob  = new Blob([bytes], { type:'application/pdf' });
     const a     = document.createElement('a');
     a.href      = URL.createObjectURL(blob);
-    a.download  = `resultado_ENEM_${j.inscricao}.pdf`;
+    a.download  = `resultado_SIMULADO_ENEM_0826_${j.inscricao}.pdf`;
     a.click();
     
   }
