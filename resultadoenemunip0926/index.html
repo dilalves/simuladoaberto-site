@@ -7,9 +7,11 @@
 
   <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
 
+  <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800;900&family=Rubik:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
   <style>
     :root{
-      --unip-blue:#07078f;
+      --unip-blue:#000080;
       --unip-blue-dark:#003f77;
       --unip-yellow:#ffd900;
       --unip-text:#151515;
@@ -19,8 +21,8 @@
 
     *{box-sizing:border-box}
     html,body{margin:0;padding:0}
-    body{background:#fff;color:var(--unip-text);font-family:Arial,Helvetica,sans-serif}
-    h1,h2,h3,h4,h5,h6{font-family:Arial,Helvetica,sans-serif}
+    body{background:#fff;color:var(--unip-text);font-family:"Rubik",Arial,Helvetica,sans-serif}
+    h1,h2,h3,h4,h5,h6{font-family:"Rubik",Arial,Helvetica,sans-serif}
 
     .unip-topbar{
       width:100%;
@@ -33,17 +35,30 @@
       gap:18px;
       color:#fff;
     }
-    .unip-logo{
-      display:inline-block;
-      color:var(--unip-yellow);
-      font-size:27px;
-      font-weight:900;
-      font-style:italic;
-      letter-spacing:-2px;
+
+    .unip-brand{
+      display:flex;
+      align-items:center;
+      min-height:46px;
+      text-decoration:none;
       line-height:1;
-      transform:skew(-7deg);
     }
-    .unip-page-title{font-size:17px;font-weight:700;white-space:nowrap}
+
+    .unip-brand img{
+      display:block;
+      width:auto;
+      height:20px;
+      max-width:none;
+    }
+
+    .unip-page-title{
+      font-family:"Rubik",Arial,Helvetica,sans-serif;
+      font-size:15px;
+      font-weight:600;
+      line-height:1;
+      white-space:nowrap;
+      color:#fff;
+    }
 
     .unip-intro{
       max-width:900px;
@@ -94,6 +109,7 @@
       font-weight:700;
       border-radius:5px;
       box-shadow:none;
+      font-family:"Rubik",Arial,Helvetica,sans-serif;
     }
     #btnConsultar{background:var(--unip-yellow) !important;color:#111 !important}
     #btnConsultar:hover{background:#ffdf2f !important}
@@ -518,7 +534,8 @@
       }
 
       .unip-topbar{min-height:42px;padding:0 14px}
-      .unip-logo{font-size:23px}
+      .unip-brand{min-height:42px}
+      .unip-brand img{height:20px}
       .unip-page-title{font-size:14px}
       .unip-intro{margin:24px auto 8px;padding:0 14px}
       .unip-intro h1{font-size:25px}
@@ -530,7 +547,9 @@
 <body>
 
   <div class="unip-topbar">
-    <div class="unip-logo" aria-label="UNIP">UNIP</div>
+    <a class="unip-brand" href="https://www.unip.br/" target="_blank" rel="noopener" aria-label="UNIP">
+      <img src="https://www.unip.br/assets/img/logo/logo-unip.svg" alt="Logo da UNIP">
+    </a>
     <div class="unip-page-title">Simulado ENEM</div>
   </div>
 
@@ -2271,3 +2290,4 @@ function drawScoreTableCentered(A, C, yTop) {
   </script>
 </body>
 </html>
+
