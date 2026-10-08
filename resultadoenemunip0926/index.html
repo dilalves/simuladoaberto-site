@@ -471,44 +471,6 @@
     font-weight:700;
   }
 
-
-    /* ===== MENINA LATERAL / PARALLAX (somente desktop) ===== */
-    #resultado{
-      position:relative;
-      overflow:visible;
-    }
-
-    .menina-parallax{
-      position:absolute;
-      top:34px;
-      left:calc(100% + 30px);
-      width:300px;
-      max-width:300px;
-      pointer-events:none;
-      user-select:none;
-      z-index:1;
-      transform:translate3d(0,0,0);
-      will-change:transform;
-    }
-
-    .menina-parallax img{
-      display:block;
-      width:100%;
-      height:auto;
-    }
-
-    /* Esconde onde não há lateral suficiente. */
-    @media (max-width:1399px){
-      .menina-parallax{ display:none !important; }
-    }
-
-    @media (prefers-reduced-motion:reduce){
-      .menina-parallax{
-        transform:none !important;
-        will-change:auto;
-      }
-    }
-
     /* MOBILE: empilha rótulo, nota e mensagem; desliga hífens */
     @media (max-width: 600px){
       /* a tabela vira “cards” por linha */
@@ -641,14 +603,6 @@
     </div>
 
     <div id="resultado" style="display:none">
-      <!-- Imagem decorativa lateral com efeito parallax -->
-      <div class="menina-parallax" id="meninaParallax" aria-hidden="true">
-        <img
-          src="https://www.unip.br/simulado-enem/assets/img/mulher_camiseta_amarela_fundo_amarelo_1.png"
-          alt=""
-          draggable="false">
-      </div>
-
       <div class="card">
         <div class="card-content">
           <span class="card-title" id="alunoNome"></span>
@@ -931,9 +885,6 @@
 
     resDiv.style.display = 'block';
     btnPdf.disabled = false; btnPdf.classList.remove('grey');
-
-    // Efeito apenas decorativo: inicializa fora do fluxo da consulta.
-    window.setTimeout(iniciarMeninaParallax, 0);
     status.textContent = '';
   }catch(e){
     msg.textContent = 'Erro ao consultar. Tente novamente.';
@@ -942,87 +893,6 @@
   }
 }
 
-
-
-  /* ===== MENINA LATERAL / PARALLAX ===== */
-  let meninaScrollBase = 0;
-  let meninaParallaxAtivo = false;
-  let meninaParallaxRAF = 0;
-
-  function iniciarMeninaParallax(){
-    try{
-      const menina = document.getElementById('meninaParallax');
-      const resultado = document.getElementById('resultado');
-
-      if (!menina || !resultado) return;
-
-      /* No celular/tablet a imagem fica escondida e o efeito nem é iniciado. */
-      if (window.innerWidth <= 1399){
-        meninaParallaxAtivo = false;
-        menina.style.transform = 'translate3d(0,0,0)';
-        return;
-      }
-
-      meninaScrollBase = window.pageYOffset || document.documentElement.scrollTop || 0;
-      meninaParallaxAtivo = true;
-      menina.style.transform = 'translate3d(0,0,0)';
-    }catch(err){
-      /* Nunca deixa um detalhe visual interferir na consulta. */
-      console.warn('Efeito lateral indisponível:', err);
-    }
-  }
-
-  function atualizarMeninaParallax(){
-    meninaParallaxRAF = 0;
-
-    if (!meninaParallaxAtivo) return;
-
-    const menina = document.getElementById('meninaParallax');
-    const resultado = document.getElementById('resultado');
-    if (!menina || !resultado) return;
-
-    if (window.innerWidth <= 1399){
-      meninaParallaxAtivo = false;
-      menina.style.transform = 'translate3d(0,0,0)';
-      return;
-    }
-
-    const scrollAtual = window.pageYOffset || document.documentElement.scrollTop || 0;
-    const distancia = scrollAtual - meninaScrollBase;
-
-    /*
-      0.40 = a imagem compensa 40% da rolagem.
-      Assim ela acompanha o conteúdo, mas cerca de 40% mais devagar.
-      Funciona tanto descendo quanto subindo.
-    */
-    const movimento = distancia * 0.40;
-    menina.style.transform = 'translate3d(0,' + movimento.toFixed(2) + 'px,0)';
-  }
-
-  function solicitarAtualizacaoMenina(){
-    if (!meninaParallaxAtivo || meninaParallaxRAF) return;
-
-    meninaParallaxRAF = window.requestAnimationFrame
-      ? window.requestAnimationFrame(atualizarMeninaParallax)
-      : window.setTimeout(atualizarMeninaParallax, 16);
-  }
-
-  window.addEventListener('scroll', solicitarAtualizacaoMenina, { passive:true });
-  window.addEventListener('resize', function(){
-    const menina = document.getElementById('meninaParallax');
-    const resultado = document.getElementById('resultado');
-    if (!menina || !resultado) return;
-
-    if (window.innerWidth <= 1399){
-      meninaParallaxAtivo = false;
-      menina.style.transform = 'translate3d(0,0,0)';
-      return;
-    }
-
-    if (resultado.style.display !== 'none'){
-      iniciarMeninaParallax();
-    }
-  }, { passive:true });
 
   function setText(id, v){ document.getElementById(id).textContent = (v==null?'-':v); }
   function val(x){ return (x==null?'-':x); }
@@ -2421,4 +2291,3 @@ function drawScoreTableCentered(A, C, yTop) {
   </script>
 </body>
 </html>
-
