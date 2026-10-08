@@ -932,9 +932,18 @@
     montarObservacoes(j.observacoesRedacao || []);
 
     resDiv.style.display = 'block';
-    iniciarMeninaParallax();
     btnPdf.disabled = false; btnPdf.classList.remove('grey');
     status.textContent = '';
+
+    // O efeito visual roda fora do fluxo crítico da consulta.
+    // Assim, qualquer problema nele nunca gera "Erro ao consultar".
+    window.setTimeout(() => {
+      try {
+        iniciarMeninaParallax();
+      } catch (err) {
+        console.warn('Parallax lateral não pôde ser iniciado:', err);
+      }
+    }, 0);
   }catch(e){
     msg.textContent = 'Erro ao consultar. Tente novamente.';
     console.error(e);
@@ -947,7 +956,7 @@
   /* ===== MENINA LATERAL / PARALLAX ===== */
   let scrollInicioMenina = 0;
   let parallaxMeninaAtivo = false;
-  let parallaxMeninaRAF = null;
+  let parallaxMeninaRAF = 0;
 
   function iniciarMeninaParallax(){
     const menina = document.getElementById('meninaParallax');
@@ -955,56 +964,48 @@
 
     if (!menina || !resultado) return;
 
-    scrollInicioMenina = window.scrollY;
+    scrollInicioMenina = window.pageYOffset || document.documentElement.scrollTop || 0;
     parallaxMeninaAtivo = true;
-    menina.style.transform = 'translate3d(0,0,0)';
-
-    atualizarMeninaParallax();
+    menina.style.transform = 'translate3d(0, 0, 0)';
   }
 
   function atualizarMeninaParallax(){
+    parallaxMeninaRAF = 0;
+
     if (!parallaxMeninaAtivo) return;
 
     const menina = document.getElementById('meninaParallax');
     const resultado = document.getElementById('resultado');
 
-    if (!menina || !resultado || resultado.style.display === 'none') return;
+    if (!menina || !resultado) return;
+    if (getComputedStyle(resultado).display === 'none') return;
 
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches){
-      menina.style.transform = 'translate3d(0,0,0)';
-      return;
-    }
+    const scrollAtual = window.pageYOffset || document.documentElement.scrollTop || 0;
+    const distancia = scrollAtual - scrollInicioMenina;
 
     /*
-      0.18 = intensidade do efeito.
-      O conteúdo acompanha 100% da rolagem e a imagem compensa 18%,
-      dando a impressão de deslizar mais devagar.
+      0.28 = compensação da rolagem.
+      A página anda 100%; a menina compensa 28%.
+      Resultado: visualmente ela desliza a aproximadamente 72% da velocidade do conteúdo.
     */
-    const distancia = window.scrollY - scrollInicioMenina;
-    let movimento = distancia * 0.18;
+    let movimento = distancia * 0.28;
 
-    /* mantém a imagem dentro da área do resultado */
-    const alturaResultado = resultado.offsetHeight;
-    const alturaMenina = menina.offsetHeight || 0;
-    const limiteInferior = Math.max(0, alturaResultado - alturaMenina - 60);
+    // Não deixa a imagem escapar muito acima do ponto inicial.
+    if (movimento < -60) movimento = -60;
 
-    movimento = Math.max(-40, Math.min(movimento, limiteInferior));
-
-    menina.style.transform = `translate3d(0, ${movimento}px, 0)`;
+    menina.style.transform = 'translate3d(0,' + movimento + 'px,0)';
   }
 
-  window.addEventListener('scroll', () => {
+  function solicitarAtualizacaoMenina(){
     if (!parallaxMeninaAtivo || parallaxMeninaRAF) return;
 
-    parallaxMeninaRAF = requestAnimationFrame(() => {
-      atualizarMeninaParallax();
-      parallaxMeninaRAF = null;
-    });
-  }, { passive:true });
+    parallaxMeninaRAF = window.requestAnimationFrame
+      ? window.requestAnimationFrame(atualizarMeninaParallax)
+      : window.setTimeout(atualizarMeninaParallax, 16);
+  }
 
-  window.addEventListener('resize', () => {
-    if (parallaxMeninaAtivo) atualizarMeninaParallax();
-  }, { passive:true });
+  window.addEventListener('scroll', solicitarAtualizacaoMenina, { passive:true });
+  window.addEventListener('resize', solicitarAtualizacaoMenina, { passive:true });
 
 
   function setText(id, v){ document.getElementById(id).textContent = (v==null?'-':v); }
