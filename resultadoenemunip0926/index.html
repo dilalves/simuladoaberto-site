@@ -471,6 +471,38 @@
     font-weight:700;
   }
 
+
+    /* ===== MENINA LATERAL / DESLIZE SUAVE (desktop) ===== */
+    .menina-parallax{
+      position:fixed;
+      top:190px;
+      right:max(24px, calc((100vw - 900px) / 2 - 330px));
+      width:285px;
+      max-width:285px;
+      pointer-events:none;
+      user-select:none;
+      z-index:2;
+      display:none;
+      will-change:top;
+    }
+
+    .menina-parallax.parallax-visivel{
+      display:block;
+    }
+
+    .menina-parallax img{
+      display:block;
+      width:100%;
+      height:auto;
+    }
+
+    @media (max-width:1399px){
+      .menina-parallax,
+      .menina-parallax.parallax-visivel{
+        display:none !important;
+      }
+    }
+
     /* MOBILE: empilha rótulo, nota e mensagem; desliga hífens */
     @media (max-width: 600px){
       /* a tabela vira “cards” por linha */
@@ -479,11 +511,12 @@
         margin:14px 0;
         padding:10px 0 12px;
         border-top:1px solid #eee;
+      }
+
       /* banner na versão celular */
-        .banner-simulado{
-          margin:12px auto 18px;
-          max-width:360px;
-        }
+      .banner-simulado{
+        margin:12px auto 18px;
+        max-width:360px;
       }
       table.striped th{
         display:block;        /* rótulo acima */
@@ -603,6 +636,15 @@
     </div>
 
     <div id="resultado" style="display:none">
+
+      <!-- decoração lateral: exibida apenas no desktop quando houver resultado -->
+      <div class="menina-parallax" id="meninaParallax" aria-hidden="true">
+        <img
+          src="https://www.unip.br/simulado-enem/assets/img/mulher_camiseta_amarela_fundo_amarelo_1.png"
+          alt=""
+          draggable="false">
+      </div>
+
       <div class="card">
         <div class="card-content">
           <span class="card-title" id="alunoNome"></span>
@@ -791,12 +833,19 @@
 
   let ultimoResultado = null;
 
-  document.getElementById('btnConsultar').addEventListener('click', consultar);
-  document.getElementById('btnPdf').addEventListener('click', gerarPDF);
-  document.getElementById('btnSisuResultado').addEventListener('click', abrirAvisoSisu);
-  document.getElementById('btnSisuContinuar').addEventListener('click', continuarSisu);
-  document.getElementById('btnVoltarSisuLista').addEventListener('click', voltarListaSisu);
-  document.getElementById('btnRodarSisu').addEventListener('click', simularSisu);
+  function ligarClique(id, handler){
+    const el = document.getElementById(id);
+    if (el && typeof handler === 'function'){
+      el.addEventListener('click', handler);
+    }
+  }
+
+  ligarClique('btnConsultar', consultar);
+  ligarClique('btnPdf', gerarPDF);
+  ligarClique('btnSisuResultado', abrirAvisoSisu);
+  ligarClique('btnSisuContinuar', continuarSisu);
+  ligarClique('btnVoltarSisuLista', voltarListaSisu);
+  ligarClique('btnRodarSisu', simularSisu);
 
   document.addEventListener('DOMContentLoaded', () => {
     M.Modal.init(document.querySelectorAll('.modal'));
@@ -878,20 +927,155 @@
     document.getElementById('out_red_comp').textContent  = comps;
     document.getElementById('blocoRedacao').style.display = 'block';
 
-    // Imagem fixa da Redação + pins/observações do corretor
-    const L = j.links || {};
-    montarRedacao(L.imagemRedacao, j.observacoesRedacao || []);
-    montarObservacoes(j.observacoesRedacao || []);
+    // Imagem fixa da Redação + pins/observações do corretor.
+    // Se esta parte visual falhar em algum navegador, não derruba o resultado.
+    try{
+      const L = j.links || {};
+      montarRedacao(L.imagemRedacao, j.observacoesRedacao || []);
+      montarObservacoes(j.observacoesRedacao || []);
+    }catch(errRedacao){
+      console.warn('Área visual da redação indisponível:', errRedacao);
+      const imgBox = document.getElementById('imgBox');
+      const obsBox = document.getElementById('obsBox');
+      if (imgBox) imgBox.innerHTML = '<p class="grey-text">Imagem da redação não disponível.</p>';
+      if (obsBox) obsBox.innerHTML = '';
+    }
 
     resDiv.style.display = 'block';
     btnPdf.disabled = false; btnPdf.classList.remove('grey');
     status.textContent = '';
+
+    // Efeito decorativo totalmente fora do fluxo crítico da consulta
+    window.setTimeout(function(){
+      try{
+        iniciarMeninaParallax();
+      }catch(errParallax){
+        console.warn('Efeito lateral indisponível:', errParallax);
+      }
+    }, 0);
   }catch(e){
     msg.textContent = 'Erro ao consultar. Tente novamente.';
     console.error(e);
     status.textContent='';
   }
 }
+
+
+
+  /* ===== MENINA LATERAL / DESLIZE SUAVE ===== */
+  let meninaParallaxAtivo = false;
+  let meninaScrollAnterior = 0;
+  let meninaTopAtual = 190;
+  let meninaTopAlvo = 190;
+  let meninaRAF = 0;
+
+  function limitarTopMenina(valor){
+    const menina = document.getElementById('meninaParallax');
+    if (!menina) return valor;
+
+    const altura = menina.offsetHeight || 390;
+    const minimo = 95;
+    const maximo = Math.max(minimo, window.innerHeight - altura - 28);
+
+    return Math.max(minimo, Math.min(valor, maximo));
+  }
+
+  function iniciarMeninaParallax(){
+    const menina = document.getElementById('meninaParallax');
+    const resultado = document.getElementById('resultado');
+
+    if (!menina || !resultado) return;
+
+    // No celular/tablet não roda nada.
+    if (window.innerWidth <= 1399){
+      meninaParallaxAtivo = false;
+      menina.classList.remove('parallax-visivel');
+      return;
+    }
+
+    meninaScrollAnterior =
+      window.pageYOffset ||
+      document.documentElement.scrollTop ||
+      0;
+
+    // Alinha inicialmente com o topo do resultado, dentro da janela.
+    const rectResultado = resultado.getBoundingClientRect();
+    meninaTopAtual = limitarTopMenina(Math.max(120, rectResultado.top + 34));
+    meninaTopAlvo = meninaTopAtual;
+
+    menina.style.top = meninaTopAtual + 'px';
+    menina.classList.add('parallax-visivel');
+    meninaParallaxAtivo = true;
+  }
+
+  function animarMeninaParallax(){
+    meninaRAF = 0;
+
+    if (!meninaParallaxAtivo) return;
+
+    const menina = document.getElementById('meninaParallax');
+    if (!menina) return;
+
+    // Inércia leve para não "grudar" no scroll.
+    meninaTopAtual += (meninaTopAlvo - meninaTopAtual) * 0.16;
+    menina.style.top = meninaTopAtual.toFixed(2) + 'px';
+
+    if (Math.abs(meninaTopAlvo - meninaTopAtual) > 0.20){
+      meninaRAF = requestAnimationFrame(animarMeninaParallax);
+    }
+  }
+
+  function aoRolarPagina(){
+    if (!meninaParallaxAtivo) return;
+
+    const scrollAtual =
+      window.pageYOffset ||
+      document.documentElement.scrollTop ||
+      0;
+
+    const delta = scrollAtual - meninaScrollAnterior;
+    meninaScrollAnterior = scrollAtual;
+
+    /*
+      A página sobe/desce 100%.
+      A menina se desloca apenas 24% no MESMO sentido visual:
+      - rola para baixo -> conteúdo sobe; menina sobe devagar;
+      - rola para cima  -> conteúdo desce; menina desce devagar.
+    */
+    meninaTopAlvo = limitarTopMenina(
+      meninaTopAlvo - (delta * 0.24)
+    );
+
+    if (!meninaRAF){
+      meninaRAF = requestAnimationFrame(animarMeninaParallax);
+    }
+  }
+
+  window.addEventListener('scroll', aoRolarPagina, { passive:true });
+
+  window.addEventListener('resize', function(){
+    const menina = document.getElementById('meninaParallax');
+    const resultado = document.getElementById('resultado');
+
+    if (!menina || !resultado) return;
+
+    if (window.innerWidth <= 1399){
+      meninaParallaxAtivo = false;
+      menina.classList.remove('parallax-visivel');
+      return;
+    }
+
+    if (resultado.style.display !== 'none'){
+      if (!meninaParallaxAtivo){
+        iniciarMeninaParallax();
+      }else{
+        meninaTopAlvo = limitarTopMenina(meninaTopAlvo);
+        if (!meninaRAF){
+          meninaRAF = requestAnimationFrame(animarMeninaParallax);
+        }
+      }
+    }
+  }, { passive:true });
 
 
   function setText(id, v){ document.getElementById(id).textContent = (v==null?'-':v); }
@@ -2291,3 +2475,4 @@ function drawScoreTableCentered(A, C, yTop) {
   </script>
 </body>
 </html>
+
