@@ -656,7 +656,8 @@
   //bloco para verificar se o resultado foi liberado antes de tentar buscar os dados do aluno
   async function verificarLiberacaoResultado() {
     try {
-      const url = `https://apisec.secauxiliar.com.br/SIMULADOS/FUVESTAO0926/check_liberacao_resultado.php?evento=FUVESTAO0926`;
+      const url = `https://apisec.secauxiliar.com.br/SIMULADOS/FUVESTAO0526/check_liberacao_resultado.php?evento=FUVESTAO0526`;
+      
 
       const resp = await fetch(url);
       const dados = await resp.json();
