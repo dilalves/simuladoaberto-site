@@ -554,7 +554,7 @@
     <h1>Simulado Aberto Fuvestao 2027</h1>
   </header>
 
-  <img src="https://raw.githubusercontent.com/dilalves/simuladoaberto-site/main/resultadofuvestao0526/Digital---Simulado-Aberto-728X90.jpg"
+  <img src="https://raw.githubusercontent.com/dilalves/simuladoaberto-site/main/resultadofuvestao0926/Digital---Simulado-Aberto-728X90.jpg"
        alt="Banner Simulado Aberto"
        class="banner-simulado">
 
@@ -656,7 +656,7 @@
   //bloco para verificar se o resultado foi liberado antes de tentar buscar os dados do aluno
   async function verificarLiberacaoResultado() {
     try {
-      const url = `https://apisec.secauxiliar.com.br/SIMULADOS/FUVESTAO0526/check_liberacao_resultado.php?evento=FUVESTAO0526`;
+      const url = `https://apisec.secauxiliar.com.br/SIMULADOS/FUVESTAO0926/check_liberacao_resultado.php?evento=FUVESTAO0926`;
 
       const resp = await fetch(url);
       const dados = await resp.json();
@@ -859,7 +859,7 @@
     instance.open();
 
     try {
-      const url = `https://apisec.secauxiliar.com.br/SIMULADOS/FUVESTAO0526/estatistica_questao_aluno.php?evento=FUVESTAO0526&cod_prova=${encodeURIComponent(codProva || '')}&questao=${encodeURIComponent(questaoAluno || '')}&resposta_aluno=${encodeURIComponent(respostaAluno || '')}`;
+      const url = `https://apisec.secauxiliar.com.br/SIMULADOS/FUVESTAO0926/estatistica_questao_aluno.php?evento=FUVESTAO0926&cod_prova=${encodeURIComponent(codProva || '')}&questao=${encodeURIComponent(questaoAluno || '')}&resposta_aluno=${encodeURIComponent(respostaAluno || '')}`;
       const resp = await fetch(url);
       const dados = await resp.json();
 
@@ -946,7 +946,7 @@
 
   const inscricao = document.getElementById("inscricao").value.trim();
   const cpf = document.getElementById("cpf").value.trim();
-  const url = `https://apisec.secauxiliar.com.br/SIMULADOS/FUVESTAO0526/psq_resultado_fuv_0526.php?inscricao=${encodeURIComponent(inscricao)}&cpf=${encodeURIComponent(cpf)}`;
+  const url = `https://apisec.secauxiliar.com.br/SIMULADOS/FUVESTAO0926/psq_resultado_fuv_0926.php?inscricao=${encodeURIComponent(inscricao)}&cpf=${encodeURIComponent(cpf)}`;
 
 
     try {
